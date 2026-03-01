@@ -20,6 +20,19 @@
 - Idempotent `dispose()`/`close()` guarded by `_disposed`/`_closed` flags
 - 33 integration tests across 5 test files validating the full Dart → FFI → C shim → zenoh-c stack
 
+### Phase 1: Put and Delete
+
+#### Added
+- C shim: `zd_put()` and `zd_delete()` wrapping zenoh-c `z_put`/`z_delete` with NULL options (default encoding, priority, congestion control)
+- `Session.put(String, String)`: one-shot string publish with early key expression validation and `_ensureOpen()` guard
+- `Session.putBytes(String, ZBytes)`: one-shot binary publish with move semantics — ZBytes consumed on success, preserved on key expression validation failure
+- `Session.delete(String)`: one-shot resource deletion with early key expression validation
+- `ZBytes.nativePtr` getter and `markConsumed()` for move-semantic tracking across FFI boundary
+- `Session._withKeyExpr()` private helper for validated key expression lifecycle (create, validate, loan, cleanup)
+- CLI example `bin/z_put.dart`: put data with `-k`/`-p` args (default: `demo/example/zenoh-dart-put`)
+- CLI example `bin/z_delete.dart`: delete resource with `-k` arg (default: `demo/example/zenoh-dart-put`)
+- 21 new tests (54 total): put, putBytes, delete, and CLI process-level tests
+
 ## 0.0.1 (Unreleased)
 
 - Initial scaffold: Melos monorepo with pure Dart `zenoh` package
