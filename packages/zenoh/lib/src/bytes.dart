@@ -16,6 +16,9 @@ class ZBytes {
   final Pointer<Void> _ptr;
   bool _disposed = false;
 
+  // Internal: set by Session.putBytes after consuming the bytes via zd_put.
+  bool _consumed = false;
+
   ZBytes._(this._ptr);
 
   /// Creates [ZBytes] by copying the given [value] string.
@@ -63,10 +66,11 @@ class ZBytes {
 
   /// Converts the payload to a Dart string.
   ///
-  /// Throws [StateError] if this [ZBytes] has been disposed.
+  /// Throws [StateError] if this [ZBytes] has been disposed or consumed.
   /// Throws [ZenohException] if the conversion fails.
   String toStr() {
     _ensureNotDisposed();
+    _ensureNotConsumed();
     final loaned = bindings.zd_bytes_loan(_ptr.cast());
     final Pointer<Void> ownedStr = calloc.allocate(bindings.zd_string_sizeof());
     final rc = bindings.zd_bytes_to_string(loaned, ownedStr.cast());
@@ -86,14 +90,34 @@ class ZBytes {
   /// Releases native resources held by this payload.
   ///
   /// Safe to call multiple times -- subsequent calls are no-ops.
+  /// Throws [StateError] if the payload has been consumed by Session.putBytes.
   void dispose() {
     if (_disposed) return;
+    _ensureNotConsumed();
     _disposed = true;
     bindings.zd_bytes_drop(_ptr.cast());
     calloc.free(_ptr);
   }
 
+  /// Internal: returns the native pointer for use by Session.putBytes.
+  Pointer<Void> get nativePtr {
+    _ensureNotDisposed();
+    _ensureNotConsumed();
+    return _ptr;
+  }
+
+  /// Internal: called by Session.putBytes after consuming the bytes.
+  void markConsumed() {
+    _consumed = true;
+  }
+
   void _ensureNotDisposed() {
     if (_disposed) throw StateError('ZBytes has been disposed');
+  }
+
+  void _ensureNotConsumed() {
+    if (_consumed) {
+      throw StateError('ZBytes has been consumed by Session.putBytes');
+    }
   }
 }

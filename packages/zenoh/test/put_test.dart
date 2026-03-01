@@ -90,15 +90,11 @@ void main() {
 
       // When: session.putBytes is called with a valid key and ZBytes payload
       // Then: the call completes without throwing any exception
-      try {
-        expect(
-          () => session.putBytes('demo/example/test', payload),
-          returnsNormally,
-        );
-      } finally {
-        // payload may have been consumed; dispose is safe to call regardless
-        payload.dispose();
-      }
+      // Note: payload is consumed by putBytes, no dispose needed
+      expect(
+        () => session.putBytes('demo/example/test', payload),
+        returnsNormally,
+      );
     });
 
     test('putBytes consumes the ZBytes payload', () {

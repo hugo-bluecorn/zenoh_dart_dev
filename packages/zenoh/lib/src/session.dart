@@ -2,6 +2,7 @@ import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
 
+import 'bytes.dart';
 import 'config.dart';
 import 'exceptions.dart';
 import 'native_lib.dart';
@@ -87,6 +88,37 @@ class Session {
 
       final putRc = bindings.zd_put(loanedSession, loanedKe, bytesPtr.cast());
       calloc.free(bytesPtr);
+      if (putRc != 0) {
+        throw ZenohException('Failed to put', putRc);
+      }
+    });
+  }
+
+  /// Publishes a [ZBytes] [payload] on the given [keyExpr].
+  ///
+  /// The [payload] is consumed by this call -- after a successful put, the
+  /// ZBytes must not be used again (calling [ZBytes.toStr] or
+  /// [ZBytes.dispose] will throw [StateError]).
+  ///
+  /// The key expression is validated before the payload is consumed. If
+  /// validation fails, the payload remains usable.
+  ///
+  /// Throws [StateError] if the session has been closed.
+  /// Throws [StateError] if [payload] has been disposed or already consumed.
+  /// Throws [ZenohException] if [keyExpr] is invalid or the put fails.
+  void putBytes(String keyExpr, ZBytes payload) {
+    _ensureOpen();
+
+    // Access nativePtr early to check disposed/consumed state before
+    // validating keyexpr. This ensures we get StateError for disposed
+    // payloads even if keyexpr is also invalid.
+    final payloadPtr = payload.nativePtr;
+
+    _withKeyExpr(keyExpr, (loanedSession, loanedKe) {
+      final putRc = bindings.zd_put(loanedSession, loanedKe, payloadPtr.cast());
+      // Mark payload as consumed regardless of success/failure,
+      // because z_bytes_move already consumed the native bytes.
+      payload.markConsumed();
       if (putRc != 0) {
         throw ZenohException('Failed to put', putRc);
       }
