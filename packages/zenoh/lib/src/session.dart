@@ -125,6 +125,24 @@ class Session {
     });
   }
 
+  /// Deletes data on the given [keyExpr].
+  ///
+  /// This sends a delete message to the zenoh network for the specified key
+  /// expression. The key expression is validated before sending.
+  ///
+  /// Throws [StateError] if the session has been closed.
+  /// Throws [ZenohException] if [keyExpr] is invalid or the delete fails.
+  void delete(String keyExpr) {
+    _ensureOpen();
+
+    _withKeyExpr(keyExpr, (loanedSession, loanedKe) {
+      final deleteRc = bindings.zd_delete(loanedSession, loanedKe);
+      if (deleteRc != 0) {
+        throw ZenohException('Failed to delete', deleteRc);
+      }
+    });
+  }
+
   /// Creates a validated view key expression and loaned session, passes them
   /// to [action], and ensures cleanup of native resources afterward.
   ///
