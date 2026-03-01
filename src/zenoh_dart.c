@@ -144,6 +144,21 @@ FFI_PLUGIN_EXPORT void zd_keyexpr_as_view_string(
 }
 
 // ---------------------------------------------------------------------------
+// Put / Delete
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT int zd_put(const z_loaned_session_t* session,
+                             const z_loaned_keyexpr_t* ke,
+                             z_owned_bytes_t* payload) {
+  return z_put(session, ke, z_bytes_move(payload), NULL);
+}
+
+FFI_PLUGIN_EXPORT int zd_delete(const z_loaned_session_t* session,
+                                const z_loaned_keyexpr_t* ke) {
+  return z_delete(session, ke, NULL);
+}
+
+// ---------------------------------------------------------------------------
 // View String utilities
 // ---------------------------------------------------------------------------
 

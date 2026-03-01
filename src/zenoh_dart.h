@@ -232,6 +232,33 @@ FFI_PLUGIN_EXPORT size_t zd_string_len(const z_loaned_string_t* str);
 FFI_PLUGIN_EXPORT void zd_string_drop(z_owned_string_t* str);
 
 // ---------------------------------------------------------------------------
+// Put / Delete
+// ---------------------------------------------------------------------------
+
+/// Publishes a payload on the given key expression.
+///
+/// The session and key expression must be valid loaned references.
+/// The payload bytes are consumed (moved) by this call.
+///
+/// @param session  Const pointer to a loaned session.
+/// @param ke       Const pointer to a loaned key expression.
+/// @param payload  Pointer to a z_owned_bytes_t (consumed via z_bytes_move).
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int zd_put(const z_loaned_session_t* session,
+                             const z_loaned_keyexpr_t* ke,
+                             z_owned_bytes_t* payload);
+
+/// Deletes a resource at the given key expression.
+///
+/// The session and key expression must be valid loaned references.
+///
+/// @param session  Const pointer to a loaned session.
+/// @param ke       Const pointer to a loaned key expression.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int zd_delete(const z_loaned_session_t* session,
+                                const z_loaned_keyexpr_t* ke);
+
+// ---------------------------------------------------------------------------
 // View String utilities
 // ---------------------------------------------------------------------------
 

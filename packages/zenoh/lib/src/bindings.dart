@@ -504,6 +504,64 @@ class ZenohDartBindings {
   late final _zd_string_drop = _zd_string_dropPtr
       .asFunction<void Function(ffi.Pointer<ffi.Opaque>)>();
 
+  /// Publishes a payload on the given key expression.
+  ///
+  /// The session and key expression must be valid loaned references.
+  /// The payload bytes are consumed (moved) by this call.
+  ///
+  /// @param session  Const pointer to a loaned session.
+  /// @param ke       Const pointer to a loaned key expression.
+  /// @param payload  Pointer to a z_owned_bytes_t (consumed via z_bytes_move).
+  /// @return 0 on success, negative on failure.
+  int zd_put(
+    ffi.Pointer<ffi.Opaque> session,
+    ffi.Pointer<ffi.Opaque> ke,
+    ffi.Pointer<ffi.Opaque> payload,
+  ) {
+    return _zd_put(session, ke, payload);
+  }
+
+  late final _zd_putPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<ffi.Opaque>,
+            ffi.Pointer<ffi.Opaque>,
+            ffi.Pointer<ffi.Opaque>,
+          )
+        >
+      >('zd_put');
+  late final _zd_put = _zd_putPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<ffi.Opaque>,
+          ffi.Pointer<ffi.Opaque>,
+          ffi.Pointer<ffi.Opaque>,
+        )
+      >();
+
+  /// Deletes a resource at the given key expression.
+  ///
+  /// The session and key expression must be valid loaned references.
+  ///
+  /// @param session  Const pointer to a loaned session.
+  /// @param ke       Const pointer to a loaned key expression.
+  /// @return 0 on success, negative on failure.
+  int zd_delete(ffi.Pointer<ffi.Opaque> session, ffi.Pointer<ffi.Opaque> ke) {
+    return _zd_delete(session, ke);
+  }
+
+  late final _zd_deletePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(ffi.Pointer<ffi.Opaque>, ffi.Pointer<ffi.Opaque>)
+        >
+      >('zd_delete');
+  late final _zd_delete = _zd_deletePtr
+      .asFunction<
+        int Function(ffi.Pointer<ffi.Opaque>, ffi.Pointer<ffi.Opaque>)
+      >();
+
   /// Returns the size of z_view_string_t in bytes.
   ///
   /// Used by Dart to allocate the correct amount of native memory
