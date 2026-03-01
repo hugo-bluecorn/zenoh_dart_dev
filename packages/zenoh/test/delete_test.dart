@@ -17,10 +17,7 @@ void main() {
       // Given: an open Session
       // When: session.delete is called with a valid key expression
       // Then: the call completes without throwing any exception
-      expect(
-        () => session.delete('demo/example/test'),
-        returnsNormally,
-      );
+      expect(() => session.delete('demo/example/test'), returnsNormally);
     });
 
     test('delete hierarchical key expression succeeds', () {
@@ -37,10 +34,7 @@ void main() {
       // Given: an open Session
       // When: session.delete is called with an empty string (invalid)
       // Then: a ZenohException is thrown
-      expect(
-        () => session.delete(''),
-        throwsA(isA<ZenohException>()),
-      );
+      expect(() => session.delete(''), throwsA(isA<ZenohException>()));
     });
 
     test('delete on closed session throws StateError', () {

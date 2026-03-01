@@ -26,8 +26,7 @@ void main() {
     test('runs with default arguments and prints confirmation', () async {
       final result = await runZDelete();
 
-      expect(result.exitCode, equals(0),
-          reason: 'stderr: ${result.stderr}');
+      expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
       final stdout = result.stdout as String;
       expect(stdout, contains('Deleting'));
       expect(stdout, contains('demo/example/zenoh-dart-put'));
@@ -36,8 +35,7 @@ void main() {
     test('accepts custom key argument', () async {
       final result = await runZDelete(['-k', 'demo/custom/key']);
 
-      expect(result.exitCode, equals(0),
-          reason: 'stderr: ${result.stderr}');
+      expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
       final stdout = result.stdout as String;
       expect(stdout, contains('demo/custom/key'));
     });
@@ -45,8 +43,7 @@ void main() {
     test('--help shows usage information', () async {
       final result = await runZDelete(['--help']);
 
-      expect(result.exitCode, equals(0),
-          reason: 'stderr: ${result.stderr}');
+      expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
       final stdout = result.stdout as String;
       expect(stdout, contains('-k'));
     });

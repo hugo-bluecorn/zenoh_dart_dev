@@ -27,10 +27,7 @@ void main() {
       // Given: an open Session
       // When: session.put is called with an empty string value
       // Then: the call completes without throwing any exception
-      expect(
-        () => session.put('demo/example/test', ''),
-        returnsNormally,
-      );
+      expect(() => session.put('demo/example/test', ''), returnsNormally);
     });
 
     test('put with unicode payload succeeds', () {
@@ -47,10 +44,7 @@ void main() {
       // Given: an open Session
       // When: session.put is called with an empty key expression
       // Then: a ZenohException is thrown
-      expect(
-        () => session.put('', 'value'),
-        throwsA(isA<ZenohException>()),
-      );
+      expect(() => session.put('', 'value'), throwsA(isA<ZenohException>()));
     });
 
     test('put on closed session throws StateError', () {
@@ -105,10 +99,7 @@ void main() {
       session.putBytes('demo/example/test', payload);
 
       // Then: subsequent payload.toStr() throws StateError (consumed)
-      expect(
-        () => payload.toStr(),
-        throwsA(isA<StateError>()),
-      );
+      expect(() => payload.toStr(), throwsA(isA<StateError>()));
     });
 
     test('putBytes with invalid key expression throws ZenohException', () {
@@ -164,22 +155,24 @@ void main() {
       );
     });
 
-    test('putBytes with invalid key expression does NOT consume the ZBytes',
-        () {
-      // Given: an open Session and a ZBytes payload
-      final payload = ZBytes.fromString('still usable');
+    test(
+      'putBytes with invalid key expression does NOT consume the ZBytes',
+      () {
+        // Given: an open Session and a ZBytes payload
+        final payload = ZBytes.fromString('still usable');
 
-      // When: session.putBytes throws ZenohException due to invalid keyexpr
-      expect(
-        () => session.putBytes('', payload),
-        throwsA(isA<ZenohException>()),
-      );
+        // When: session.putBytes throws ZenohException due to invalid keyexpr
+        expect(
+          () => session.putBytes('', payload),
+          throwsA(isA<ZenohException>()),
+        );
 
-      // Then: the ZBytes is still usable (was not consumed)
-      expect(payload.toStr(), equals('still usable'));
+        // Then: the ZBytes is still usable (was not consumed)
+        expect(payload.toStr(), equals('still usable'));
 
-      // Cleanup
-      payload.dispose();
-    });
+        // Cleanup
+        payload.dispose();
+      },
+    );
   });
 }

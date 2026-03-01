@@ -7,10 +7,18 @@ const defaultPayload = 'Put from Dart!';
 void main(List<String> arguments) {
   final parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Show this help')
-    ..addOption('key', abbr: 'k', defaultsTo: defaultKey,
-        help: 'The key expression to write to')
-    ..addOption('payload', abbr: 'p', defaultsTo: defaultPayload,
-        help: 'The value to write');
+    ..addOption(
+      'key',
+      abbr: 'k',
+      defaultsTo: defaultKey,
+      help: 'The key expression to write to',
+    )
+    ..addOption(
+      'payload',
+      abbr: 'p',
+      defaultsTo: defaultPayload,
+      help: 'The value to write',
+    );
 
   final ArgResults args;
   try {

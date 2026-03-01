@@ -150,7 +150,7 @@ class Session {
   void _withKeyExpr(
     String keyExpr,
     void Function(Pointer<Opaque> loanedSession, Pointer<Opaque> loanedKe)
-        action,
+    action,
   ) {
     final Pointer<Void> kePtr = calloc.allocate(
       bindings.zd_view_keyexpr_sizeof(),

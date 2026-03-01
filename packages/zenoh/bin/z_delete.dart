@@ -6,8 +6,12 @@ const defaultKey = 'demo/example/zenoh-dart-put';
 void main(List<String> arguments) {
   final parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Show this help')
-    ..addOption('key', abbr: 'k', defaultsTo: defaultKey,
-        help: 'The key expression to delete');
+    ..addOption(
+      'key',
+      abbr: 'k',
+      defaultsTo: defaultKey,
+      help: 'The key expression to delete',
+    );
 
   final ArgResults args;
   try {

@@ -26,19 +26,21 @@ void main() {
     test('runs with default arguments and prints confirmation', () async {
       final result = await runZPut();
 
-      expect(result.exitCode, equals(0),
-          reason: 'stderr: ${result.stderr}');
+      expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
       final stdout = result.stdout as String;
       expect(stdout, contains('Putting Data'));
       expect(stdout, contains('demo/example/zenoh-dart-put'));
     });
 
     test('accepts custom key and payload arguments', () async {
-      final result =
-          await runZPut(['-k', 'demo/custom/key', '-p', 'Custom value']);
+      final result = await runZPut([
+        '-k',
+        'demo/custom/key',
+        '-p',
+        'Custom value',
+      ]);
 
-      expect(result.exitCode, equals(0),
-          reason: 'stderr: ${result.stderr}');
+      expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
       final stdout = result.stdout as String;
       expect(stdout, contains('demo/custom/key'));
       expect(stdout, contains('Custom value'));
@@ -47,8 +49,7 @@ void main() {
     test('--help shows usage information', () async {
       final result = await runZPut(['--help']);
 
-      expect(result.exitCode, equals(0),
-          reason: 'stderr: ${result.stderr}');
+      expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
       final stdout = result.stdout as String;
       expect(stdout, contains('-k'));
       expect(stdout, contains('-p'));
