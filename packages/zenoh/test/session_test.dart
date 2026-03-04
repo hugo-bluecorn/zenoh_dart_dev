@@ -187,5 +187,21 @@ void main() {
         )),
       );
     });
+
+    test('deleteResource on non-existent key succeeds', () {
+      // fire-and-forget semantics -- no error even if no data published
+      expect(
+        () => session.deleteResource('demo/example/nonexistent'),
+        returnsNormally,
+      );
+    });
+
+    test('deleteResource with invalid key expression throws ZenohException',
+        () {
+      expect(
+        () => session.deleteResource(''),
+        throwsA(isA<ZenohException>()),
+      );
+    });
   });
 }
