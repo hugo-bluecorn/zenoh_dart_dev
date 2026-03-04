@@ -177,13 +177,24 @@ collaborate through a RED -> GREEN -> REFACTOR cycle.
 > planning process. Manual invocation produces degraded results because the
 > agent's 10-step process (from the skill definition) is absent.
 
-### Two-Session Workflow
+### Four-Session Workflow
 
-This project uses a two-session review pattern for plan quality:
-- **CZ session** — Runs `/tdd-plan` and `/tdd-implement`; performs all code work
-- **CA session** — Read-only advisor that reviews plans before CZ approval
+This project uses a four-session role pattern for structured development:
 
-See `docs/tdd-prompts/ca-plan-advisor.md` for the CA session prompt.
+| Session | Role | Commands | Scope |
+|---------|------|----------|-------|
+| **CA** | Architect / Reviewer | None (read-only) | Decisions, issues, memory, plan review, PR verification |
+| **CP** | Planner | `/tdd-plan` | Slice decomposition, plan iteration |
+| **CI** | Implementer | `/tdd-implement`, `/tdd-release`, `/tdd-finalize-docs` | Code, tests, releases, direct edits |
+| **CB** | Packaging Advisor | None (read-only) | Build, cross-compilation, distribution, pub.dev |
+
+**Memory model:** CA is the sole memory writer. CP, CI, and CB read only.
+
+See `docs/dev-roles/` for session prompts:
+- `ca-architect.md` — architect/reviewer role
+- `cp-planner.md` — planner role
+- `ci-implementer.md` — implementer role
+- `cb-packaging.md` — packaging advisor role
 
 ### Session State
 
