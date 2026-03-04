@@ -74,27 +74,42 @@ class Session {
     if (_closed) throw StateError('Session has been closed');
   }
 
+  /// Executes [action] with a loaned session and a loaned key expression,
+  /// guaranteeing cleanup of the key expression in all cases.
+  void _withKeyExpr(
+    String keyExpr,
+    void Function(Pointer<Void> loanedSession, Pointer<Void> loanedKe) action,
+  ) {
+    _ensureOpen();
+    final ke = KeyExpr(keyExpr);
+    try {
+      final loanedSession =
+          bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+      final loanedKe =
+          bindings.zd_view_keyexpr_loan(ke.nativePtr.cast()) as Pointer<Void>;
+      action(loanedSession, loanedKe);
+    } finally {
+      ke.dispose();
+    }
+  }
+
   /// Publishes a string [value] on the given [keyExpr].
   ///
   /// Throws [ZenohException] if the key expression is invalid or the put fails.
   /// Throws [StateError] if the session has been closed.
   void put(String keyExpr, String value) {
-    _ensureOpen();
-    final ke = KeyExpr(keyExpr);
-    try {
+    _withKeyExpr(keyExpr, (loanedSession, loanedKe) {
       final payload = ZBytes.fromString(value);
       final rc = bindings.zd_put(
-        bindings.zd_session_loan(_ptr.cast()),
-        bindings.zd_view_keyexpr_loan(ke.nativePtr.cast()),
+        loanedSession.cast(),
+        loanedKe.cast(),
         payload.nativePtr.cast(),
       );
       payload.markConsumed();
       if (rc != 0) {
         throw ZenohException('Put failed', rc);
       }
-    } finally {
-      ke.dispose();
-    }
+    });
   }
 
   /// Publishes a [ZBytes] [payload] on the given [keyExpr].
@@ -108,20 +123,17 @@ class Session {
     _ensureOpen();
     // Validate payload state before allocating KeyExpr
     final payloadPtr = payload.nativePtr;
-    final ke = KeyExpr(keyExpr);
-    try {
+    _withKeyExpr(keyExpr, (loanedSession, loanedKe) {
       final rc = bindings.zd_put(
-        bindings.zd_session_loan(_ptr.cast()),
-        bindings.zd_view_keyexpr_loan(ke.nativePtr.cast()),
+        loanedSession.cast(),
+        loanedKe.cast(),
         payloadPtr.cast(),
       );
       payload.markConsumed();
       if (rc != 0) {
         throw ZenohException('Put failed', rc);
       }
-    } finally {
-      ke.dispose();
-    }
+    });
   }
 
   /// Deletes a resource on the given [keyExpr].
@@ -129,18 +141,14 @@ class Session {
   /// Throws [ZenohException] if the key expression is invalid or the delete fails.
   /// Throws [StateError] if the session has been closed.
   void deleteResource(String keyExpr) {
-    _ensureOpen();
-    final ke = KeyExpr(keyExpr);
-    try {
+    _withKeyExpr(keyExpr, (loanedSession, loanedKe) {
       final rc = bindings.zd_delete(
-        bindings.zd_session_loan(_ptr.cast()),
-        bindings.zd_view_keyexpr_loan(ke.nativePtr.cast()),
+        loanedSession.cast(),
+        loanedKe.cast(),
       );
       if (rc != 0) {
         throw ZenohException('Delete failed', rc);
       }
-    } finally {
-      ke.dispose();
-    }
+    });
   }
 }
