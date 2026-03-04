@@ -77,6 +77,23 @@ cd packages/zenoh
 LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build fvm dart test
 ```
 
+### 4. Try the CLI examples
+
+> **Note:** `LD_LIBRARY_PATH` is required during development because the native
+> libraries (`libzenoh_dart.so`, `libzenohc.so`) are not on the system linker
+> path. This applies to both tests and CLI examples.
+
+```bash
+# Put data on a key expression
+cd packages/zenoh
+LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
+  fvm dart run bin/z_put.dart -k demo/example/test -p 'Hello from Dart!'
+
+# Delete a key expression
+LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
+  fvm dart run bin/z_delete.dart -k demo/example/test
+```
+
 ## Phase Roadmap
 
 | Phase | Name | Description |
