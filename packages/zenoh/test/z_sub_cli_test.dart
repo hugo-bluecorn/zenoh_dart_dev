@@ -3,6 +3,22 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+/// The FVM-resolved Dart executable path.
+const _dartExe = '/home/hugo-bluecorn/fvm/versions/stable/bin/dart';
+
+/// Forcefully kills a process, using SIGKILL if SIGTERM doesn't work.
+Future<void> forceKill(Process process) async {
+  process.kill(ProcessSignal.sigterm);
+  try {
+    await process.exitCode.timeout(const Duration(seconds: 3));
+  } catch (_) {
+    process.kill(ProcessSignal.sigkill);
+    await process.exitCode
+        .timeout(const Duration(seconds: 2))
+        .catchError((_) => -1);
+  }
+}
+
 void main() {
   final packageRoot = Directory.current.path;
   final repoRoot = '$packageRoot/../..';
@@ -17,8 +33,8 @@ void main() {
   group('z_sub CLI', () {
     test('runs and prints subscriber declaration', () async {
       final process = await Process.start(
-        'fvm',
-        ['dart', 'run', 'bin/z_sub.dart'],
+        _dartExe,
+        ['run', 'bin/z_sub.dart'],
         workingDirectory: packageRoot,
         environment: env(),
       );
@@ -30,27 +46,26 @@ void main() {
 
       // Let it run for 3 seconds, then kill it
       await Future<void>.delayed(const Duration(seconds: 3));
-      process.kill(ProcessSignal.sigterm);
-
-      final exitCode = await process.exitCode
-          .timeout(const Duration(seconds: 5));
-
+      await forceKill(process);
       await subscription.cancel();
 
-      // Process killed by signal may have various exit codes
-      // The important thing is it printed the declaration message
       expect(stdout.toString(), contains('Declaring Subscriber'));
-      expect(
-        stdout.toString(),
-        contains('demo/example/**'),
-      );
+      expect(stdout.toString(), contains('demo/example/**'));
     });
 
     test('receives a sample from z_put', () async {
-      // Start z_sub listening on a specific key
+      // Use explicit TCP to ensure the two processes can communicate
+      const port = 18551;
+      const endpoint = 'tcp/127.0.0.1:$port';
+
+      // Start z_sub listening on a specific key with TCP listener
       final subProcess = await Process.start(
-        'fvm',
-        ['dart', 'run', 'bin/z_sub.dart', '-k', 'demo/cli/test'],
+        _dartExe,
+        [
+          'run', 'bin/z_sub.dart',
+          '-k', 'demo/cli/test',
+          '-l', endpoint,
+        ],
         workingDirectory: packageRoot,
         environment: env(),
       );
@@ -61,16 +76,17 @@ void main() {
           .listen(subStdout.write);
 
       try {
-        // Wait for subscriber to be ready
-        await Future<void>.delayed(const Duration(seconds: 3));
+        // Wait for subscriber session to bind TCP listener
+        await Future<void>.delayed(const Duration(seconds: 5));
 
-        // Run z_put to send a sample
+        // Run z_put connecting to the subscriber's TCP endpoint
         final putResult = await Process.run(
-          'fvm',
+          _dartExe,
           [
-            'dart', 'run', 'bin/z_put.dart',
+            'run', 'bin/z_put.dart',
             '-k', 'demo/cli/test',
             '-p', 'from-put',
+            '-e', endpoint,
           ],
           workingDirectory: packageRoot,
           environment: env(),
@@ -85,18 +101,15 @@ void main() {
         expect(output, contains('Received PUT'));
         expect(output, contains('from-put'));
       } finally {
-        subProcess.kill(ProcessSignal.sigterm);
-        await subProcess.exitCode
-            .timeout(const Duration(seconds: 5))
-            .catchError((_) => -1);
+        await forceKill(subProcess);
         await subSubscription.cancel();
       }
     });
 
     test('accepts --key flag', () async {
       final process = await Process.start(
-        'fvm',
-        ['dart', 'run', 'bin/z_sub.dart', '--key', 'demo/custom/**'],
+        _dartExe,
+        ['run', 'bin/z_sub.dart', '--key', 'demo/custom/**'],
         workingDirectory: packageRoot,
         environment: env(),
       );
@@ -107,11 +120,7 @@ void main() {
           .listen(stdout.write);
 
       await Future<void>.delayed(const Duration(seconds: 3));
-      process.kill(ProcessSignal.sigterm);
-
-      await process.exitCode
-          .timeout(const Duration(seconds: 5))
-          .catchError((_) => -1);
+      await forceKill(process);
       await subscription.cancel();
 
       expect(stdout.toString(), contains('demo/custom/**'));
@@ -119,8 +128,8 @@ void main() {
 
     test('with empty key expression fails', () async {
       final result = await Process.run(
-        'fvm',
-        ['dart', 'run', 'bin/z_sub.dart', '--key', ''],
+        _dartExe,
+        ['run', 'bin/z_sub.dart', '--key', ''],
         workingDirectory: packageRoot,
         environment: env(),
       ).timeout(const Duration(seconds: 30));
