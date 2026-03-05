@@ -135,6 +135,10 @@ CLI examples live in `packages/zenoh/bin/` and require `LD_LIBRARY_PATH` during 
 cd packages/zenoh && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
   fvm dart run bin/z_put.dart -k demo/example/test -p 'Hello from Dart!'
 
+# Delete a key expression
+cd packages/zenoh && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
+  fvm dart run bin/z_delete.dart -k demo/example/test
+
 # Subscribe to a key expression (runs until Ctrl-C)
 cd packages/zenoh && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
   fvm dart run bin/z_sub.dart -k 'demo/example/**'
