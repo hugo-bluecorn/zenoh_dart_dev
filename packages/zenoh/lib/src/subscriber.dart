@@ -34,7 +34,7 @@ class Subscriber {
     final Pointer<Void> ptr = calloc.allocate(size);
 
     final receivePort = ReceivePort();
-    final controller = StreamController<Sample>.broadcast();
+    final controller = StreamController<Sample>();
 
     receivePort.listen((dynamic message) {
       if (message is List) {
@@ -47,8 +47,9 @@ class Subscriber {
           keyExpr: keyExpr,
           payload: utf8.decode(payloadBytes),
           kind: kind == 0 ? SampleKind.put : SampleKind.delete,
-          attachment:
-              attachmentBytes != null ? utf8.decode(attachmentBytes) : null,
+          attachment: attachmentBytes != null
+              ? utf8.decode(attachmentBytes)
+              : null,
         );
         controller.add(sample);
       }
@@ -71,7 +72,7 @@ class Subscriber {
     return Subscriber._(ptr, receivePort, controller);
   }
 
-  /// A broadcast stream of [Sample]s received by this subscriber.
+  /// A stream of [Sample]s received by this subscriber.
   Stream<Sample> get stream => _controller.stream;
 
   /// Undeclares the subscriber and releases native resources.

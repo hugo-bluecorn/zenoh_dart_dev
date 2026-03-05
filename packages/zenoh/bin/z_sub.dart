@@ -41,8 +41,10 @@ Future<void> main(List<String> arguments) async {
   // Listen for samples and print them
   final streamSubscription = subscriber.stream.listen((sample) {
     final kindStr = sample.kind == SampleKind.put ? 'PUT' : 'DELETE';
-    print(">> [Subscriber] Received $kindStr ('${sample.keyExpr}': "
-        "'${sample.payload}')");
+    print(
+      ">> [Subscriber] Received $kindStr ('${sample.keyExpr}': "
+      "'${sample.payload}')",
+    );
   });
 
   // Handle SIGINT and SIGTERM for clean shutdown

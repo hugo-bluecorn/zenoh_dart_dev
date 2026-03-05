@@ -26,9 +26,9 @@ void main() {
       '$repoRoot/extern/zenoh-c/target/release:$repoRoot/build';
 
   Map<String, String> env() => {
-        ...Platform.environment,
-        'LD_LIBRARY_PATH': ldLibraryPath,
-      };
+    ...Platform.environment,
+    'LD_LIBRARY_PATH': ldLibraryPath,
+  };
 
   group('z_sub CLI', () {
     test('runs and prints subscriber declaration', () async {
@@ -61,11 +61,7 @@ void main() {
       // Start z_sub listening on a specific key with TCP listener
       final subProcess = await Process.start(
         _dartExe,
-        [
-          'run', 'bin/z_sub.dart',
-          '-k', 'demo/cli/test',
-          '-l', endpoint,
-        ],
+        ['run', 'bin/z_sub.dart', '-k', 'demo/cli/test', '-l', endpoint],
         workingDirectory: packageRoot,
         environment: env(),
       );
@@ -83,16 +79,23 @@ void main() {
         final putResult = await Process.run(
           _dartExe,
           [
-            'run', 'bin/z_put.dart',
-            '-k', 'demo/cli/test',
-            '-p', 'from-put',
-            '-e', endpoint,
+            'run',
+            'bin/z_put.dart',
+            '-k',
+            'demo/cli/test',
+            '-p',
+            'from-put',
+            '-e',
+            endpoint,
           ],
           workingDirectory: packageRoot,
           environment: env(),
         ).timeout(const Duration(seconds: 30));
-        expect(putResult.exitCode, equals(0),
-            reason: 'z_put stderr: ${putResult.stderr}');
+        expect(
+          putResult.exitCode,
+          equals(0),
+          reason: 'z_put stderr: ${putResult.stderr}',
+        );
 
         // Wait for the sample to arrive
         await Future<void>.delayed(const Duration(seconds: 3));
