@@ -201,5 +201,115 @@ void main() {
         throwsA(isA<TimeoutException>()),
       );
     });
+
+    test('receives DELETE sample from session.deleteResource', () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/del');
+      addTearDown(subscriber.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      session1.deleteResource('zenoh/dart/test/del');
+
+      final sample = await subscriber.stream
+          .first
+          .timeout(const Duration(seconds: 5));
+
+      expect(sample.keyExpr, equals('zenoh/dart/test/del'));
+      expect(sample.kind, equals(SampleKind.delete));
+    });
+  });
+
+  group('Subscriber stream close behavior', () {
+    late Session session1;
+    late Session session2;
+
+    setUpAll(() async {
+      // Use port 17449 to avoid conflicts with the integration group above
+      final config1 = Config();
+      config1.insertJson5(
+        'listen/endpoints',
+        '["tcp/127.0.0.1:17449"]',
+      );
+      session1 = Session.open(config: config1);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final config2 = Config();
+      config2.insertJson5(
+        'connect/endpoints',
+        '["tcp/127.0.0.1:17449"]',
+      );
+      session2 = Session.open(config: config2);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+    });
+
+    tearDownAll(() {
+      session1.close();
+      session2.close();
+    });
+
+    test('stream closes when subscriber is closed', () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/close1');
+
+      final doneCompleter = Completer<void>();
+      subscriber.stream.listen(
+        (_) {},
+        onDone: () => doneCompleter.complete(),
+      );
+
+      subscriber.close();
+
+      // The done callback should fire within a reasonable time
+      await doneCompleter.future.timeout(const Duration(seconds: 5));
+    });
+
+    test('stream closes after receiving samples when subscriber is closed',
+        () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/close2');
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      // Send a sample first
+      session1.put('zenoh/dart/test/close2', 'before close');
+
+      final sample = await subscriber.stream
+          .first
+          .timeout(const Duration(seconds: 5));
+      expect(sample.payload, equals('before close'));
+      expect(sample.kind, equals(SampleKind.put));
+
+      // Now close and verify stream completes
+      final doneCompleter = Completer<void>();
+      subscriber.stream.listen(
+        (_) {},
+        onDone: () => doneCompleter.complete(),
+      );
+
+      subscriber.close();
+
+      await doneCompleter.future.timeout(const Duration(seconds: 5));
+    });
+
+    test('closing subscriber before any samples emits zero events', () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/close3');
+
+      final samples = <Sample>[];
+      final doneCompleter = Completer<void>();
+      subscriber.stream.listen(
+        samples.add,
+        onDone: () => doneCompleter.complete(),
+      );
+
+      // Close immediately without sending any puts
+      subscriber.close();
+
+      await doneCompleter.future.timeout(const Duration(seconds: 5));
+      expect(samples, isEmpty);
+    });
   });
 }
