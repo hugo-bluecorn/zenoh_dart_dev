@@ -27,15 +27,17 @@ zenoh-dart/                     # git repo root
 ## Current Status
 
 **Phase 0 Bootstrap: COMPLETE** — 29 C shim functions, 5 Dart API classes, 33 integration tests.
+**Phase P1 Packaging: COMPLETE** — Build infrastructure done in Phase 0. Tier-2 prebuilt placement (`native/linux/x86_64/libzenohc.so`) intentionally deferred — it's a 30-second `mkdir + cp` whenever needed (CI setup, new contributor onboarding, pub.dev prep). The CMake 3-tier discovery, single-load `native_lib.dart`, Android build script, and RPATH configuration are all in place.
+**Phase 1 Put/Delete: COMPLETE** — 31 C shim functions, 56 integration tests. `Session.put`, `Session.putBytes`, and `Session.deleteResource` implemented with CLI examples `z_put.dart` and `z_delete.dart`.
 
 Available Dart API classes:
 - `Config` — Session configuration with JSON5 insertion
-- `Session` — Open/close zenoh sessions (peer mode)
+- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations
 - `KeyExpr` — Key expression creation and validation
-- `ZBytes` — Binary payload container with string round-trip
+- `ZBytes` — Binary payload container with string round-trip; `markConsumed()` for FFI ownership semantics
 - `ZenohException` — Error type for zenoh operations
 
-Phases 1–18 (put/sub/pub/query/SHM/liveliness/throughput/storage/advanced) are specified in `docs/phases/` but not yet implemented.
+Phases 2–18 (sub/pub/query/SHM/liveliness/throughput/storage/advanced) are specified in `docs/phases/` but not yet implemented.
 
 ## FVM Requirement
 
@@ -119,6 +121,21 @@ cd packages/zenoh && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../b
 fvm dart run melos bootstrap
 ```
 
+### CLI examples
+
+CLI examples live in `packages/zenoh/bin/` and require `LD_LIBRARY_PATH` during development (native libraries are not on the system linker path).
+
+```bash
+# Run a CLI example (e.g., z_put)
+cd packages/zenoh && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
+  fvm dart run bin/z_put.dart -k demo/example/test -p 'Hello from Dart!'
+```
+
+CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When adding a new CLI example in any phase:
+1. Match the zenoh-c flag names and short forms exactly (e.g., `-k`/`--key`, `-p`/`--payload`)
+2. Document the full usage (with `LD_LIBRARY_PATH`) in the README.md CLI Examples section
+3. The `/tdd-finalize-docs` agent must include CLI usage in the README update
+
 ## Architecture
 
 ### FFI Package Structure
@@ -176,13 +193,24 @@ collaborate through a RED -> GREEN -> REFACTOR cycle.
 > planning process. Manual invocation produces degraded results because the
 > agent's 10-step process (from the skill definition) is absent.
 
-### Two-Session Workflow
+### Four-Session Workflow
 
-This project uses a two-session review pattern for plan quality:
-- **CZ session** — Runs `/tdd-plan` and `/tdd-implement`; performs all code work
-- **CA session** — Read-only advisor that reviews plans before CZ approval
+This project uses a four-session role pattern for structured development:
 
-See `docs/tdd-prompts/ca-plan-advisor.md` for the CA session prompt.
+| Session | Role | Commands | Scope |
+|---------|------|----------|-------|
+| **CA** | Architect / Reviewer | None (read-only) | Decisions, issues, memory, plan review, PR verification |
+| **CP** | Planner | `/tdd-plan` | Slice decomposition, plan iteration |
+| **CI** | Implementer | `/tdd-implement`, `/tdd-release`, `/tdd-finalize-docs` | Code, tests, releases, direct edits |
+| **CB** | Packaging Advisor | None (read-only) | Build, cross-compilation, distribution, pub.dev |
+
+**Memory model:** CA is the sole memory writer. CP, CI, and CB read only.
+
+See `docs/dev-roles/` for session prompts:
+- `ca-architect.md` — architect/reviewer role
+- `cp-planner.md` — planner role
+- `ci-implementer.md` — implementer role
+- `cb-packaging.md` — packaging advisor role
 
 ### Session State
 
@@ -207,6 +235,25 @@ tests calling through FFI into the real native code — these are integration
 tests by nature. Do NOT mock the FFI layer; call through to the real
 `libzenohc.so` and `libzenoh_dart.so`.
 
+### Reference Architecture for API Design
+
+Our dependency chain is: **Rust (zenoh core) → zenoh-c (C bindings) →
+C shim (zd_*) → Dart FFI → Dart API**. We reference two layers:
+
+- **zenoh-c** is our contract boundary. Every function we call, every
+  options struct we fill, every return code we check is defined here.
+  The C headers and tests are the authoritative spec.
+- **zenoh-cpp** is our structural peer. It wraps the same zenoh-c API
+  from another language, making it the best template for API design
+  (options classes, error handling, Session vs Publisher split).
+
+Do NOT reference the Rust source (`eclipse-zenoh/zenoh`) during planning
+or implementation. It is one layer too deep — we cannot call Rust APIs,
+only C APIs. The Rust codebase would overwhelm planning context and is
+the wrong abstraction level. If a specific phase hits ambiguity that
+zenoh-c and zenoh-cpp cannot resolve, escalate to CA for ad-hoc
+investigation.
+
 ### Reference Tests in Submodules
 
 The `extern/zenoh-c/tests/` and `extern/zenoh-cpp/tests/` directories contain
@@ -228,6 +275,53 @@ tests that serve as both behavioral specifications and structural templates:
 When planning a phase, read the corresponding zenoh-c test (e.g.,
 `z_api_payload_test.c` for bytes, `z_int_pub_sub_test.c` for pub/sub) to
 understand what behaviors to verify and what edge cases to cover.
+
+### Cross-Language API Parity Check
+
+Before finalizing a phase plan or implementation, verify the Dart API against
+the C and C++ equivalents in the extern submodules. This catches missing
+semantics that the phase doc may not spell out explicitly.
+
+**During planning (tdd-planner)**, read these for each new C shim function:
+
+1. **C options struct** — Find `z_<operation>_options_t` in
+   `extern/zenoh-c/include/zenoh_commons.h`. List every field. Confirm which
+   fields the current phase exposes and which are explicitly deferred (NULL
+   options = defaults). Document deferred fields in the plan so future phases
+   know what remains.
+2. **C move/consume semantics** — Check `extern/zenoh-c/tests/z_api_drop_options.c`
+   and similar tests. Identify which parameters are consumed by `z_*_move()`.
+   Every consumed parameter needs a corresponding `markConsumed()` call in
+   Dart. When multiple parameters are consumed in one call (e.g., payload +
+   attachment in `z_put`), the plan must account for all of them.
+3. **C++ wrapper** — Read the corresponding method in
+   `extern/zenoh-cpp/include/zenoh/api/session.hxx` (or `publisher.hxx`,
+   `queryable.hxx`, etc.). Note the C++ options class fields and whether the
+   Session-level and Publisher-level APIs differ. The Dart API should follow
+   the same split when both levels exist.
+
+**During implementation (tdd-implementer)**, verify:
+
+4. **Return code semantics** — zenoh-c returns 0 on success, negative on
+   error. Use `!= 0` consistently in Dart (not `< 0`), since this is
+   defensive against future positive error codes.
+5. **Error handling parity** — C++ throws `ZException` with a message and
+   error code. Dart must throw `ZenohException` with equivalent information.
+   Read the C++ `__ZENOH_RESULT_CHECK` macro messages for consistent wording.
+6. **Cleanup on all paths** — If a C++ method has RAII cleanup (destructors
+   on scope exit), the Dart equivalent needs explicit `try/finally` or helper
+   methods (like `_withKeyExpr`) to guarantee the same cleanup.
+
+**Quick reference — what to read per phase:**
+
+| What | Where |
+|------|-------|
+| C options structs | `extern/zenoh-c/include/zenoh_commons.h` — search `z_<op>_options_t` |
+| C move semantics | `extern/zenoh-c/tests/z_api_drop_options.c` |
+| C examples | `extern/zenoh-c/examples/z_<op>.c` |
+| C++ Session API | `extern/zenoh-cpp/include/zenoh/api/session.hxx` |
+| C++ Publisher API | `extern/zenoh-cpp/include/zenoh/api/publisher.hxx` |
+| C++ tests | `extern/zenoh-cpp/tests/universal/network/*.cxx` |
 
 ### Phase Docs as Source of Truth
 
@@ -279,3 +373,7 @@ Use the primary Dart module as `<scope>` in commit messages:
 - `test(session): ...`, `feat(session): ...`
 - `test(keyexpr): ...`, `feat(keyexpr): ...`
 - `test(z-put): ...` for CLI examples
+
+## Session Directives
+
+When /tdd-plan completes, always show the FULL plan text produced by the planner agent — every slice with Given/When/Then, acceptance criteria, phase tracking, and dependencies. Never summarize or abbreviate the plan output.

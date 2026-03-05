@@ -6,7 +6,7 @@ Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protoc
 
 ```
 ┌─────────────────────────────┐
-│   Dart API (packages/zenoh)  │  Config, Session, KeyExpr, ZBytes
+│   Dart API (packages/zenoh)  │  Config, Session (put/putBytes/deleteResource), KeyExpr, ZBytes
 ├─────────────────────────────┤
 │   Generated FFI Bindings     │  bindings.dart (auto-generated via ffigen)
 ├─────────────────────────────┤
@@ -24,7 +24,14 @@ Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protoc
 - 5 Dart API classes: `Config`, `Session`, `KeyExpr`, `ZBytes`, `ZenohException`
 - 33 integration tests passing
 
-Phases 1–18 are specified in [`docs/phases/`](docs/phases/) but not yet implemented.
+**Phase 1 — Put/Delete: COMPLETE**
+
+- 31 C shim functions (added `zd_put`, `zd_delete`)
+- `Session.put()`, `Session.putBytes()`, `Session.deleteResource()` one-shot operations
+- CLI examples: `z_put.dart`, `z_delete.dart`
+- 56 integration tests passing
+
+Phases 2–18 are specified in [`docs/phases/`](docs/phases/) but not yet implemented.
 
 ## Packages
 
@@ -70,12 +77,29 @@ cd packages/zenoh
 LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build fvm dart test
 ```
 
+### 4. Try the CLI examples
+
+> **Note:** `LD_LIBRARY_PATH` is required during development because the native
+> libraries (`libzenoh_dart.so`, `libzenohc.so`) are not on the system linker
+> path. This applies to both tests and CLI examples.
+
+```bash
+# Put data on a key expression
+cd packages/zenoh
+LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
+  fvm dart run bin/z_put.dart -k demo/example/test -p 'Hello from Dart!'
+
+# Delete a key expression
+LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
+  fvm dart run bin/z_delete.dart -k demo/example/test
+```
+
 ## Phase Roadmap
 
 | Phase | Name | Description |
 |-------|------|-------------|
-| 0 | [Bootstrap](docs/phases/phase-00-bootstrap.md) | Session, Config, KeyExpr, ZBytes infrastructure |
-| 1 | [Put / Delete](docs/phases/phase-01-put-delete.md) | Basic key-value put and delete operations |
+| 0 | [Bootstrap](docs/phases/phase-00-bootstrap.md) | Session, Config, KeyExpr, ZBytes infrastructure — **COMPLETE** |
+| 1 | [Put / Delete](docs/phases/phase-01-put-delete.md) | Basic key-value put and delete operations — **COMPLETE** |
 | 2 | [Subscribe](docs/phases/phase-02-sub.md) | Subscriber for receiving publications |
 | 3 | [Publish](docs/phases/phase-03-pub.md) | Publisher with matched listener support |
 | 4 | [SHM Pub/Sub](docs/phases/phase-04-shm-pub-sub.md) | Shared-memory pub/sub for zero-copy |
