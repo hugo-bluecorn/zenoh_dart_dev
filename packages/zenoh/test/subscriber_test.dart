@@ -312,4 +312,115 @@ void main() {
       expect(samples, isEmpty);
     });
   });
+
+  group('Multiple subscribers', () {
+    late Session session1;
+    late Session session2;
+
+    setUpAll(() async {
+      // Use port 17450 to avoid conflicts with other test groups
+      final config1 = Config();
+      config1.insertJson5(
+        'listen/endpoints',
+        '["tcp/127.0.0.1:17450"]',
+      );
+      session1 = Session.open(config: config1);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final config2 = Config();
+      config2.insertJson5(
+        'connect/endpoints',
+        '["tcp/127.0.0.1:17450"]',
+      );
+      session2 = Session.open(config: config2);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+    });
+
+    tearDownAll(() {
+      session1.close();
+      session2.close();
+    });
+
+    test('multiple subscribers on same key each receive all samples',
+        () async {
+      final sub1 =
+          session2.declareSubscriber('zenoh/dart/test/multi-sub');
+      addTearDown(sub1.close);
+      final sub2 =
+          session2.declareSubscriber('zenoh/dart/test/multi-sub');
+      addTearDown(sub2.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      session1.put('zenoh/dart/test/multi-sub', 'broadcast');
+
+      final sample1 = await sub1.stream
+          .first
+          .timeout(const Duration(seconds: 5));
+      final sample2 = await sub2.stream
+          .first
+          .timeout(const Duration(seconds: 5));
+
+      expect(sample1.payload, equals('broadcast'));
+      expect(sample2.payload, equals('broadcast'));
+    });
+
+    test(
+        'multiple subscribers on different keys receive only their matching samples',
+        () async {
+      final subA =
+          session2.declareSubscriber('zenoh/dart/test/a');
+      addTearDown(subA.close);
+      final subB =
+          session2.declareSubscriber('zenoh/dart/test/b');
+      addTearDown(subB.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      session1.put('zenoh/dart/test/a', 'for-a');
+      session1.put('zenoh/dart/test/b', 'for-b');
+
+      final sampleA = await subA.stream
+          .first
+          .timeout(const Duration(seconds: 5));
+      final sampleB = await subB.stream
+          .first
+          .timeout(const Duration(seconds: 5));
+
+      expect(sampleA.payload, equals('for-a'));
+      expect(sampleB.payload, equals('for-b'));
+    });
+
+    test('closing one subscriber does not affect another', () async {
+      final sub1 =
+          session2.declareSubscriber('zenoh/dart/test/independent');
+      final sub2 =
+          session2.declareSubscriber('zenoh/dart/test/independent');
+      addTearDown(sub2.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      // Close sub1 first
+      sub1.close();
+
+      // Verify sub1's stream is done
+      final doneCompleter = Completer<void>();
+      sub1.stream.listen(
+        (_) {},
+        onDone: () => doneCompleter.complete(),
+      );
+      await doneCompleter.future.timeout(const Duration(seconds: 5));
+
+      // Now put a sample -- sub2 should still receive it
+      session1.put('zenoh/dart/test/independent', 'after-close');
+
+      final sample = await sub2.stream
+          .first
+          .timeout(const Duration(seconds: 5));
+
+      expect(sample.payload, equals('after-close'));
+    });
+  });
 }
