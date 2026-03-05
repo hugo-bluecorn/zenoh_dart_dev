@@ -13,3 +13,6 @@
 [submodule "extern/cargo-ndk"]
 	path = extern/cargo-ndk
 	url = https://github.com/bbqsrc/cargo-ndk.git
+[submodule "extern/zenoh"]
+	path = extern/zenoh
+	url = https://github.com/eclipse-zenoh/zenoh.git
