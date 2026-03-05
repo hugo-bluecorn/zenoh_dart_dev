@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
+import 'exceptions.dart';
 import 'native_lib.dart';
 import 'sample.dart';
 
@@ -64,7 +65,7 @@ class Subscriber {
       receivePort.close();
       controller.close();
       calloc.free(ptr);
-      throw StateError('Failed to declare subscriber (code: $rc)');
+      throw ZenohException('Failed to declare subscriber', rc);
     }
 
     return Subscriber._(ptr, receivePort, controller);
