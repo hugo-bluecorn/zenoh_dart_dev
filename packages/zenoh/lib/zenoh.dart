@@ -6,3 +6,4 @@ export 'src/config.dart';
 export 'src/exceptions.dart';
 export 'src/keyexpr.dart';
 export 'src/session.dart';
+export 'src/zenoh.dart';
