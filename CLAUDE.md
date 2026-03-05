@@ -383,6 +383,28 @@ Use the primary Dart module as `<scope>` in commit messages:
 - `test(keyexpr): ...`, `feat(keyexpr): ...`
 - `test(z-put): ...` for CLI examples
 
+## Documentation Finalization Guide
+
+When `/tdd-finalize-docs` runs after a release, update these specific sections:
+
+### CLAUDE.md updates
+1. **"Current Status" section** — Add a status line for the completed phase: `**Phase N Name: COMPLETE** — X C shim functions, Y integration tests. <brief description>.`
+2. **"Available Dart API classes" list** — Add new classes with one-line descriptions. Keep alphabetical by category (static utils, config, session, data types, exceptions).
+3. **"CLI examples" code block** — Add new CLI examples with full `LD_LIBRARY_PATH` command. Include a comment describing what the command does. Verify ALL existing CLI examples are present (check `packages/zenoh/bin/z_*.dart` against the code block).
+4. **"Phases N–18" line** — Update the starting phase number.
+
+### README.md updates
+1. **Architecture diagram** — Update the top-line class list in the ASCII diagram.
+2. **Phase status blocks** — Add a new status block for the completed phase with: C shim function count, new API surface, CLI example, test count.
+3. **"Phases N–18" line** — Update the starting phase number.
+4. **"CLI Examples" section** — Add new CLI commands with `LD_LIBRARY_PATH`. Verify ALL existing CLI examples are present (check `packages/zenoh/bin/z_*.dart`).
+5. **"Phase Roadmap" table** — Mark the completed phase row with `— **COMPLETE**`.
+
+### Verification checklist
+- Cross-check `packages/zenoh/bin/z_*.dart` against CLI example sections in both CLAUDE.md and README.md — every CLI binary must be documented.
+- Cross-check `packages/zenoh/lib/zenoh.dart` exports against "Available Dart API classes" — every exported class/enum must be listed.
+- Run `fvm dart analyze packages/zenoh` to confirm no issues.
+
 ## Session Directives
 
 When /tdd-plan completes, always show the FULL plan text produced by the planner agent — every slice with Given/When/Then, acceptance criteria, phase tracking, and dependencies. Never summarize or abbreviate the plan output.
