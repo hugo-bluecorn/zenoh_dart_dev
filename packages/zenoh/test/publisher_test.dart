@@ -328,6 +328,49 @@ void main() {
     );
   });
 
+  group('Publisher QoS options', () {
+    late Session session;
+
+    setUpAll(() {
+      session = Session.open();
+    });
+
+    tearDownAll(() {
+      session.close();
+    });
+
+    test('Publisher declared with CongestionControl.drop does not throw', () {
+      final publisher = session.declarePublisher(
+        'demo/qos',
+        congestionControl: CongestionControl.drop,
+      );
+      expect(publisher, isA<Publisher>());
+      publisher.close();
+    });
+
+    test('Publisher declared with Priority.realTime does not throw', () {
+      final publisher = session.declarePublisher(
+        'demo/qos',
+        priority: Priority.realTime,
+      );
+      expect(publisher, isA<Publisher>());
+      publisher.close();
+    });
+
+    test('Publisher declared with all options succeeds', () {
+      final publisher = session.declarePublisher(
+        'demo/full',
+        encoding: Encoding.applicationJson,
+        congestionControl: CongestionControl.drop,
+        priority: Priority.interactiveHigh,
+        enableMatchingListener: true,
+      );
+      expect(publisher.matchingStatus, isNotNull);
+      expect(publisher.keyExpr, equals('demo/full'));
+      publisher.close();
+    });
+  });
+
   group('Matching status one-shot', () {
     late Session session1;
     late Session session2;

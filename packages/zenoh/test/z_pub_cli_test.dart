@@ -1,0 +1,56 @@
+import 'dart:io';
+
+import 'package:test/test.dart';
+
+/// The FVM-resolved Dart executable path.
+const _dartExe = '/home/hugo-bluecorn/fvm/versions/stable/bin/dart';
+
+/// Forcefully kills a process, using SIGKILL if SIGTERM doesn't work.
+Future<void> forceKill(Process process) async {
+  process.kill(ProcessSignal.sigterm);
+  try {
+    await process.exitCode.timeout(const Duration(seconds: 3));
+  } catch (_) {
+    process.kill(ProcessSignal.sigkill);
+    await process.exitCode
+        .timeout(const Duration(seconds: 2))
+        .catchError((_) => -1);
+  }
+}
+
+void main() {
+  final packageRoot = Directory.current.path;
+  final repoRoot = '$packageRoot/../..';
+  final ldLibraryPath =
+      '$repoRoot/extern/zenoh-c/target/release:$repoRoot/build';
+
+  Map<String, String> env() => {
+    ...Platform.environment,
+    'LD_LIBRARY_PATH': ldLibraryPath,
+  };
+
+  group('z_pub CLI', () {
+    test('runs and prints publisher declaration', () async {
+      final process = await Process.start(
+        _dartExe,
+        ['run', 'example/z_pub.dart'],
+        workingDirectory: packageRoot,
+        environment: env(),
+      );
+
+      final stdout = StringBuffer();
+      final subscription = process.stdout
+          .transform(const SystemEncoding().decoder)
+          .listen(stdout.write);
+
+      // Let it run for 3 seconds, then kill it
+      await Future<void>.delayed(const Duration(seconds: 3));
+      await forceKill(process);
+      await subscription.cancel();
+
+      final output = stdout.toString();
+      expect(output, contains('Declaring Publisher'));
+      expect(output, contains('Putting Data'));
+    });
+  });
+}
