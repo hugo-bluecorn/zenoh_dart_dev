@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
 
@@ -152,5 +154,177 @@ void main() {
         throwsA(isA<StateError>()),
       );
     });
+
+    test('Publisher.deleteResource completes without error', () {
+      final publisher = session.declarePublisher('demo/example/pub-del');
+      addTearDown(publisher.close);
+      expect(() => publisher.deleteResource(), returnsNormally);
+    });
+
+    test('Publisher.deleteResource after close throws StateError', () {
+      final publisher = session.declarePublisher('demo/example/pub-del2');
+      publisher.close();
+      expect(() => publisher.deleteResource(), throwsA(isA<StateError>()));
+    });
+  });
+
+  group('Publisher pub/sub integration', () {
+    late Session session1;
+    late Session session2;
+
+    setUpAll(() async {
+      final config1 = Config();
+      config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17452"]');
+      session1 = Session.open(config: config1);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final config2 = Config();
+      config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17452"]');
+      session2 = Session.open(config: config2);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+    });
+
+    tearDownAll(() {
+      session1.close();
+      session2.close();
+    });
+
+    test('Publisher.put received by subscriber as PUT sample', () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/pub-put');
+      addTearDown(subscriber.close);
+      final publisher =
+          session1.declarePublisher('zenoh/dart/test/pub-put');
+      addTearDown(publisher.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      publisher.put('hello from pub');
+
+      final sample = await subscriber.stream.first.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(sample.payload, equals('hello from pub'));
+      expect(sample.kind, equals(SampleKind.put));
+      expect(sample.keyExpr, equals('zenoh/dart/test/pub-put'));
+    });
+
+    test('Publisher.deleteResource received by subscriber as DELETE sample',
+        () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/pub-del');
+      addTearDown(subscriber.close);
+      final publisher =
+          session1.declarePublisher('zenoh/dart/test/pub-del');
+      addTearDown(publisher.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      publisher.deleteResource();
+
+      final sample = await subscriber.stream.first.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(sample.kind, equals(SampleKind.delete));
+    });
+
+    test('Publisher.put with attachment received by subscriber', () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/pub-att');
+      addTearDown(subscriber.close);
+      final publisher =
+          session1.declarePublisher('zenoh/dart/test/pub-att');
+      addTearDown(publisher.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      publisher.put('value', attachment: ZBytes.fromString('meta'));
+
+      final sample = await subscriber.stream.first.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(sample.payload, equals('value'));
+      expect(sample.attachment, equals('meta'));
+    });
+
+    test('Publisher.put with encoding received by subscriber with encoding',
+        () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/pub-enc');
+      addTearDown(subscriber.close);
+      final publisher = session1.declarePublisher(
+        'zenoh/dart/test/pub-enc',
+        encoding: Encoding.applicationJson,
+      );
+      addTearDown(publisher.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      publisher.put('{"key":"value"}');
+
+      final sample = await subscriber.stream.first.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(sample.encoding, contains('application/json'));
+    });
+  });
+
+  group('Multiple publishers integration', () {
+    late Session session1;
+    late Session session2;
+
+    setUpAll(() async {
+      final config1 = Config();
+      config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17453"]');
+      session1 = Session.open(config: config1);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final config2 = Config();
+      config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17453"]');
+      session2 = Session.open(config: config2);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+    });
+
+    tearDownAll(() {
+      session1.close();
+      session2.close();
+    });
+
+    test(
+      'Multiple publishers on different keys each received by correct subscriber',
+      () async {
+        final subA =
+            session2.declareSubscriber('zenoh/dart/test/pub-a');
+        addTearDown(subA.close);
+        final subB =
+            session2.declareSubscriber('zenoh/dart/test/pub-b');
+        addTearDown(subB.close);
+        final pubA =
+            session1.declarePublisher('zenoh/dart/test/pub-a');
+        addTearDown(pubA.close);
+        final pubB =
+            session1.declarePublisher('zenoh/dart/test/pub-b');
+        addTearDown(pubB.close);
+
+        await Future<void>.delayed(const Duration(seconds: 1));
+
+        pubA.put('alpha');
+        pubB.put('beta');
+
+        final sampleA = await subA.stream.first.timeout(
+          const Duration(seconds: 5),
+        );
+        final sampleB = await subB.stream.first.timeout(
+          const Duration(seconds: 5),
+        );
+
+        expect(sampleA.payload, equals('alpha'));
+        expect(sampleB.payload, equals('beta'));
+      },
+    );
   });
 }
