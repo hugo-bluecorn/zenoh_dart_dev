@@ -61,6 +61,72 @@ void main() {
       },
     );
 
+    test('Publisher.put publishes a string value without error', () {
+      final publisher = session.declarePublisher('demo/example/pub-put');
+      addTearDown(publisher.close);
+      expect(() => publisher.put('Hello from publisher'), returnsNormally);
+    });
+
+    test('Publisher.putBytes publishes ZBytes and consumes the payload', () {
+      final publisher = session.declarePublisher('demo/example/pub-bytes');
+      addTearDown(publisher.close);
+      final payload = ZBytes.fromString('raw data');
+      expect(() => publisher.putBytes(payload), returnsNormally);
+      expect(
+        () => payload.nativePtr,
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('Publisher.put with encoding override succeeds', () {
+      final publisher = session.declarePublisher('demo/example/pub-enc');
+      addTearDown(publisher.close);
+      expect(
+        () => publisher.put(
+          'json data',
+          encoding: Encoding.applicationJson,
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('Publisher.put with attachment succeeds and consumes attachment', () {
+      final publisher = session.declarePublisher('demo/example/pub-att');
+      addTearDown(publisher.close);
+      final attachment = ZBytes.fromString('metadata');
+      expect(
+        () => publisher.put('value', attachment: attachment),
+        returnsNormally,
+      );
+      expect(
+        () => attachment.nativePtr,
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('Publisher.putBytes with encoding and attachment succeeds', () {
+      final publisher = session.declarePublisher('demo/example/pub-full');
+      addTearDown(publisher.close);
+      final payload = ZBytes.fromString('data');
+      final attachment = ZBytes.fromString('meta');
+      expect(
+        () => publisher.putBytes(
+          payload,
+          encoding: Encoding.textPlain,
+          attachment: attachment,
+        ),
+        returnsNormally,
+      );
+      expect(() => payload.nativePtr, throwsA(isA<StateError>()));
+      expect(() => attachment.nativePtr, throwsA(isA<StateError>()));
+    });
+
+    test('Publisher.put after close throws StateError', () {
+      final publisher = session.declarePublisher('demo/example/pub-closed');
+      publisher.close();
+      expect(() => publisher.put('test'), throwsA(isA<StateError>()));
+    });
+
     test('Publisher operations after close throw StateError', () {
       final publisher = session.declarePublisher('demo/example/pub');
       publisher.close();
