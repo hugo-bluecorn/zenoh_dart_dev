@@ -4,6 +4,19 @@ import 'dart:ffi';
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
 
+/// Helper to allocate an SHM buffer, write a string into it, and convert
+/// to ZBytes.  Allocates exactly [message.length] bytes for zero-copy
+/// round-trip fidelity.
+ZBytes _shmStringToZBytes(ShmProvider provider, String message) {
+  final encoded = utf8.encode(message);
+  final buffer = provider.alloc(encoded.length)!;
+  final dataPtr = buffer.data;
+  for (var i = 0; i < encoded.length; i++) {
+    dataPtr[i] = encoded[i];
+  }
+  return buffer.toBytes();
+}
+
 void main() {
   group('ShmProvider', () {
     test('creates with valid total size', () {
@@ -190,6 +203,119 @@ void main() {
       addTearDown(zbytes.dispose);
 
       expect(() => buffer.data, throwsStateError);
+    });
+  });
+
+  group('SHM Pub/Sub Integration', () {
+    late Session session1;
+    late Session session2;
+    late ShmProvider provider;
+
+    setUpAll(() async {
+      final config1 = Config();
+      config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17456"]');
+      session1 = Session.open(config: config1);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final config2 = Config();
+      config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17456"]');
+      session2 = Session.open(config: config2);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      provider = ShmProvider(size: 65536);
+    });
+
+    tearDownAll(() {
+      provider.close();
+      session2.close();
+      session1.close();
+    });
+
+    test('SHM-published data received by subscriber', () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/shm-pub');
+      addTearDown(subscriber.close);
+      final publisher =
+          session1.declarePublisher('zenoh/dart/test/shm-pub');
+      addTearDown(publisher.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      final zbytes = _shmStringToZBytes(provider, 'hello shm');
+      publisher.putBytes(zbytes);
+
+      final sample = await subscriber.stream.first.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(sample.payload, equals('hello shm'));
+      expect(sample.kind, equals(SampleKind.put));
+    });
+
+    test('Multiple SHM publishes received in order', () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/shm-multi');
+      addTearDown(subscriber.close);
+      final publisher =
+          session1.declarePublisher('zenoh/dart/test/shm-multi');
+      addTearDown(publisher.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      for (var i = 0; i < 3; i++) {
+        final zbytes = _shmStringToZBytes(provider, '[$i]');
+        publisher.putBytes(zbytes);
+      }
+
+      final samples = await subscriber.stream
+          .take(3)
+          .timeout(const Duration(seconds: 5))
+          .toList();
+      expect(samples.map((s) => s.payload).toList(),
+          equals(['[0]', '[1]', '[2]']));
+    });
+
+    test('SHM publish with encoding override', () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/shm-enc');
+      addTearDown(subscriber.close);
+      final publisher =
+          session1.declarePublisher('zenoh/dart/test/shm-enc');
+      addTearDown(publisher.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      final zbytes = _shmStringToZBytes(provider, '{"key":"value"}');
+      publisher.putBytes(zbytes, encoding: Encoding.applicationJson);
+
+      final sample = await subscriber.stream.first.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(sample.encoding, contains('application/json'));
+    });
+
+    test('SHM publish with attachment works', () async {
+      final subscriber =
+          session2.declareSubscriber('zenoh/dart/test/shm-att');
+      addTearDown(subscriber.close);
+      final publisher =
+          session1.declarePublisher('zenoh/dart/test/shm-att');
+      addTearDown(publisher.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      final zbytes = _shmStringToZBytes(provider, 'shm-data');
+      publisher.putBytes(
+        zbytes,
+        attachment: ZBytes.fromString('meta'),
+      );
+
+      final sample = await subscriber.stream.first.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(sample.payload, equals('shm-data'));
+      expect(sample.attachment, equals('meta'));
     });
   });
 }
