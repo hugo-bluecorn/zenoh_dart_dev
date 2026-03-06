@@ -34,7 +34,7 @@ void main() {
     test('runs and prints subscriber declaration', () async {
       final process = await Process.start(
         _dartExe,
-        ['run', 'bin/z_sub.dart'],
+        ['run', 'example/z_sub.dart'],
         workingDirectory: packageRoot,
         environment: env(),
       );
@@ -61,7 +61,7 @@ void main() {
       // Start z_sub listening on a specific key with TCP listener
       final subProcess = await Process.start(
         _dartExe,
-        ['run', 'bin/z_sub.dart', '-k', 'demo/cli/test', '-l', endpoint],
+        ['run', 'example/z_sub.dart', '-k', 'demo/cli/test', '-l', endpoint],
         workingDirectory: packageRoot,
         environment: env(),
       );
@@ -80,7 +80,7 @@ void main() {
           _dartExe,
           [
             'run',
-            'bin/z_put.dart',
+            'example/z_put.dart',
             '-k',
             'demo/cli/test',
             '-p',
@@ -112,7 +112,7 @@ void main() {
     test('accepts --key flag', () async {
       final process = await Process.start(
         _dartExe,
-        ['run', 'bin/z_sub.dart', '--key', 'demo/custom/**'],
+        ['run', 'example/z_sub.dart', '--key', 'demo/custom/**'],
         workingDirectory: packageRoot,
         environment: env(),
       );
@@ -132,7 +132,7 @@ void main() {
     test('with empty key expression fails', () async {
       final result = await Process.run(
         _dartExe,
-        ['run', 'bin/z_sub.dart', '--key', ''],
+        ['run', 'example/z_sub.dart', '--key', ''],
         workingDirectory: packageRoot,
         environment: env(),
       ).timeout(const Duration(seconds: 30));

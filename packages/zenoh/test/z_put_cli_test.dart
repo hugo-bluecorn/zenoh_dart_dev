@@ -12,7 +12,7 @@ void main() {
     Future<ProcessResult> runZPut([List<String> args = const []]) async {
       return Process.run(
         'fvm',
-        ['dart', 'run', 'bin/z_put.dart', ...args],
+        ['dart', 'run', 'example/z_put.dart', ...args],
         workingDirectory: packageRoot,
         environment: {
           ...Platform.environment,

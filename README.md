@@ -95,15 +95,15 @@ LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build fvm dart test
 # Put data on a key expression
 cd packages/zenoh
 LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
-  fvm dart run bin/z_put.dart -k demo/example/test -p 'Hello from Dart!'
+  fvm dart run example/z_put.dart -k demo/example/test -p 'Hello from Dart!'
 
 # Delete a key expression
 LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
-  fvm dart run bin/z_delete.dart -k demo/example/test
+  fvm dart run example/z_delete.dart -k demo/example/test
 
 # Subscribe to a key expression (runs until Ctrl-C; combine with z_put in another terminal)
 LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
-  fvm dart run bin/z_sub.dart -k 'demo/example/**'
+  fvm dart run example/z_sub.dart -k 'demo/example/**'
 ```
 
 ## Phase Roadmap

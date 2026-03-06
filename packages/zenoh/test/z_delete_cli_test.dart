@@ -12,7 +12,7 @@ void main() {
     Future<ProcessResult> runZDelete([List<String> args = const []]) async {
       return Process.run(
         'fvm',
-        ['dart', 'run', 'bin/z_delete.dart', ...args],
+        ['dart', 'run', 'example/z_delete.dart', ...args],
         workingDirectory: packageRoot,
         environment: {
           ...Platform.environment,
