@@ -50,8 +50,7 @@ class ShmMutBuffer {
   /// Throws [ZenohException] if the conversion fails.
   ZBytes toBytes() {
     _ensureUsable();
-    final Pointer<Void> bytesPtr =
-        calloc.allocate(bindings.zd_bytes_sizeof());
+    final Pointer<Void> bytesPtr = calloc.allocate(bindings.zd_bytes_sizeof());
     final rc = bindings.zd_bytes_from_shm_mut(bytesPtr.cast(), _ptr.cast());
     if (rc != 0) {
       calloc.free(bytesPtr);

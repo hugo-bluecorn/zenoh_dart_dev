@@ -30,36 +30,45 @@ void main() {
   };
 
   group('z_pub_shm CLI', () {
-    test('runs and prints SHM provider creation and publisher declaration',
-        () async {
-      final process = await Process.start(
-        _dartExe,
-        ['run', 'example/z_pub_shm.dart'],
-        workingDirectory: packageRoot,
-        environment: env(),
-      );
+    test(
+      'runs and prints SHM provider creation and publisher declaration',
+      () async {
+        final process = await Process.start(
+          _dartExe,
+          ['run', 'example/z_pub_shm.dart'],
+          workingDirectory: packageRoot,
+          environment: env(),
+        );
 
-      final stdout = StringBuffer();
-      final subscription = process.stdout
-          .transform(const SystemEncoding().decoder)
-          .listen(stdout.write);
+        final stdout = StringBuffer();
+        final subscription = process.stdout
+            .transform(const SystemEncoding().decoder)
+            .listen(stdout.write);
 
-      // Let it run for 3 seconds, then kill it
-      await Future<void>.delayed(const Duration(seconds: 3));
-      await forceKill(process);
-      await subscription.cancel();
+        // Let it run for 3 seconds, then kill it
+        await Future<void>.delayed(const Duration(seconds: 3));
+        await forceKill(process);
+        await subscription.cancel();
 
-      final output = stdout.toString();
-      expect(output, contains('Opening session...'));
-      expect(output, contains('Creating POSIX SHM Provider...'));
-      expect(output, contains('Declaring Publisher'));
-      expect(output, contains('Putting Data'));
-    });
+        final output = stdout.toString();
+        expect(output, contains('Opening session...'));
+        expect(output, contains('Creating POSIX SHM Provider...'));
+        expect(output, contains('Declaring Publisher'));
+        expect(output, contains('Putting Data'));
+      },
+    );
 
     test('accepts -k and -p flags', () async {
       final process = await Process.start(
         _dartExe,
-        ['run', 'example/z_pub_shm.dart', '-k', 'demo/shm/test', '-p', 'SHM data'],
+        [
+          'run',
+          'example/z_pub_shm.dart',
+          '-k',
+          'demo/shm/test',
+          '-p',
+          'SHM data',
+        ],
         workingDirectory: packageRoot,
         environment: env(),
       );

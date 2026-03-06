@@ -49,10 +49,7 @@ void main() {
       provider.close();
 
       expect(() => provider.available, throwsStateError);
-      expect(
-        () => provider.alloc(128),
-        throwsStateError,
-      );
+      expect(() => provider.alloc(128), throwsStateError);
     });
 
     test('with zero total size', () {
@@ -234,11 +231,9 @@ void main() {
     });
 
     test('SHM-published data received by subscriber', () async {
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/shm-pub');
+      final subscriber = session2.declareSubscriber('zenoh/dart/test/shm-pub');
       addTearDown(subscriber.close);
-      final publisher =
-          session1.declarePublisher('zenoh/dart/test/shm-pub');
+      final publisher = session1.declarePublisher('zenoh/dart/test/shm-pub');
       addTearDown(publisher.close);
 
       await Future<void>.delayed(const Duration(seconds: 1));
@@ -254,11 +249,11 @@ void main() {
     });
 
     test('Multiple SHM publishes received in order', () async {
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/shm-multi');
+      final subscriber = session2.declareSubscriber(
+        'zenoh/dart/test/shm-multi',
+      );
       addTearDown(subscriber.close);
-      final publisher =
-          session1.declarePublisher('zenoh/dart/test/shm-multi');
+      final publisher = session1.declarePublisher('zenoh/dart/test/shm-multi');
       addTearDown(publisher.close);
 
       await Future<void>.delayed(const Duration(seconds: 1));
@@ -272,16 +267,16 @@ void main() {
           .take(3)
           .timeout(const Duration(seconds: 5))
           .toList();
-      expect(samples.map((s) => s.payload).toList(),
-          equals(['[0]', '[1]', '[2]']));
+      expect(
+        samples.map((s) => s.payload).toList(),
+        equals(['[0]', '[1]', '[2]']),
+      );
     });
 
     test('SHM publish with encoding override', () async {
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/shm-enc');
+      final subscriber = session2.declareSubscriber('zenoh/dart/test/shm-enc');
       addTearDown(subscriber.close);
-      final publisher =
-          session1.declarePublisher('zenoh/dart/test/shm-enc');
+      final publisher = session1.declarePublisher('zenoh/dart/test/shm-enc');
       addTearDown(publisher.close);
 
       await Future<void>.delayed(const Duration(seconds: 1));
@@ -296,20 +291,15 @@ void main() {
     });
 
     test('SHM publish with attachment works', () async {
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/shm-att');
+      final subscriber = session2.declareSubscriber('zenoh/dart/test/shm-att');
       addTearDown(subscriber.close);
-      final publisher =
-          session1.declarePublisher('zenoh/dart/test/shm-att');
+      final publisher = session1.declarePublisher('zenoh/dart/test/shm-att');
       addTearDown(publisher.close);
 
       await Future<void>.delayed(const Duration(seconds: 1));
 
       final zbytes = _shmStringToZBytes(provider, 'shm-data');
-      publisher.putBytes(
-        zbytes,
-        attachment: ZBytes.fromString('meta'),
-      );
+      publisher.putBytes(zbytes, attachment: ZBytes.fromString('meta'));
 
       final sample = await subscriber.stream.first.timeout(
         const Duration(seconds: 5),
