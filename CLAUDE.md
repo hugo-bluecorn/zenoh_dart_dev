@@ -30,19 +30,24 @@ zenoh-dart/                     # git repo root
 **Phase P1 Packaging: COMPLETE** — Build infrastructure done in Phase 0. Tier-2 prebuilt placement (`native/linux/x86_64/libzenohc.so`) intentionally deferred — it's a 30-second `mkdir + cp` whenever needed (CI setup, new contributor onboarding, pub.dev prep). The CMake 3-tier discovery, single-load `native_lib.dart`, Android build script, and RPATH configuration are all in place.
 **Phase 1 Put/Delete: COMPLETE** — 31 C shim functions, 56 integration tests. `Session.put`, `Session.putBytes`, and `Session.deleteResource` implemented with CLI examples `z_put.dart` and `z_delete.dart`.
 **Phase 2 Subscriber: COMPLETE** — 34 C shim functions, 80 integration tests. `Session.declareSubscriber`, `Subscriber`, `Sample`, `SampleKind` implemented via NativePort callback bridge with CLI example `z_sub.dart`.
+**Phase 3 Publisher: COMPLETE** — 43 C shim functions, 120 integration tests. `Publisher` with `put`/`putBytes`/`deleteResource`/`keyExpr`/`hasMatchingSubscribers`/`matchingStatus`/`close`; `Encoding`, `CongestionControl`, `Priority` types; `Sample.encoding` field; CLI example `z_pub.dart`.
 
 Available Dart API classes:
 - `Zenoh` — Static utilities: `initLog(fallback)` for runtime logger initialization (call before `Session.open()`)
 - `Config` — Session configuration with JSON5 insertion
-- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`
+- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`; `declarePublisher(keyExpr)` returns a `Publisher`
 - `KeyExpr` — Key expression creation and validation
 - `ZBytes` — Binary payload container with string round-trip; `markConsumed()` for FFI ownership semantics
+- `Publisher` — Declared publisher with `put()`, `putBytes()`, `deleteResource()`, `keyExpr`, `hasMatchingSubscribers()`, `matchingStatus` stream, and `close()`
 - `Subscriber` — Callback-based subscriber delivering samples via `Stream<Sample>`; `close()` undeclares and frees the native subscriber
-- `Sample` — Received data with `keyExpr`, `payload`, `kind` (`SampleKind`), and optional `attachment` fields
+- `Sample` — Received data with `keyExpr`, `payload`, `kind` (`SampleKind`), optional `attachment`, and optional `encoding` fields
 - `SampleKind` — Enum with `put` and `delete` values
+- `Encoding` — MIME type wrapper with 10 predefined constants (`textPlain`, `applicationJson`, etc.) and custom constructor
+- `CongestionControl` — Enum with `block` and `drop` congestion control strategies
+- `Priority` — Enum with 7 priority levels from `realTime` to `background`
 - `ZenohException` — Error type for zenoh operations
 
-Phases 3–18 (pub/query/SHM/liveliness/throughput/storage/advanced) are specified in `docs/phases/` but not yet implemented.
+Phases 4–18 (SHM/query/liveliness/throughput/storage/advanced) are specified in `docs/phases/` but not yet implemented.
 
 ## FVM Requirement
 
@@ -142,6 +147,10 @@ cd packages/zenoh && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../b
 # Subscribe to a key expression (runs until Ctrl-C)
 cd packages/zenoh && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
   fvm dart run example/z_sub.dart -k 'demo/example/**'
+
+# Publish in a loop on a key expression (runs until Ctrl-C)
+cd packages/zenoh && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
+  fvm dart run example/z_pub.dart -k demo/example/test -p 'Hello from Dart!'
 ```
 
 CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When adding a new CLI example in any phase:
