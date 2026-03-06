@@ -38,8 +38,9 @@ class Publisher {
     final size = bindings.zd_publisher_sizeof();
     final Pointer<Void> ptr = calloc.allocate(size);
 
-    final encodingStr =
-        encoding != null ? encoding.mimeType.toNativeUtf8() : nullptr;
+    final encodingStr = encoding != null
+        ? encoding.mimeType.toNativeUtf8()
+        : nullptr;
 
     try {
       final rc = bindings.zd_declare_publisher(
@@ -83,10 +84,7 @@ class Publisher {
         matchingController.close();
         bindings.zd_publisher_drop(ptr.cast());
         calloc.free(ptr);
-        throw ZenohException(
-          'Failed to declare matching listener',
-          mlRc,
-        );
+        throw ZenohException('Failed to declare matching listener', mlRc);
       }
     }
 
@@ -121,10 +119,10 @@ class Publisher {
     final loaned = bindings.zd_publisher_loan(_ptr.cast());
     final payload = ZBytes.fromString(value);
 
-    final encodingStr =
-        encoding != null ? encoding.mimeType.toNativeUtf8() : nullptr;
-    final attachmentPtr =
-        attachment != null ? attachment.nativePtr : nullptr;
+    final encodingStr = encoding != null
+        ? encoding.mimeType.toNativeUtf8()
+        : nullptr;
+    final attachmentPtr = attachment != null ? attachment.nativePtr : nullptr;
 
     try {
       final rc = bindings.zd_publisher_put(
@@ -154,10 +152,10 @@ class Publisher {
     final loaned = bindings.zd_publisher_loan(_ptr.cast());
     final payloadPtr = payload.nativePtr;
 
-    final encodingStr =
-        encoding != null ? encoding.mimeType.toNativeUtf8() : nullptr;
-    final attachmentPtr =
-        attachment != null ? attachment.nativePtr : nullptr;
+    final encodingStr = encoding != null
+        ? encoding.mimeType.toNativeUtf8()
+        : nullptr;
+    final attachmentPtr = attachment != null ? attachment.nativePtr : nullptr;
 
     try {
       final rc = bindings.zd_publisher_put(

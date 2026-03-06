@@ -26,8 +26,7 @@ class Encoding {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Encoding && mimeType == other.mimeType;
+      identical(this, other) || other is Encoding && mimeType == other.mimeType;
 
   @override
   int get hashCode => mimeType.hashCode;

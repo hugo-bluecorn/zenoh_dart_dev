@@ -74,20 +74,14 @@ void main() {
       addTearDown(publisher.close);
       final payload = ZBytes.fromString('raw data');
       expect(() => publisher.putBytes(payload), returnsNormally);
-      expect(
-        () => payload.nativePtr,
-        throwsA(isA<StateError>()),
-      );
+      expect(() => payload.nativePtr, throwsA(isA<StateError>()));
     });
 
     test('Publisher.put with encoding override succeeds', () {
       final publisher = session.declarePublisher('demo/example/pub-enc');
       addTearDown(publisher.close);
       expect(
-        () => publisher.put(
-          'json data',
-          encoding: Encoding.applicationJson,
-        ),
+        () => publisher.put('json data', encoding: Encoding.applicationJson),
         returnsNormally,
       );
     });
@@ -100,10 +94,7 @@ void main() {
         () => publisher.put('value', attachment: attachment),
         returnsNormally,
       );
-      expect(
-        () => attachment.nativePtr,
-        throwsA(isA<StateError>()),
-      );
+      expect(() => attachment.nativePtr, throwsA(isA<StateError>()));
     });
 
     test('Publisher.putBytes with encoding and attachment succeeds', () {
@@ -133,22 +124,13 @@ void main() {
       final publisher = session.declarePublisher('demo/example/pub');
       publisher.close();
 
-      expect(
-        () => publisher.put('test'),
-        throwsA(isA<StateError>()),
-      );
+      expect(() => publisher.put('test'), throwsA(isA<StateError>()));
       expect(
         () => publisher.putBytes(ZBytes.fromString('test')),
         throwsA(isA<StateError>()),
       );
-      expect(
-        () => publisher.deleteResource(),
-        throwsA(isA<StateError>()),
-      );
-      expect(
-        () => publisher.keyExpr,
-        throwsA(isA<StateError>()),
-      );
+      expect(() => publisher.deleteResource(), throwsA(isA<StateError>()));
+      expect(() => publisher.keyExpr, throwsA(isA<StateError>()));
       expect(
         () => publisher.hasMatchingSubscribers(),
         throwsA(isA<StateError>()),
@@ -192,11 +174,9 @@ void main() {
     });
 
     test('Publisher.put received by subscriber as PUT sample', () async {
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/pub-put');
+      final subscriber = session2.declareSubscriber('zenoh/dart/test/pub-put');
       addTearDown(subscriber.close);
-      final publisher =
-          session1.declarePublisher('zenoh/dart/test/pub-put');
+      final publisher = session1.declarePublisher('zenoh/dart/test/pub-put');
       addTearDown(publisher.close);
 
       await Future<void>.delayed(const Duration(seconds: 1));
@@ -211,31 +191,31 @@ void main() {
       expect(sample.keyExpr, equals('zenoh/dart/test/pub-put'));
     });
 
-    test('Publisher.deleteResource received by subscriber as DELETE sample',
-        () async {
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/pub-del');
-      addTearDown(subscriber.close);
-      final publisher =
-          session1.declarePublisher('zenoh/dart/test/pub-del');
-      addTearDown(publisher.close);
+    test(
+      'Publisher.deleteResource received by subscriber as DELETE sample',
+      () async {
+        final subscriber = session2.declareSubscriber(
+          'zenoh/dart/test/pub-del',
+        );
+        addTearDown(subscriber.close);
+        final publisher = session1.declarePublisher('zenoh/dart/test/pub-del');
+        addTearDown(publisher.close);
 
-      await Future<void>.delayed(const Duration(seconds: 1));
+        await Future<void>.delayed(const Duration(seconds: 1));
 
-      publisher.deleteResource();
+        publisher.deleteResource();
 
-      final sample = await subscriber.stream.first.timeout(
-        const Duration(seconds: 5),
-      );
-      expect(sample.kind, equals(SampleKind.delete));
-    });
+        final sample = await subscriber.stream.first.timeout(
+          const Duration(seconds: 5),
+        );
+        expect(sample.kind, equals(SampleKind.delete));
+      },
+    );
 
     test('Publisher.put with attachment received by subscriber', () async {
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/pub-att');
+      final subscriber = session2.declareSubscriber('zenoh/dart/test/pub-att');
       addTearDown(subscriber.close);
-      final publisher =
-          session1.declarePublisher('zenoh/dart/test/pub-att');
+      final publisher = session1.declarePublisher('zenoh/dart/test/pub-att');
       addTearDown(publisher.close);
 
       await Future<void>.delayed(const Duration(seconds: 1));
@@ -249,26 +229,29 @@ void main() {
       expect(sample.attachment, equals('meta'));
     });
 
-    test('Publisher.put with encoding received by subscriber with encoding',
-        () async {
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/pub-enc');
-      addTearDown(subscriber.close);
-      final publisher = session1.declarePublisher(
-        'zenoh/dart/test/pub-enc',
-        encoding: Encoding.applicationJson,
-      );
-      addTearDown(publisher.close);
+    test(
+      'Publisher.put with encoding received by subscriber with encoding',
+      () async {
+        final subscriber = session2.declareSubscriber(
+          'zenoh/dart/test/pub-enc',
+        );
+        addTearDown(subscriber.close);
+        final publisher = session1.declarePublisher(
+          'zenoh/dart/test/pub-enc',
+          encoding: Encoding.applicationJson,
+        );
+        addTearDown(publisher.close);
 
-      await Future<void>.delayed(const Duration(seconds: 1));
+        await Future<void>.delayed(const Duration(seconds: 1));
 
-      publisher.put('{"key":"value"}');
+        publisher.put('{"key":"value"}');
 
-      final sample = await subscriber.stream.first.timeout(
-        const Duration(seconds: 5),
-      );
-      expect(sample.encoding, contains('application/json'));
-    });
+        final sample = await subscriber.stream.first.timeout(
+          const Duration(seconds: 5),
+        );
+        expect(sample.encoding, contains('application/json'));
+      },
+    );
   });
 
   group('Multiple publishers integration', () {
@@ -297,17 +280,13 @@ void main() {
     test(
       'Multiple publishers on different keys each received by correct subscriber',
       () async {
-        final subA =
-            session2.declareSubscriber('zenoh/dart/test/pub-a');
+        final subA = session2.declareSubscriber('zenoh/dart/test/pub-a');
         addTearDown(subA.close);
-        final subB =
-            session2.declareSubscriber('zenoh/dart/test/pub-b');
+        final subB = session2.declareSubscriber('zenoh/dart/test/pub-b');
         addTearDown(subB.close);
-        final pubA =
-            session1.declarePublisher('zenoh/dart/test/pub-a');
+        final pubA = session1.declarePublisher('zenoh/dart/test/pub-a');
         addTearDown(pubA.close);
-        final pubB =
-            session1.declarePublisher('zenoh/dart/test/pub-b');
+        final pubB = session1.declarePublisher('zenoh/dart/test/pub-b');
         addTearDown(pubB.close);
 
         await Future<void>.delayed(const Duration(seconds: 1));
@@ -394,30 +373,37 @@ void main() {
       session2.close();
     });
 
-    test('hasMatchingSubscribers returns false when no subscribers exist',
-        () async {
-      final publisher =
-          session1.declarePublisher('zenoh/dart/test/match-none');
-      addTearDown(publisher.close);
+    test(
+      'hasMatchingSubscribers returns false when no subscribers exist',
+      () async {
+        final publisher = session1.declarePublisher(
+          'zenoh/dart/test/match-none',
+        );
+        addTearDown(publisher.close);
 
-      await Future<void>.delayed(const Duration(seconds: 1));
+        await Future<void>.delayed(const Duration(seconds: 1));
 
-      expect(publisher.hasMatchingSubscribers(), isFalse);
-    });
+        expect(publisher.hasMatchingSubscribers(), isFalse);
+      },
+    );
 
-    test('hasMatchingSubscribers returns true when a subscriber exists',
-        () async {
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/match-yes');
-      addTearDown(subscriber.close);
-      final publisher =
-          session1.declarePublisher('zenoh/dart/test/match-yes');
-      addTearDown(publisher.close);
+    test(
+      'hasMatchingSubscribers returns true when a subscriber exists',
+      () async {
+        final subscriber = session2.declareSubscriber(
+          'zenoh/dart/test/match-yes',
+        );
+        addTearDown(subscriber.close);
+        final publisher = session1.declarePublisher(
+          'zenoh/dart/test/match-yes',
+        );
+        addTearDown(publisher.close);
 
-      await Future<void>.delayed(const Duration(seconds: 1));
+        await Future<void>.delayed(const Duration(seconds: 1));
 
-      expect(publisher.hasMatchingSubscribers(), isTrue);
-    });
+        expect(publisher.hasMatchingSubscribers(), isTrue);
+      },
+    );
 
     test('matchingStatus is null when listener not enabled', () {
       final publisher = session1.declarePublisher('zenoh/dart/test/match-null');
@@ -426,8 +412,9 @@ void main() {
     });
 
     test('hasMatchingSubscribers after close throws StateError', () {
-      final publisher =
-          session1.declarePublisher('zenoh/dart/test/match-closed');
+      final publisher = session1.declarePublisher(
+        'zenoh/dart/test/match-closed',
+      );
       publisher.close();
       expect(
         () => publisher.hasMatchingSubscribers(),
@@ -459,8 +446,7 @@ void main() {
       session2.close();
     });
 
-    test('matchingStatus stream emits true when subscriber appears',
-        () async {
+    test('matchingStatus stream emits true when subscriber appears', () async {
       final publisher = session1.declarePublisher(
         'zenoh/dart/test/match-stream',
         enableMatchingListener: true,
@@ -472,8 +458,9 @@ void main() {
       await Future<void>.delayed(const Duration(seconds: 1));
 
       // Declare subscriber to trigger matching
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/match-stream');
+      final subscriber = session2.declareSubscriber(
+        'zenoh/dart/test/match-stream',
+      );
       addTearDown(subscriber.close);
 
       final status = await publisher.matchingStatus!.first.timeout(
@@ -482,39 +469,42 @@ void main() {
       expect(status, isTrue);
     });
 
-    test('matchingStatus stream emits false when subscriber disappears',
-        () async {
-      final publisher = session1.declarePublisher(
-        'zenoh/dart/test/match-stream2',
-        enableMatchingListener: true,
-      );
-      addTearDown(publisher.close);
+    test(
+      'matchingStatus stream emits false when subscriber disappears',
+      () async {
+        final publisher = session1.declarePublisher(
+          'zenoh/dart/test/match-stream2',
+          enableMatchingListener: true,
+        );
+        addTearDown(publisher.close);
 
-      final statuses = <bool>[];
-      final gotFalse = Completer<void>();
-      publisher.matchingStatus!.listen((status) {
-        statuses.add(status);
-        if (status == false && statuses.length > 1) {
-          if (!gotFalse.isCompleted) gotFalse.complete();
-        }
-      });
+        final statuses = <bool>[];
+        final gotFalse = Completer<void>();
+        publisher.matchingStatus!.listen((status) {
+          statuses.add(status);
+          if (status == false && statuses.length > 1) {
+            if (!gotFalse.isCompleted) gotFalse.complete();
+          }
+        });
 
-      await Future<void>.delayed(const Duration(seconds: 1));
+        await Future<void>.delayed(const Duration(seconds: 1));
 
-      // Declare then close subscriber
-      final subscriber =
-          session2.declareSubscriber('zenoh/dart/test/match-stream2');
+        // Declare then close subscriber
+        final subscriber = session2.declareSubscriber(
+          'zenoh/dart/test/match-stream2',
+        );
 
-      // Wait for routing propagation
-      await Future<void>.delayed(const Duration(seconds: 2));
+        // Wait for routing propagation
+        await Future<void>.delayed(const Duration(seconds: 2));
 
-      subscriber.close();
+        subscriber.close();
 
-      // Wait for "false" status
-      await gotFalse.future.timeout(const Duration(seconds: 5));
-      expect(statuses, contains(true));
-      expect(statuses.last, isFalse);
-    });
+        // Wait for "false" status
+        await gotFalse.future.timeout(const Duration(seconds: 5));
+        expect(statuses, contains(true));
+        expect(statuses.last, isFalse);
+      },
+    );
 
     test('matchingStatus stream closes when publisher is closed', () async {
       final publisher = session1.declarePublisher(
