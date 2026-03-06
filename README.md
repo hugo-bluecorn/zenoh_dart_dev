@@ -6,7 +6,7 @@ Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protoc
 
 ```
 ┌─────────────────────────────┐
-│   Dart API (packages/zenoh)  │  Config, Session (put/putBytes/deleteResource/declareSubscriber), KeyExpr, ZBytes, Subscriber, Sample
+│   Dart API (packages/zenoh)  │  Config, Session, Publisher, Subscriber, Sample, Encoding, CongestionControl, Priority, KeyExpr, ZBytes
 ├─────────────────────────────┤
 │   Generated FFI Bindings     │  bindings.dart (auto-generated via ffigen)
 ├─────────────────────────────┤
@@ -39,7 +39,16 @@ Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protoc
 - CLI example: `z_sub.dart`
 - 80 integration tests passing
 
-Phases 3–18 are specified in [`docs/phases/`](docs/phases/) but not yet implemented.
+**Phase 3 — Publisher: COMPLETE**
+
+- 43 C shim functions (added 9 publisher functions: `zd_publisher_sizeof`, `zd_declare_publisher`, `zd_publisher_loan`, `zd_publisher_drop`, `zd_publisher_put`, `zd_publisher_delete`, `zd_publisher_keyexpr`, `zd_publisher_declare_background_matching_listener`, `zd_publisher_get_matching_status`)
+- `Session.declarePublisher()` returns a `Publisher` with `put()`, `putBytes()`, `deleteResource()`, `keyExpr`, `hasMatchingSubscribers()`, `matchingStatus` stream, and `close()`
+- `Encoding` class (10 MIME constants), `CongestionControl` enum, `Priority` enum
+- `Sample.encoding` field for subscriber encoding extraction
+- CLI example: `z_pub.dart`
+- 120 integration tests passing
+
+Phases 4–18 are specified in [`docs/phases/`](docs/phases/) but not yet implemented.
 
 ## Packages
 
@@ -101,9 +110,13 @@ LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
 LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
   fvm dart run example/z_delete.dart -k demo/example/test
 
-# Subscribe to a key expression (runs until Ctrl-C; combine with z_put in another terminal)
+# Subscribe to a key expression (runs until Ctrl-C; combine with z_put or z_pub in another terminal)
 LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
   fvm dart run example/z_sub.dart -k 'demo/example/**'
+
+# Publish in a loop on a key expression (runs until Ctrl-C)
+LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
+  fvm dart run example/z_pub.dart -k demo/example/test -p 'Hello from Dart!'
 ```
 
 ## Phase Roadmap
@@ -113,7 +126,7 @@ LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
 | 0 | [Bootstrap](docs/phases/phase-00-bootstrap.md) | Session, Config, KeyExpr, ZBytes infrastructure — **COMPLETE** |
 | 1 | [Put / Delete](docs/phases/phase-01-put-delete.md) | Basic key-value put and delete operations — **COMPLETE** |
 | 2 | [Subscribe](docs/phases/phase-02-sub.md) | Subscriber for receiving publications — **COMPLETE** |
-| 3 | [Publish](docs/phases/phase-03-pub.md) | Publisher with matched listener support |
+| 3 | [Publish](docs/phases/phase-03-pub.md) | Publisher with matched listener support — **COMPLETE** |
 | 4 | [SHM Pub/Sub](docs/phases/phase-04-shm-pub-sub.md) | Shared-memory pub/sub for zero-copy |
 | 5 | [Scout / Info](docs/phases/phase-05-scout-info.md) | Network discovery and session info |
 | 6 | [Get / Queryable](docs/phases/phase-06-get-queryable.md) | Request/reply query pattern |

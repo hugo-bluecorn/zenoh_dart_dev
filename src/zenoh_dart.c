@@ -219,7 +219,15 @@ static void _zd_sample_callback(z_loaned_sample_t* sample, void* context) {
   // 4. Attachment (nullable)
   const z_loaned_bytes_t* attachment = z_sample_attachment(sample);
 
-  // Build Dart_CObject array: [keyexpr, payload, kind, attachment]
+  // 5. Encoding as string
+  const z_loaned_encoding_t* encoding = z_sample_encoding(sample);
+  z_owned_string_t encoding_str;
+  z_encoding_to_string(encoding, &encoding_str);
+  const z_loaned_string_t* enc_loaned = z_string_loan(&encoding_str);
+  size_t enc_len = z_string_len(enc_loaned);
+  const char* enc_data = z_string_data(enc_loaned);
+
+  // Build Dart_CObject array: [keyexpr, payload, kind, attachment, encoding]
   Dart_CObject c_keyexpr;
   c_keyexpr.type = Dart_CObject_kString;
   // z_string_data may not be null-terminated, so copy to a buffer
@@ -252,17 +260,26 @@ static void _zd_sample_callback(z_loaned_sample_t* sample, void* context) {
     c_attachment.type = Dart_CObject_kNull;
   }
 
-  Dart_CObject* elements[4] = {&c_keyexpr, &c_payload, &c_kind, &c_attachment};
+  Dart_CObject c_encoding;
+  char* enc_buf = (char*)malloc(enc_len + 1);
+  memcpy(enc_buf, enc_data, enc_len);
+  enc_buf[enc_len] = '\0';
+  c_encoding.type = Dart_CObject_kString;
+  c_encoding.value.as_string = enc_buf;
+
+  Dart_CObject* elements[5] = {&c_keyexpr, &c_payload, &c_kind, &c_attachment, &c_encoding};
   Dart_CObject c_array;
   c_array.type = Dart_CObject_kArray;
-  c_array.value.as_array.length = 4;
+  c_array.value.as_array.length = 5;
   c_array.value.as_array.values = elements;
 
   Dart_PostCObject_DL(ctx->dart_port, &c_array);
 
   // Cleanup
   free(key_buf);
+  free(enc_buf);
   z_string_drop(z_string_move(&payload_str));
+  z_string_drop(z_string_move(&encoding_str));
   if (has_attachment) {
     z_string_drop(z_string_move(&attachment_str));
   }
@@ -304,4 +321,133 @@ FFI_PLUGIN_EXPORT int zd_declare_subscriber(
 
 FFI_PLUGIN_EXPORT void zd_subscriber_drop(z_owned_subscriber_t* subscriber) {
   z_subscriber_drop(z_subscriber_move(subscriber));
+}
+
+// ---------------------------------------------------------------------------
+// Publisher
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT size_t zd_publisher_sizeof(void) {
+  return sizeof(z_owned_publisher_t);
+}
+
+FFI_PLUGIN_EXPORT int zd_declare_publisher(
+    const z_loaned_session_t* session,
+    z_owned_publisher_t* publisher,
+    const z_loaned_keyexpr_t* keyexpr,
+    const char* encoding,
+    int congestion_control,
+    int priority) {
+  z_publisher_options_t opts;
+  z_publisher_options_default(&opts);
+
+  z_owned_encoding_t owned_encoding;
+  if (encoding != NULL) {
+    z_encoding_from_str(&owned_encoding, encoding);
+    opts.encoding = z_encoding_move(&owned_encoding);
+  }
+  if (congestion_control >= 0) {
+    opts.congestion_control = (z_congestion_control_t)congestion_control;
+  }
+  if (priority >= 0) {
+    opts.priority = (z_priority_t)priority;
+  }
+
+  return z_declare_publisher(session, publisher, keyexpr, &opts);
+}
+
+FFI_PLUGIN_EXPORT const z_loaned_publisher_t* zd_publisher_loan(
+    const z_owned_publisher_t* publisher) {
+  return z_publisher_loan(publisher);
+}
+
+FFI_PLUGIN_EXPORT void zd_publisher_drop(z_owned_publisher_t* publisher) {
+  z_publisher_drop(z_publisher_move(publisher));
+}
+
+FFI_PLUGIN_EXPORT int zd_publisher_put(
+    const z_loaned_publisher_t* publisher,
+    z_owned_bytes_t* payload,
+    const char* encoding,
+    z_owned_bytes_t* attachment) {
+  z_publisher_put_options_t opts;
+  z_publisher_put_options_default(&opts);
+
+  z_owned_encoding_t owned_encoding;
+  if (encoding != NULL) {
+    z_encoding_from_str(&owned_encoding, encoding);
+    opts.encoding = z_encoding_move(&owned_encoding);
+  }
+  if (attachment != NULL) {
+    opts.attachment = z_bytes_move(attachment);
+  }
+
+  return z_publisher_put(publisher, z_bytes_move(payload), &opts);
+}
+
+FFI_PLUGIN_EXPORT int zd_publisher_delete(
+    const z_loaned_publisher_t* publisher) {
+  z_publisher_delete_options_t opts;
+  z_publisher_delete_options_default(&opts);
+  return z_publisher_delete(publisher, &opts);
+}
+
+FFI_PLUGIN_EXPORT const z_loaned_keyexpr_t* zd_publisher_keyexpr(
+    const z_loaned_publisher_t* publisher) {
+  return z_publisher_keyexpr(publisher);
+}
+
+/// Context struct for matching status callback.
+typedef struct {
+  Dart_Port_DL dart_port;
+} zd_matching_context_t;
+
+/// Matching status callback: posts matching status to Dart.
+static void _zd_matching_status_callback(
+    const z_matching_status_t* status, void* context) {
+  zd_matching_context_t* ctx = (zd_matching_context_t*)context;
+
+  Dart_CObject c_matching;
+  c_matching.type = Dart_CObject_kInt64;
+  c_matching.value.as_int64 = status->matching ? 1 : 0;
+
+  Dart_PostCObject_DL(ctx->dart_port, &c_matching);
+}
+
+/// Drop callback for matching status context.
+static void _zd_matching_drop(void* context) {
+  free(context);
+}
+
+FFI_PLUGIN_EXPORT int zd_publisher_declare_background_matching_listener(
+    const z_loaned_publisher_t* publisher,
+    int64_t dart_port) {
+  zd_matching_context_t* ctx =
+      (zd_matching_context_t*)malloc(sizeof(zd_matching_context_t));
+  if (!ctx) return -1;
+  ctx->dart_port = (Dart_Port_DL)dart_port;
+
+  z_owned_closure_matching_status_t callback;
+  z_closure_matching_status(
+      &callback, _zd_matching_status_callback, _zd_matching_drop, ctx);
+
+  int rc = z_publisher_declare_background_matching_listener(
+      publisher, z_closure_matching_status_move(&callback));
+
+  if (rc != 0) {
+    z_closure_matching_status_drop(z_closure_matching_status_move(&callback));
+  }
+
+  return rc;
+}
+
+FFI_PLUGIN_EXPORT int zd_publisher_get_matching_status(
+    const z_loaned_publisher_t* publisher,
+    int* matching) {
+  z_matching_status_t status;
+  int rc = z_publisher_get_matching_status(publisher, &status);
+  if (rc == 0) {
+    *matching = status.matching ? 1 : 0;
+  }
+  return rc;
 }
