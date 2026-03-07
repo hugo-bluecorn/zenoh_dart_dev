@@ -311,16 +311,14 @@ void main() {
 
     setUpAll(() async {
       final config1 = Config();
-      config1.insertJson5(
-          'listen/endpoints', '["tcp/127.0.0.1:17460"]');
+      config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17460"]');
       session1 = Session.open(config: config1);
 
       // Wait for listener to bind
       await Future.delayed(Duration(milliseconds: 500));
 
       final config2 = Config();
-      config2.insertJson5(
-          'connect/endpoints', '["tcp/127.0.0.1:17460"]');
+      config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17460"]');
       session2 = Session.open(config: config2);
 
       // Wait for link establishment
@@ -336,10 +334,16 @@ void main() {
       final peers1 = session1.peersZid();
       final peers2 = session2.peersZid();
 
-      expect(peers1.contains(session2.zid), isTrue,
-          reason: 'session1 should see session2 as a peer');
-      expect(peers2.contains(session1.zid), isTrue,
-          reason: 'session2 should see session1 as a peer');
+      expect(
+        peers1.contains(session2.zid),
+        isTrue,
+        reason: 'session1 should see session2 as a peer',
+      );
+      expect(
+        peers2.contains(session1.zid),
+        isTrue,
+        reason: 'session2 should see session1 as a peer',
+      );
     });
 
     test('two connected sessions have different ZIDs', () {

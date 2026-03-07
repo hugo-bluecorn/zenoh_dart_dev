@@ -6,9 +6,24 @@ import 'package:zenoh/zenoh.dart';
 void main() {
   group('ZenohId', () {
     test('stores 16 bytes', () {
-      final input = Uint8List.fromList(
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-      );
+      final input = Uint8List.fromList([
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+      ]);
       final zid = ZenohId(input);
 
       expect(zid.bytes.length, equals(16));
@@ -16,9 +31,24 @@ void main() {
     });
 
     test('toHexString produces hex representation', () {
-      final input = Uint8List.fromList(
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      );
+      final input = Uint8List.fromList([
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+      ]);
       final zid = ZenohId(input);
 
       final hex = zid.toHexString();
@@ -27,15 +57,60 @@ void main() {
     });
 
     test('equality and hashCode', () {
-      final bytes1 = Uint8List.fromList(
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-      );
-      final bytes2 = Uint8List.fromList(
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-      );
-      final bytes3 = Uint8List.fromList(
-        [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1],
-      );
+      final bytes1 = Uint8List.fromList([
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+      ]);
+      final bytes2 = Uint8List.fromList([
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+      ]);
+      final bytes3 = Uint8List.fromList([
+        16,
+        15,
+        14,
+        13,
+        12,
+        11,
+        10,
+        9,
+        8,
+        7,
+        6,
+        5,
+        4,
+        3,
+        2,
+        1,
+      ]);
 
       final zid1 = ZenohId(bytes1);
       final zid2 = ZenohId(bytes2);

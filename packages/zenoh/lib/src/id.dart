@@ -10,7 +10,7 @@ class ZenohId {
 
   /// Creates a ZenohId from a 16-byte [Uint8List].
   ZenohId(Uint8List bytes)
-      : bytes = Uint8List.fromList(bytes); // unmodifiable copy
+    : bytes = Uint8List.fromList(bytes); // unmodifiable copy
 
   @override
   bool operator ==(Object other) {

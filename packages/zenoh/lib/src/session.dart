@@ -121,16 +121,14 @@ class Session {
   /// May return an empty list if no router is connected (e.g., in peer mode).
   ///
   /// Throws [StateError] if the session has been closed.
-  List<ZenohId> routersZid() =>
-      _collectZids(bindings.zd_info_routers_zid);
+  List<ZenohId> routersZid() => _collectZids(bindings.zd_info_routers_zid);
 
   /// Returns the [ZenohId]s of all connected peers.
   ///
   /// May return an empty list if no peer is connected.
   ///
   /// Throws [StateError] if the session has been closed.
-  List<ZenohId> peersZid() =>
-      _collectZids(bindings.zd_info_peers_zid);
+  List<ZenohId> peersZid() => _collectZids(bindings.zd_info_peers_zid);
 
   /// Executes [action] with a loaned session and a loaned key expression,
   /// guaranteeing cleanup of the key expression in all cases.

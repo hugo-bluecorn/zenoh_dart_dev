@@ -95,7 +95,11 @@ Future<void> main() async {
       // resolve the package:zenoh import via workspace package_config.json
       final result = await Process.run(
         dartBin,
-        ['run', '--packages=$repoRoot/.dart_tool/package_config.json', tempScript.path],
+        [
+          'run',
+          '--packages=$repoRoot/.dart_tool/package_config.json',
+          tempScript.path,
+        ],
         workingDirectory: packageRoot,
         environment: {
           ...Platform.environment,

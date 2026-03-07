@@ -82,12 +82,13 @@ class Zenoh {
         final zidBytes = message[0] as Uint8List;
         final whatami = message[1] as int;
         final locatorsStr = message[2] as String;
-        hellos.add(Hello(
-          zid: ZenohId(zidBytes),
-          whatami: WhatAmI.fromInt(whatami),
-          locators:
-              locatorsStr.isEmpty ? <String>[] : locatorsStr.split(';'),
-        ));
+        hellos.add(
+          Hello(
+            zid: ZenohId(zidBytes),
+            whatami: WhatAmI.fromInt(whatami),
+            locators: locatorsStr.isEmpty ? <String>[] : locatorsStr.split(';'),
+          ),
+        );
       }
     });
 

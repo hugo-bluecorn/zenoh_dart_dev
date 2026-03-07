@@ -32,10 +32,8 @@ void main() {
     test('discovers a peer session', () async {
       // Open a session with multicast on loopback interface
       final listenConfig = Config();
-      listenConfig.insertJson5(
-          'listen/endpoints', '["tcp/127.0.0.1:17461"]');
-      listenConfig.insertJson5(
-          'scouting/multicast/interface', '"lo"');
+      listenConfig.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17461"]');
+      listenConfig.insertJson5('scouting/multicast/interface', '"lo"');
       final session = Session.open(config: listenConfig);
       addTearDown(session.close);
 
@@ -45,8 +43,7 @@ void main() {
       // Scout with loopback multicast to find the peer
       final scoutConfig = Config();
       scoutConfig.insertJson5('scouting/multicast/interface', '"lo"');
-      final hellos =
-          await Zenoh.scout(config: scoutConfig, timeoutMs: 2000);
+      final hellos = await Zenoh.scout(config: scoutConfig, timeoutMs: 2000);
       expect(hellos, isNotEmpty);
 
       final peerHello = hellos.firstWhere(
@@ -61,10 +58,8 @@ void main() {
 
     test('Hello fields are populated correctly', () async {
       final listenConfig = Config();
-      listenConfig.insertJson5(
-          'listen/endpoints', '["tcp/127.0.0.1:17462"]');
-      listenConfig.insertJson5(
-          'scouting/multicast/interface', '"lo"');
+      listenConfig.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17462"]');
+      listenConfig.insertJson5('scouting/multicast/interface', '"lo"');
       final session = Session.open(config: listenConfig);
       addTearDown(session.close);
 
@@ -72,8 +67,7 @@ void main() {
 
       final scoutConfig = Config();
       scoutConfig.insertJson5('scouting/multicast/interface', '"lo"');
-      final hellos =
-          await Zenoh.scout(config: scoutConfig, timeoutMs: 2000);
+      final hellos = await Zenoh.scout(config: scoutConfig, timeoutMs: 2000);
       expect(hellos, isNotEmpty);
 
       final hello = hellos.first;
@@ -81,8 +75,9 @@ void main() {
       expect(hello.zid.bytes.length, 16);
       expect(hello.zid.bytes.any((b) => b != 0), isTrue);
       expect(
-          hello.whatami,
-          isIn([WhatAmI.router, WhatAmI.peer, WhatAmI.client]));
+        hello.whatami,
+        isIn([WhatAmI.router, WhatAmI.peer, WhatAmI.client]),
+      );
       expect(hello.locators, isA<List<String>>());
       expect(hello.locators, isNotEmpty);
       // At least one locator should contain a protocol prefix
@@ -91,10 +86,8 @@ void main() {
 
     test('Hello.toString produces readable output', () async {
       final listenConfig = Config();
-      listenConfig.insertJson5(
-          'listen/endpoints', '["tcp/127.0.0.1:17463"]');
-      listenConfig.insertJson5(
-          'scouting/multicast/interface', '"lo"');
+      listenConfig.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17463"]');
+      listenConfig.insertJson5('scouting/multicast/interface', '"lo"');
       final session = Session.open(config: listenConfig);
       addTearDown(session.close);
 
@@ -102,8 +95,7 @@ void main() {
 
       final scoutConfig = Config();
       scoutConfig.insertJson5('scouting/multicast/interface', '"lo"');
-      final hellos =
-          await Zenoh.scout(config: scoutConfig, timeoutMs: 2000);
+      final hellos = await Zenoh.scout(config: scoutConfig, timeoutMs: 2000);
       expect(hellos, isNotEmpty);
 
       final str = hellos.first.toString();

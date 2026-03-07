@@ -28,10 +28,7 @@ void main() {
       final stdout = result.stdout as String;
       // Must contain 'own id:' followed by a hex string
       expect(stdout, contains('own id:'));
-      expect(
-        stdout,
-        matches(RegExp(r'own id: [0-9a-f]+')),
-      );
+      expect(stdout, matches(RegExp(r'own id: [0-9a-f]+')));
     });
 
     test('prints router and peer ID sections', () async {
@@ -52,8 +49,7 @@ void main() {
     });
 
     test('accepts --connect and --listen long-form flags', () async {
-      final result =
-          await runZInfo(['--connect', 'tcp/127.0.0.1:7447']);
+      final result = await runZInfo(['--connect', 'tcp/127.0.0.1:7447']);
       // Process completes without argument parse error
       final stderr = result.stderr as String;
       expect(stderr, isNot(contains('Could not find an option named')));
