@@ -888,6 +888,163 @@ class ZenohDartBindings {
             int Function(ffi.Pointer<ffi.Opaque>, ffi.Pointer<ffi.Int>)
           >();
 
+  /// Copies the session's own ZID (16 bytes) into the provided buffer.
+  ///
+  /// @param session  Const pointer to a loaned session.
+  /// @param out_id   Pointer to a 16-byte buffer to receive the ZID.
+  void zd_info_zid(
+    ffi.Pointer<ffi.Opaque> session,
+    ffi.Pointer<ffi.Uint8> out_id,
+  ) {
+    return _zd_info_zid(session, out_id);
+  }
+
+  late final _zd_info_zidPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<ffi.Opaque>, ffi.Pointer<ffi.Uint8>)
+        >
+      >('zd_info_zid');
+  late final _zd_info_zid = _zd_info_zidPtr
+      .asFunction<
+        void Function(ffi.Pointer<ffi.Opaque>, ffi.Pointer<ffi.Uint8>)
+      >();
+
+  /// Converts a 16-byte ZID to its string representation.
+  ///
+  /// @param id   Pointer to a 16-byte ZID buffer.
+  /// @param out  Pointer to an uninitialized z_owned_string_t to receive the result.
+  void zd_id_to_string(ffi.Pointer<ffi.Uint8> id, ffi.Pointer<ffi.Opaque> out) {
+    return _zd_id_to_string(id, out);
+  }
+
+  late final _zd_id_to_stringPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Opaque>)
+        >
+      >('zd_id_to_string');
+  late final _zd_id_to_string = _zd_id_to_stringPtr
+      .asFunction<
+        void Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Opaque>)
+      >();
+
+  /// Collects connected router ZIDs into a caller-provided buffer.
+  ///
+  /// Each ZID is 16 bytes. The buffer must be at least max_count * 16 bytes.
+  ///
+  /// @param session    Const pointer to a loaned session.
+  /// @param out_ids    Pointer to a buffer for ZID bytes (16 bytes per ZID).
+  /// @param max_count  Maximum number of ZIDs to collect.
+  /// @return Number of ZIDs written to the buffer.
+  int zd_info_routers_zid(
+    ffi.Pointer<ffi.Opaque> session,
+    ffi.Pointer<ffi.Uint8> out_ids,
+    int max_count,
+  ) {
+    return _zd_info_routers_zid(session, out_ids, max_count);
+  }
+
+  late final _zd_info_routers_zidPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<ffi.Opaque>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Int,
+          )
+        >
+      >('zd_info_routers_zid');
+  late final _zd_info_routers_zid = _zd_info_routers_zidPtr
+      .asFunction<
+        int Function(ffi.Pointer<ffi.Opaque>, ffi.Pointer<ffi.Uint8>, int)
+      >();
+
+  /// Collects connected peer ZIDs into a caller-provided buffer.
+  ///
+  /// Each ZID is 16 bytes. The buffer must be at least max_count * 16 bytes.
+  ///
+  /// @param session    Const pointer to a loaned session.
+  /// @param out_ids    Pointer to a buffer for ZID bytes (16 bytes per ZID).
+  /// @param max_count  Maximum number of ZIDs to collect.
+  /// @return Number of ZIDs written to the buffer.
+  int zd_info_peers_zid(
+    ffi.Pointer<ffi.Opaque> session,
+    ffi.Pointer<ffi.Uint8> out_ids,
+    int max_count,
+  ) {
+    return _zd_info_peers_zid(session, out_ids, max_count);
+  }
+
+  late final _zd_info_peers_zidPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<ffi.Opaque>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Int,
+          )
+        >
+      >('zd_info_peers_zid');
+  late final _zd_info_peers_zid = _zd_info_peers_zidPtr
+      .asFunction<
+        int Function(ffi.Pointer<ffi.Opaque>, ffi.Pointer<ffi.Uint8>, int)
+      >();
+
+  /// Scouts for zenoh entities on the network.
+  ///
+  /// Each discovered hello is posted to the Dart native port as a
+  /// Dart_CObject array of 3 elements:
+  /// [0] TypedData(Uint8, 16 bytes) -- ZID
+  /// [1] Int64 -- whatami value
+  /// [2] String -- locators joined with ';'
+  ///
+  /// After z_scout returns, a null sentinel is posted to signal completion.
+  ///
+  /// @param config      Pointer to an owned config (consumed). NULL = default config.
+  /// @param dart_port   The Dart native port to post Hello messages to.
+  /// @param timeout_ms  Scouting timeout in milliseconds.
+  /// @param what        Bitmask of entity types to scout for (e.g., 3 = router+peer).
+  /// @return 0 on success, negative on failure.
+  int zd_scout(
+    ffi.Pointer<ffi.Opaque> config,
+    int dart_port,
+    int timeout_ms,
+    int what,
+  ) {
+    return _zd_scout(config, dart_port, timeout_ms, what);
+  }
+
+  late final _zd_scoutPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int Function(
+            ffi.Pointer<ffi.Opaque>,
+            ffi.Int64,
+            ffi.Uint64,
+            ffi.Int,
+          )
+        >
+      >('zd_scout');
+  late final _zd_scout = _zd_scoutPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Opaque>, int, int, int)>();
+
+  /// Converts a whatami integer to a human-readable view string.
+  ///
+  /// @param whatami  The whatami value (1=router, 2=peer, 4=client).
+  /// @param out      Pointer to an uninitialized z_view_string_t.
+  /// @return 0 on success, negative on failure.
+  int zd_whatami_to_view_string(int whatami, ffi.Pointer<ffi.Opaque> out) {
+    return _zd_whatami_to_view_string(whatami, out);
+  }
+
+  late final _zd_whatami_to_view_stringPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Int Function(ffi.Int, ffi.Pointer<ffi.Opaque>)>
+      >('zd_whatami_to_view_string');
+  late final _zd_whatami_to_view_string = _zd_whatami_to_view_stringPtr
+      .asFunction<int Function(int, ffi.Pointer<ffi.Opaque>)>();
+
   /// Returns the size of z_owned_shm_provider_t in bytes.
   int zd_shm_provider_sizeof() {
     return _zd_shm_provider_sizeof();

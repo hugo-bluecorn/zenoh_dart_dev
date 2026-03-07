@@ -395,6 +395,76 @@ FFI_PLUGIN_EXPORT int zd_publisher_get_matching_status(
     int* matching);
 
 // ---------------------------------------------------------------------------
+// Info (Session identity)
+// ---------------------------------------------------------------------------
+
+/// Copies the session's own ZID (16 bytes) into the provided buffer.
+///
+/// @param session  Const pointer to a loaned session.
+/// @param out_id   Pointer to a 16-byte buffer to receive the ZID.
+FFI_PLUGIN_EXPORT void zd_info_zid(const z_loaned_session_t* session,
+                                   uint8_t* out_id);
+
+/// Converts a 16-byte ZID to its string representation.
+///
+/// @param id   Pointer to a 16-byte ZID buffer.
+/// @param out  Pointer to an uninitialized z_owned_string_t to receive the result.
+FFI_PLUGIN_EXPORT void zd_id_to_string(const uint8_t* id,
+                                       z_owned_string_t* out);
+
+/// Collects connected router ZIDs into a caller-provided buffer.
+///
+/// Each ZID is 16 bytes. The buffer must be at least max_count * 16 bytes.
+///
+/// @param session    Const pointer to a loaned session.
+/// @param out_ids    Pointer to a buffer for ZID bytes (16 bytes per ZID).
+/// @param max_count  Maximum number of ZIDs to collect.
+/// @return Number of ZIDs written to the buffer.
+FFI_PLUGIN_EXPORT int zd_info_routers_zid(const z_loaned_session_t* session,
+                                          uint8_t* out_ids, int max_count);
+
+/// Collects connected peer ZIDs into a caller-provided buffer.
+///
+/// Each ZID is 16 bytes. The buffer must be at least max_count * 16 bytes.
+///
+/// @param session    Const pointer to a loaned session.
+/// @param out_ids    Pointer to a buffer for ZID bytes (16 bytes per ZID).
+/// @param max_count  Maximum number of ZIDs to collect.
+/// @return Number of ZIDs written to the buffer.
+FFI_PLUGIN_EXPORT int zd_info_peers_zid(const z_loaned_session_t* session,
+                                        uint8_t* out_ids, int max_count);
+
+// ---------------------------------------------------------------------------
+// Scout
+// ---------------------------------------------------------------------------
+
+/// Scouts for zenoh entities on the network.
+///
+/// Each discovered hello is posted to the Dart native port as a
+/// Dart_CObject array of 3 elements:
+///   [0] TypedData(Uint8, 16 bytes) -- ZID
+///   [1] Int64 -- whatami value
+///   [2] String -- locators joined with ';'
+///
+/// After z_scout returns, a null sentinel is posted to signal completion.
+///
+/// @param config      Pointer to an owned config (consumed). NULL = default config.
+/// @param dart_port   The Dart native port to post Hello messages to.
+/// @param timeout_ms  Scouting timeout in milliseconds.
+/// @param what        Bitmask of entity types to scout for (e.g., 3 = router+peer).
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int zd_scout(z_owned_config_t* config, int64_t dart_port,
+                               uint64_t timeout_ms, int what);
+
+/// Converts a whatami integer to a human-readable view string.
+///
+/// @param whatami  The whatami value (1=router, 2=peer, 4=client).
+/// @param out      Pointer to an uninitialized z_view_string_t.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int zd_whatami_to_view_string(int whatami,
+                                                z_view_string_t* out);
+
+// ---------------------------------------------------------------------------
 // Shared Memory (SHM)
 // ---------------------------------------------------------------------------
 #if defined(Z_FEATURE_SHARED_MEMORY) && defined(Z_FEATURE_UNSTABLE_API)
