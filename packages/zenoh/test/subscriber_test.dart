@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:test/test.dart';
 import 'package:zenoh/src/config.dart';
@@ -54,6 +55,43 @@ void main() {
         kind: SampleKind.put,
       );
       expect(sample.encoding, isNull);
+    });
+  });
+
+  group('Sample payloadBytes', () {
+    test('Sample constructor accepts payloadBytes parameter', () {
+      final bytes = Uint8List.fromList([104, 101, 108, 108, 111]);
+      final sample = Sample(
+        keyExpr: 'demo/test',
+        payload: 'hello',
+        payloadBytes: bytes,
+        kind: SampleKind.put,
+      );
+      expect(sample.payloadBytes, equals([104, 101, 108, 108, 111]));
+      expect(sample.payload, equals('hello'));
+    });
+
+    test('Sample payloadBytes is independent of payload string', () {
+      final bytes = Uint8List.fromList([0xFF, 0xFE, 0x00, 0x01]);
+      final sample = Sample(
+        keyExpr: 'demo/test',
+        payload: '',
+        payloadBytes: bytes,
+        kind: SampleKind.put,
+      );
+      expect(sample.payloadBytes, equals([0xFF, 0xFE, 0x00, 0x01]));
+      expect(sample.payload, equals(''));
+    });
+
+    test('Sample payloadBytes with empty payload', () {
+      final sample = Sample(
+        keyExpr: 'demo/test',
+        payload: '',
+        payloadBytes: Uint8List(0),
+        kind: SampleKind.put,
+      );
+      expect(sample.payloadBytes, hasLength(0));
+      expect(sample.payload, equals(''));
     });
   });
 
