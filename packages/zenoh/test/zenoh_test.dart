@@ -14,4 +14,99 @@ void main() {
       expect(() => Zenoh.initLog('info'), returnsNormally);
     });
   });
+
+  group('Zenoh scout', () {
+    test('completes without error', () async {
+      final hellos = await Zenoh.scout(timeoutMs: 500);
+      expect(hellos, isA<List<Hello>>());
+    });
+
+    test('with custom config completes', () async {
+      final config = Config();
+      final hellos = await Zenoh.scout(config: config, timeoutMs: 500);
+      expect(hellos, isA<List<Hello>>());
+      // Config should be consumed -- attempting to use it throws StateError
+      expect(() => config.nativePtr, throwsStateError);
+    });
+
+    test('discovers a peer session', () async {
+      // Open a session listening on a TCP endpoint
+      final listenConfig = Config();
+      listenConfig.insertJson5(
+          'listen/endpoints', '["tcp/127.0.0.1:17461"]');
+      final session = Session.open(config: listenConfig);
+      addTearDown(session.close);
+
+      // Wait for listener to bind
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final hellos = await Zenoh.scout(timeoutMs: 2000);
+      expect(hellos, isNotEmpty);
+
+      final peerHello = hellos.firstWhere(
+        (h) => h.whatami == WhatAmI.peer,
+        orElse: () => throw TestFailure('No peer found in scout results'),
+      );
+      expect(peerHello.zid.bytes.length, 16);
+      // ZID should be non-zero
+      expect(peerHello.zid.bytes.any((b) => b != 0), isTrue);
+      expect(peerHello.locators, isNotEmpty);
+    });
+
+    test('Hello fields are populated correctly', () async {
+      final listenConfig = Config();
+      listenConfig.insertJson5(
+          'listen/endpoints', '["tcp/127.0.0.1:17462"]');
+      final session = Session.open(config: listenConfig);
+      addTearDown(session.close);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final hellos = await Zenoh.scout(timeoutMs: 2000);
+      expect(hellos, isNotEmpty);
+
+      final hello = hellos.first;
+      expect(hello.zid, isA<ZenohId>());
+      expect(hello.zid.bytes.length, 16);
+      expect(hello.zid.bytes.any((b) => b != 0), isTrue);
+      expect(hello.whatami, isIn([WhatAmI.router, WhatAmI.peer, WhatAmI.client]));
+      expect(hello.locators, isA<List<String>>());
+      expect(hello.locators, isNotEmpty);
+      // At least one locator should contain a protocol prefix
+      expect(hello.locators.any((l) => l.contains('tcp/')), isTrue);
+    });
+
+    test('Hello.toString produces readable output', () async {
+      final listenConfig = Config();
+      listenConfig.insertJson5(
+          'listen/endpoints', '["tcp/127.0.0.1:17463"]');
+      final session = Session.open(config: listenConfig);
+      addTearDown(session.close);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final hellos = await Zenoh.scout(timeoutMs: 2000);
+      expect(hellos, isNotEmpty);
+
+      final str = hellos.first.toString();
+      expect(str, contains('Hello'));
+      expect(str, contains(hellos.first.zid.toHexString()));
+      expect(str, contains(hellos.first.whatami.name));
+      // Should contain at least one locator
+      expect(str, contains('tcp/'));
+    });
+
+    test('with consumed config throws StateError', () async {
+      final config = Config();
+      // Consume the config by opening a session
+      final session = Session.open(config: config);
+      addTearDown(session.close);
+
+      // Now config is consumed -- scout should throw
+      expect(
+        () => Zenoh.scout(config: config, timeoutMs: 500),
+        throwsStateError,
+      );
+    });
+  });
 }
