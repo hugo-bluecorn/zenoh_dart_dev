@@ -22,6 +22,7 @@ void main() {
       final sample = Sample(
         keyExpr: 'demo/test',
         payload: 'hello',
+        payloadBytes: Uint8List.fromList([104, 101, 108, 108, 111]),
         kind: SampleKind.put,
         attachment: 'metadata',
       );
@@ -33,6 +34,7 @@ void main() {
       final sampleNoAttachment = Sample(
         keyExpr: 'demo/test',
         payload: 'hello',
+        payloadBytes: Uint8List.fromList([104, 101, 108, 108, 111]),
         kind: SampleKind.put,
       );
       expect(sampleNoAttachment.attachment, isNull);
@@ -42,6 +44,7 @@ void main() {
       final sample = Sample(
         keyExpr: 'demo/test',
         payload: 'hello',
+        payloadBytes: Uint8List.fromList([104, 101, 108, 108, 111]),
         kind: SampleKind.put,
         encoding: 'text/plain',
       );
@@ -52,6 +55,7 @@ void main() {
       final sample = Sample(
         keyExpr: 'demo/test',
         payload: 'hello',
+        payloadBytes: Uint8List.fromList([104, 101, 108, 108, 111]),
         kind: SampleKind.put,
       );
       expect(sample.encoding, isNull);
