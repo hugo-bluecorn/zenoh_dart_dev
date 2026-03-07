@@ -62,7 +62,7 @@ Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protoc
 - 62 C shim functions (added 6 `zd_info_*`/`zd_scout`/`zd_id_to_string`/`zd_whatami_to_view_string` functions)
 - `ZenohId` class: 16-byte identifier with `toHexString()`, equality, and hashCode
 - `WhatAmI` enum: `router`, `peer`, `client` values mapping zenoh-c bitmask
-- `Hello` class: scouting result with `zid`, `whatAmI`, and `locators` fields
+- `Hello` class: scouting result with `zid`, `whatami`, and `locators` fields
 - `Session.zid`, `Session.routersZid()`, `Session.peersZid()` for session info queries
 - `Zenoh.scout()`: discovers zenoh entities on the network via NativePort callback bridge
 - CLI examples: `z_info.dart`, `z_scout.dart`

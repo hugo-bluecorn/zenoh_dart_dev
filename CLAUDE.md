@@ -51,7 +51,7 @@ Available Dart API classes:
 - `ShmMutBuffer` — Mutable SHM buffer with `data` pointer (zero-copy write), `length`, `toBytes()` (zero-copy conversion to `ZBytes`), and `dispose()`
 - `ZenohId` — 16-byte session/entity identifier with `toHexString()`, equality, and hashCode
 - `WhatAmI` — Enum with `router`, `peer`, and `client` values mapping zenoh-c bitmask (1, 2, 4)
-- `Hello` — Scouting result with `zid` (`ZenohId`), `whatAmI` (`WhatAmI`), and `locators` (list of strings) fields
+- `Hello` — Scouting result with `zid` (`ZenohId`), `whatami` (`WhatAmI`), and `locators` (list of strings) fields
 - `ZenohException` — Error type for zenoh operations
 
 Phases 6–18 (query/liveliness/throughput/storage/advanced) are specified in `docs/phases/` but not yet implemented.
