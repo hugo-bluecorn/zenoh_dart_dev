@@ -13,7 +13,7 @@ void main(List<String> args) async {
     output.assets.code.add(
       CodeAsset(
         package: packageName,
-        name: 'package:exp_hooks_prebuilt_native/src/bindings.dart',
+        name: 'src/bindings.dart',
         linkMode: DynamicLoadingBundled(),
         file: nativeDir.resolve('libzenoh_dart.so'),
       ),
@@ -23,7 +23,7 @@ void main(List<String> args) async {
     output.assets.code.add(
       CodeAsset(
         package: packageName,
-        name: 'package:exp_hooks_prebuilt_native/src/zenohc.dart',
+        name: 'src/zenohc.dart',
         linkMode: DynamicLoadingBundled(),
         file: nativeDir.resolve('libzenohc.so'),
       ),
