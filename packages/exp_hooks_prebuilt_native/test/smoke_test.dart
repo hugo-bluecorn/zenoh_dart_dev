@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:io';
 
 import 'package:exp_hooks_prebuilt_native/exp_hooks_prebuilt_native.dart';
 import 'package:exp_hooks_prebuilt_native/src/bindings.dart';
@@ -66,5 +67,67 @@ void main() {
       // If we get here, @Native worked - document success.
       expect(loadError, isNull, reason: '@Native resolution succeeded');
     });
+  });
+
+  group('dart run verification', () {
+    late String packageDir;
+
+    setUpAll(() {
+      // Resolve the package directory from the test file location.
+      // Platform.script points to the test file; go up to package root.
+      packageDir =
+          '${Directory.current.path}/packages/exp_hooks_prebuilt_native';
+      if (!Directory(packageDir).existsSync()) {
+        // If running from within the package directory already.
+        packageDir = Directory.current.path;
+      }
+    });
+
+    test(
+      'dart run example/smoke.dart succeeds without LD_LIBRARY_PATH',
+      () async {
+        final result = await Process.run(
+          'fvm',
+          ['dart', 'run', 'example/smoke.dart'],
+          workingDirectory: packageDir,
+          environment: {'LD_LIBRARY_PATH': ''},
+        );
+        expect(
+          result.exitCode,
+          equals(0),
+          reason: 'stderr: ${result.stderr}\nstdout: ${result.stdout}',
+        );
+        expect(
+          result.stdout.toString(),
+          contains('initZenohDart() returned: true'),
+        );
+      },
+      timeout: Timeout(Duration(seconds: 30)),
+    );
+
+    test('dart run invokes build hook system', () async {
+      final result = await Process.run(
+        'fvm',
+        ['dart', 'run', 'example/smoke.dart'],
+        workingDirectory: packageDir,
+        environment: {'LD_LIBRARY_PATH': ''},
+      );
+      // The Dart build hook system prints diagnostics to stderr.
+      final stderr = result.stderr.toString();
+      final stdout = result.stdout.toString();
+      final combined = '$stderr$stdout';
+      expect(
+        combined,
+        anyOf(
+          contains('build hook'),
+          contains('Building native assets'),
+          contains('Running build'),
+          contains('hook/build.dart'),
+        ),
+        reason:
+            'Expected evidence of hook system invocation.\n'
+            'stderr: $stderr\nstdout: $stdout',
+      );
+    }, timeout: Timeout(Duration(seconds: 30)));
   });
 }
