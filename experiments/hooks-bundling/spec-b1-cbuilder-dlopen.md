@@ -4,6 +4,7 @@
 > **Author**: CA (Architect)
 > **Status**: Spec complete, ready for CP
 > **Package**: `packages/exp_hooks_cbuilder_dlopen/`
+> **Branch**: `experiment/b1-cbuilder-dlopen`
 > **Parent**: `experiments/hooks-bundling/design.md`
 
 ## Objective

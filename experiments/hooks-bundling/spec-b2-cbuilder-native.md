@@ -4,6 +4,7 @@
 > **Author**: CA (Architect)
 > **Status**: Spec complete, ready for CP
 > **Package**: `packages/exp_hooks_cbuilder_native/`
+> **Branch**: `experiment/b2-cbuilder-native`
 > **Parent**: `experiments/hooks-bundling/design.md`
 
 ## Objective
