@@ -34,8 +34,7 @@ void main() {
       final packages = content['packages'] as List<dynamic>;
       final hasPackage = packages.any(
         (p) =>
-            (p as Map<String, dynamic>)['name'] ==
-            'exp_hooks_prebuilt_native',
+            (p as Map<String, dynamic>)['name'] == 'exp_hooks_prebuilt_native',
       );
       expect(
         hasPackage,

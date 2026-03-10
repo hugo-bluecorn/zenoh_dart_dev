@@ -21,33 +21,27 @@ void main() {
   });
 
   group('@Native asset resolution', () {
-    test(
-      '@Native resolves zd_init_dart_api_dl without LD_LIBRARY_PATH',
-      () {
-        if (loadError != null) {
-          markTestSkipped('@Native resolution failed: $loadError');
-          return;
-        }
-        final result = zdInitDartApiDl(NativeApi.initializeApiDLData);
-        expect(result, equals(0));
-      },
-    );
+    test('@Native resolves zd_init_dart_api_dl without LD_LIBRARY_PATH', () {
+      if (loadError != null) {
+        markTestSkipped('@Native resolution failed: $loadError');
+        return;
+      }
+      final result = zdInitDartApiDl(NativeApi.initializeApiDLData);
+      expect(result, equals(0));
+    });
 
-    test(
-      'zd_init_log succeeds -- proves DT_NEEDED resolves libzenohc.so',
-      () {
-        if (loadError != null) {
-          markTestSkipped('@Native resolution failed: $loadError');
-          return;
-        }
-        final filter = 'error'.toNativeUtf8();
-        try {
-          expect(() => zdInitLog(filter), returnsNormally);
-        } finally {
-          calloc.free(filter);
-        }
-      },
-    );
+    test('zd_init_log succeeds -- proves DT_NEEDED resolves libzenohc.so', () {
+      if (loadError != null) {
+        markTestSkipped('@Native resolution failed: $loadError');
+        return;
+      }
+      final filter = 'error'.toNativeUtf8();
+      try {
+        expect(() => zdInitLog(filter), returnsNormally);
+      } finally {
+        calloc.free(filter);
+      }
+    });
 
     test('initZenohDart returns true', () {
       if (loadError != null) {
