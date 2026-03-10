@@ -1,4 +1,17 @@
 # Changelog
+## Experiment A1: Both-Prebuilt + DynamicLibrary.open() (2026-03-10)
+
+### Added
+- Experiment package `exp_hooks_prebuilt_dlopen` testing Dart build hooks with prebuilt native libraries and `DynamicLibrary.open()` loading
+- Build hook (`hook/build.dart`) declaring two `CodeAsset` entries with `DynamicLoadingBundled()` for `libzenoh_dart.so` and `libzenohc.so`
+- 7 automated tests (2 pass, 5 skip with documented reasons)
+- `lessons-learned.md` with empirical results for all 6 verification criteria
+
+### Results
+- **NEGATIVE** (expected): `DynamicLibrary.open()` cannot find hook-bundled assets — OS linker (`ld.so`) does not read hook metadata
+- Hook builds succeed and register metadata, but no files are copied to linker-accessible locations
+- Confirms Experiment A2 (`@Native` annotations) is required for hook-based native library resolution
+
 ## 0.6.1 (Unreleased)
 
 ### Added
