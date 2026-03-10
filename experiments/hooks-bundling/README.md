@@ -1,5 +1,9 @@
 # Dart Build Hooks Experiment: Two-Library Native Bundling
 
+## Result
+
+`@Native` annotations are **mandatory** for Dart build hooks — `DynamicLibrary.open()` cannot find hook-bundled assets regardless of build strategy. The full analysis, quantitative results, and migration recommendation are in [synthesis.md](synthesis.md).
+
 ## Problem
 
 zenoh-dart ships **two** native shared libraries:
@@ -114,6 +118,9 @@ Results (created during implementation):
 | `packages/exp_hooks_prebuilt_native/lessons-learned.md` | A2 results |
 | `packages/exp_hooks_cbuilder_dlopen/lessons-learned.md` | B1 results |
 | `packages/exp_hooks_cbuilder_native/lessons-learned.md` | B2 results |
+| [consumer_test/RESULT.md](consumer_test/RESULT.md) | External consumer verification |
+| [spec-consumer-test.md](spec-consumer-test.md) | Consumer test spec |
+| **[synthesis.md](synthesis.md)** | **Final analysis, conclusions, and migration recommendation** |
 
 ## SDK Versions
 
