@@ -30,8 +30,7 @@ void main() {
       expect(result, equals(0));
     });
 
-    test('zd_init_log succeeds -- proves DT_NEEDED resolves libzenohc.so',
-        () {
+    test('zd_init_log succeeds -- proves DT_NEEDED resolves libzenohc.so', () {
       if (loadError != null) {
         markTestSkipped('@Native resolution failed: $loadError');
         return;

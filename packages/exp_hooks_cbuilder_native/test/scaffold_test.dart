@@ -34,14 +34,12 @@ void main() {
       final packages = content['packages'] as List<dynamic>;
       final hasPackage = packages.any(
         (p) =>
-            (p as Map<String, dynamic>)['name'] ==
-            'exp_hooks_cbuilder_native',
+            (p as Map<String, dynamic>)['name'] == 'exp_hooks_cbuilder_native',
       );
       expect(
         hasPackage,
         isTrue,
-        reason:
-            'exp_hooks_cbuilder_native should be in package_config.json',
+        reason: 'exp_hooks_cbuilder_native should be in package_config.json',
       );
     });
 
