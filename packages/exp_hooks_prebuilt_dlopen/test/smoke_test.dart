@@ -35,9 +35,11 @@ void main() {
         return;
       }
 
-      final initDartApiDl = lib!.lookupFunction<
-          IntPtr Function(Pointer<Void>),
-          int Function(Pointer<Void>)>('zd_init_dart_api_dl');
+      final initDartApiDl = lib!
+          .lookupFunction<
+            IntPtr Function(Pointer<Void>),
+            int Function(Pointer<Void>)
+          >('zd_init_dart_api_dl');
 
       final result = initDartApiDl(NativeApi.initializeApiDLData);
       expect(result, equals(0), reason: 'zd_init_dart_api_dl should return 0');
@@ -53,8 +55,11 @@ void main() {
           return;
         }
 
-        final initLog = lib!.lookupFunction<Void Function(Pointer<Utf8>),
-            void Function(Pointer<Utf8>)>('zd_init_log');
+        final initLog = lib!
+            .lookupFunction<
+              Void Function(Pointer<Utf8>),
+              void Function(Pointer<Utf8>)
+            >('zd_init_log');
 
         final level = 'error'.toNativeUtf8();
         try {
@@ -66,22 +71,27 @@ void main() {
       },
     );
 
-    test('initZenohDart returns true -- both libs loaded, FFI calls succeed',
-        () {
-      if (loadError != null) {
-        markTestSkipped(
-          'DynamicLibrary.open cannot find hook-bundled assets: $loadError',
-        );
-        return;
-      }
-      expect(initZenohDart(), isTrue);
-    });
+    test(
+      'initZenohDart returns true -- both libs loaded, FFI calls succeed',
+      () {
+        if (loadError != null) {
+          markTestSkipped(
+            'DynamicLibrary.open cannot find hook-bundled assets: $loadError',
+          );
+          return;
+        }
+        expect(initZenohDart(), isTrue);
+      },
+    );
 
     test('DynamicLibrary.open failure produces informative error', () {
       if (loadError != null) {
         // Negative result captured -- record the error message.
-        expect(loadError, isNotEmpty,
-            reason: 'Error message should be informative');
+        expect(
+          loadError,
+          isNotEmpty,
+          reason: 'Error message should be informative',
+        );
         markTestSkipped(
           'Confirmed: DynamicLibrary.open fails with: $loadError',
         );

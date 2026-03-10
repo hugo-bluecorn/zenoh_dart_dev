@@ -17,18 +17,16 @@ typedef ZdInitLog = void Function(Pointer<Utf8>);
 bool initZenohDart() {
   final lib = DynamicLibrary.open('libzenoh_dart.so');
 
-  final initDartApiDl =
-      lib.lookupFunction<ZdInitDartApiDlNative, ZdInitDartApiDl>(
-    'zd_init_dart_api_dl',
-  );
+  final initDartApiDl = lib
+      .lookupFunction<ZdInitDartApiDlNative, ZdInitDartApiDl>(
+        'zd_init_dart_api_dl',
+      );
   final result = initDartApiDl(NativeApi.initializeApiDLData);
   if (result != 0) {
     throw StateError('Failed to initialize Dart API DL (code: $result)');
   }
 
-  final initLog = lib.lookupFunction<ZdInitLogNative, ZdInitLog>(
-    'zd_init_log',
-  );
+  final initLog = lib.lookupFunction<ZdInitLogNative, ZdInitLog>('zd_init_log');
   final level = 'error'.toNativeUtf8();
   try {
     initLog(level);
