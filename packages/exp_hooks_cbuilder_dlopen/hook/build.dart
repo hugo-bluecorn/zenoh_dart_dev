@@ -13,19 +13,14 @@ void main(List<String> args) async {
     final cbuilder = CBuilder.library(
       name: 'zenoh_dart',
       assetName: 'src/native_lib.dart',
-      sources: [
-        'src/zenoh_dart_minimal.c',
-        'src/dart/dart_api_dl.c',
-      ],
+      sources: ['src/zenoh_dart_minimal.c', 'src/dart/dart_api_dl.c'],
       includes: [
         'include', // zenoh-c headers
         'src/dart', // dart_api_dl.h
         'src/dart/include', // dart_api.h, dart_native_api.h
       ],
       libraries: ['zenohc'],
-      flags: [
-        '-L${packageRoot.resolve('native/linux/x86_64/').toFilePath()}',
-      ],
+      flags: ['-L${packageRoot.resolve('native/linux/x86_64/').toFilePath()}'],
     );
 
     await cbuilder.run(input: input, output: output);

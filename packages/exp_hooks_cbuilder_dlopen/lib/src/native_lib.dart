@@ -26,8 +26,7 @@ bool initZenohDart() {
     throw StateError('Failed to initialize Dart API DL (code: $result)');
   }
 
-  final initLog =
-      lib.lookupFunction<ZdInitLogNative, ZdInitLog>('zd_init_log');
+  final initLog = lib.lookupFunction<ZdInitLogNative, ZdInitLog>('zd_init_log');
   final level = 'error'.toNativeUtf8();
   try {
     initLog(level);

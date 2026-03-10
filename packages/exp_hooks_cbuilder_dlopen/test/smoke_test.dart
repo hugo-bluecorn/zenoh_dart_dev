@@ -136,48 +136,52 @@ void main() {
       );
     }, timeout: Timeout(Duration(seconds: 30)));
 
-    test('dart run outcome matches DynamicLibrary.open result', () async {
-      final result = await Process.run(
-        'fvm',
-        ['dart', 'run', 'example/smoke.dart'],
-        workingDirectory: packageDir,
-        environment: {'LD_LIBRARY_PATH': ''},
-      );
-      if (result.exitCode != 0) {
-        // Negative result: DynamicLibrary.open fails without LD_LIBRARY_PATH.
-        final combined = '${result.stdout}${result.stderr}';
-        expect(
-          combined,
-          contains('libzenoh_dart.so'),
-          reason: 'Error output should mention the library name',
+    test(
+      'dart run outcome matches DynamicLibrary.open result',
+      () async {
+        final result = await Process.run(
+          'fvm',
+          ['dart', 'run', 'example/smoke.dart'],
+          workingDirectory: packageDir,
+          environment: {'LD_LIBRARY_PATH': ''},
         );
-      } else {
-        // Positive result: library loaded successfully.
+        if (result.exitCode != 0) {
+          // Negative result: DynamicLibrary.open fails without LD_LIBRARY_PATH.
+          final combined = '${result.stdout}${result.stderr}';
+          expect(
+            combined,
+            contains('libzenoh_dart.so'),
+            reason: 'Error output should mention the library name',
+          );
+        } else {
+          // Positive result: library loaded successfully.
+          expect(
+            result.stdout.toString(),
+            contains('initZenohDart() returned: true'),
+          );
+        }
+      },
+      timeout: Timeout(Duration(seconds: 30)),
+    );
+
+    test(
+      'dart run with LD_LIBRARY_PATH as control',
+      () async {
+        final cbuilderOutput = '$packageDir/.dart_tool/lib';
+        final nativeDir = '$packageDir/native/linux/x86_64';
+        final result = await Process.run(
+          'fvm',
+          ['dart', 'run', 'example/smoke.dart'],
+          workingDirectory: packageDir,
+          environment: {'LD_LIBRARY_PATH': '$cbuilderOutput:$nativeDir'},
+        );
+        expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
         expect(
           result.stdout.toString(),
           contains('initZenohDart() returned: true'),
         );
-      }
-    }, timeout: Timeout(Duration(seconds: 30)));
-
-    test('dart run with LD_LIBRARY_PATH as control', () async {
-      final cbuilderOutput = '$packageDir/.dart_tool/lib';
-      final nativeDir = '$packageDir/native/linux/x86_64';
-      final result = await Process.run(
-        'fvm',
-        ['dart', 'run', 'example/smoke.dart'],
-        workingDirectory: packageDir,
-        environment: {'LD_LIBRARY_PATH': '$cbuilderOutput:$nativeDir'},
-      );
-      expect(
-        result.exitCode,
-        equals(0),
-        reason: 'stderr: ${result.stderr}',
-      );
-      expect(
-        result.stdout.toString(),
-        contains('initZenohDart() returned: true'),
-      );
-    }, timeout: Timeout(Duration(seconds: 30)));
+      },
+      timeout: Timeout(Duration(seconds: 30)),
+    );
   });
 }
