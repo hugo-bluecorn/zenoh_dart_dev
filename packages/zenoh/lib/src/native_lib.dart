@@ -10,6 +10,10 @@ bool _initialized = false;
 /// publisher matching status). Safe to call multiple times.
 void ensureInitialized() {
   if (_initialized) return;
+  final promoteRc = ffi_bindings.zd_promote_zenohc_global();
+  if (promoteRc != 0) {
+    throw StateError('Failed to promote libzenohc.so to RTLD_GLOBAL');
+  }
   final result = ffi_bindings.zd_init_dart_api_dl(
     NativeApi.initializeApiDLData,
   );
