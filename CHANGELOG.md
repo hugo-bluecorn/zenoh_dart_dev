@@ -1,4 +1,25 @@
 # Changelog
+## 0.6.2 (Unreleased)
+
+### Fixed
+- Inter-process SIGSEGV crash when two Dart processes connect via zenoh TCP
+  - Root cause: `@Native` lazy loading via `NoActiveIsolateScope` causes tokio
+    waker vtable dispatch failure on background threads
+  - Fix: reverted from `@Native` ffi-native bindings to class-based
+    `ZenohDartBindings(DynamicLibrary)` loaded eagerly via `DynamicLibrary.open()`
+  - Removed wrong-fix `zd_promote_zenohc_global()` C shim function (62 shim
+    functions, unchanged from Phase 5)
+
+### Added
+- 13 new tests (193 total): native lib pre-load (6), inter-process TCP
+  connection (4), inter-process pub/sub data exchange (3)
+- Test helpers: `interprocess_connect.dart`, `interprocess_pubsub.dart`
+
+### Changed
+- `bindings.dart` regenerated as class-based (was `@Native` ffi-native)
+- `native_lib.dart`: `ensureInitialized()` now loads via `DynamicLibrary.open()`
+  with path resolution from package root (`native/linux/x86_64/`)
+
 ## Experiment B2: CBuilder + @Native Annotations (2026-03-10)
 
 ### Added
