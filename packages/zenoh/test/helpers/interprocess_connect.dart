@@ -5,10 +5,10 @@ import 'package:zenoh/zenoh.dart';
 /// Helper script for inter-process connection tests.
 ///
 /// Modes:
-///   --listen --port <port>   Listen on tcp/127.0.0.1:<port>, print LISTENING
-///   --connect --port <port>  Connect to tcp/127.0.0.1:<port>, print CONNECTED
+///   `--listen --port PORT`   Listen on `tcp/127.0.0.1:PORT`, print LISTENING
+///   `--connect --port PORT`  Connect to `tcp/127.0.0.1:PORT`, print CONNECTED
 ///
-/// In both modes, waits [--duration <seconds>] (default 5) then exits cleanly.
+/// In both modes, waits `--duration SECONDS` (default 5) then exits cleanly.
 void main(List<String> args) async {
   final portIdx = args.indexOf('--port');
   if (portIdx == -1 || portIdx + 1 >= args.length) {
