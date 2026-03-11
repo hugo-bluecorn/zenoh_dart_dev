@@ -34,7 +34,6 @@ class Session {
   ///
   /// Throws [ZenohException] if the session cannot be opened.
   static Session open({Config? config}) {
-    ensureInitialized();
     final size = bindings.zd_session_sizeof();
     final Pointer<Void> ptr = calloc.allocate(size);
 

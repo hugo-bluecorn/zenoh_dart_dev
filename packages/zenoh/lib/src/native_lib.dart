@@ -21,10 +21,13 @@ ZenohDartBindings get bindings {
   return _bindings;
 }
 
-/// Resolves the absolute path to a native library bundled by the build hook.
+/// Resolves the absolute path to a prebuilt native library.
 ///
-/// Build hooks place libraries in `.dart_tool/lib/` relative to the package
-/// root. We find the package root via Isolate.resolvePackageUriSync().
+/// Prefers the `native/linux/x86_64/` directory (original prebuilts) over
+/// `.dart_tool/lib/` (build hook copy). This is critical: the Dart VM loads
+/// CodeAsset libraries from `.dart_tool/lib/` via `NoActiveIsolateScope`,
+/// which taints the dlopen handle. Loading from a separate path ensures
+/// [DynamicLibrary.open] creates an independent, untainted handle.
 String? _resolveLibraryPath(String libraryName) {
   try {
     final packageUri = Isolate.resolvePackageUriSync(

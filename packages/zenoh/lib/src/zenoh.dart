@@ -34,7 +34,6 @@ class Zenoh {
   ///
   /// See: https://docs.rs/env_logger/latest/env_logger/
   static void initLog(String fallback) {
-    ensureInitialized();
     final cStr = fallback.toNativeUtf8();
     try {
       bindings.zd_init_log(cStr.cast<Char>());
