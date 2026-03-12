@@ -29,21 +29,18 @@ ZenohDartBindings get bindings {
 /// which taints the dlopen handle. Loading from a separate path ensures
 /// [DynamicLibrary.open] creates an independent, untainted handle.
 String? _resolveLibraryPath(String libraryName) {
+  // Try package URI resolution first (works in pure Dart,
+  // but throws UnsupportedError in Flutter test runner).
   try {
     final packageUri = Isolate.resolvePackageUriSync(
       Uri.parse('package:zenoh/src/native_lib.dart'),
     );
     if (packageUri != null) {
-      // packageUri = file:///...packages/zenoh/lib/src/native_lib.dart
-      // Package root = ../../.. from lib/src/
       final packageRoot = packageUri.resolve('../../');
-      // Prefer native/ (original prebuilt) over .dart_tool/lib/ (hook copy).
-      // The Dart VM may load .dart_tool/lib/ via CodeAsset metadata with
-      // NoActiveIsolateScope — loading from a DIFFERENT path ensures our
-      // DynamicLibrary.open() creates a separate dlopen handle that is not
-      // tainted by the VM's loading mechanism.
       final nativeFile = File.fromUri(
-        packageRoot.resolve('native/linux/x86_64/$libraryName'),
+        packageRoot.resolve(
+          'native/linux/x86_64/$libraryName',
+        ),
       );
       if (nativeFile.existsSync()) return nativeFile.path;
       final hookFile = File.fromUri(
@@ -51,23 +48,24 @@ String? _resolveLibraryPath(String libraryName) {
       );
       if (hookFile.existsSync()) return hookFile.path;
     }
-
-    // Fallback: try relative to current working directory
-    final candidates = <String>[
-      'native/linux/x86_64/$libraryName',
-      '.dart_tool/lib/$libraryName',
-      'packages/zenoh/native/linux/x86_64/$libraryName',
-      'packages/zenoh/.dart_tool/lib/$libraryName',
-    ];
-    for (final candidate in candidates) {
-      final file = File(candidate);
-      if (file.existsSync()) return file.absolute.path;
-    }
-
-    return null;
   } catch (_) {
-    return null;
+    // Isolate.resolvePackageUriSync is unsupported in
+    // Flutter's test runner — fall through to CWD probing.
   }
+
+  // Fallback: try relative to current working directory.
+  final candidates = <String>[
+    'native/linux/x86_64/$libraryName',
+    '.dart_tool/lib/$libraryName',
+    'packages/zenoh/native/linux/x86_64/$libraryName',
+    'packages/zenoh/.dart_tool/lib/$libraryName',
+  ];
+  for (final candidate in candidates) {
+    final file = File(candidate);
+    if (file.existsSync()) return file.absolute.path;
+  }
+
+  return null;
 }
 
 /// Ensures the native library is loaded and the Dart API DL is initialized.
