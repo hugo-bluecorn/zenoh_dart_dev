@@ -221,4 +221,4 @@ cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml
 
 ## License
 
-See [LICENSE](LICENSE) for details.
+Apache 2.0 -- see [LICENSE](LICENSE).
