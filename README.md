@@ -219,6 +219,19 @@ fvm dart analyze packages/zenoh
 cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml
 ```
 
+### Claude Code Roles
+
+This project uses a four-session workflow with [Claude Code](https://claude.ai/code) for structured development. Each session has a dedicated role with scoped responsibilities:
+
+| Session | Role | Scope |
+|---------|------|-------|
+| **CA** | Architect / Reviewer | Decisions, plan review, PR verification, memory |
+| **CP** | Planner | Slice decomposition via `/tdd-plan` |
+| **CI** | Implementer | Code, tests, releases via `/tdd-implement` and `/tdd-release` |
+| **CB** | Packaging Advisor | Build, cross-compilation, distribution |
+
+Role definitions are in `.claude/skills/` (skills) and `docs/dev-roles/` (full session prompts). See [CLAUDE.md](CLAUDE.md) for the TDD workflow and conventions.
+
 ## License
 
 Apache 2.0 -- see [LICENSE](LICENSE).
