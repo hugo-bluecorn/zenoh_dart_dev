@@ -1,5 +1,7 @@
 # Zenoh Dart
 
+> **BUILD SYSTEM OVERHAUL IN PROGRESS** — The CMake setup is being restructured to support proper `install()` targets. The build instructions below may not work until this is complete.
+
 Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protocol for real-time, distributed systems. This package wraps [zenoh-c](https://github.com/eclipse-zenoh/zenoh-c) v1.7.2 through a thin C shim layer, giving Dart and Flutter applications access to zenoh's wire protocol without native plugin boilerplate.
 
 It runs anywhere Dart runs: CLI tools, Serverpod backends, Flutter apps on Linux and Android.
