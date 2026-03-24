@@ -73,6 +73,8 @@ Phases 6-18 (query, liveliness, throughput, storage, advanced) are [specified](d
 
 ## Building from Source
 
+> *Lasciate ogne speranza, voi ch'intrate* — Build system overhaul in progress. These instructions are being replaced by proper `cmake --install` targets.
+
 ### Prerequisites
 
 | Tool | Why | Minimum |
