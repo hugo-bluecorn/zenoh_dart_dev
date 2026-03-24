@@ -1,120 +1,129 @@
 # Zenoh Dart
 
-Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protocol for real-time, distributed systems.
+Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protocol for real-time, distributed systems. This package wraps [zenoh-c](https://github.com/eclipse-zenoh/zenoh-c) v1.7.2 through a thin C shim layer, giving Dart and Flutter applications access to zenoh's wire protocol without native plugin boilerplate.
+
+It runs anywhere Dart runs: CLI tools, Serverpod backends, Flutter apps on Linux and Android.
 
 ## Architecture
 
 ```
-┌─────────────────────────────┐
-│   Dart API (packages/zenoh)  │  Config, Session, Publisher, Subscriber, Sample, Encoding, CongestionControl, Priority, KeyExpr, ZBytes, ShmProvider, ShmMutBuffer, ZenohId, WhatAmI, Hello
-├─────────────────────────────┤
-│   Generated FFI Bindings     │  bindings.dart (ZenohDartBindings class, loaded via DynamicLibrary.open())
-├─────────────────────────────┤
-│   C Shim (src/zenoh_dart.c)  │  zd_* functions flattening zenoh-c macros
-├─────────────────────────────┤
-│   libzenohc.so (zenoh-c)     │  Rust-based zenoh implementation
-└─────────────────────────────┘
+┌─────────────────────────────────┐
+│  Idiomatic Dart API              │  Session, Publisher, Subscriber, ShmProvider, ...
+│  packages/zenoh/lib/src/         │
+├─────────────────────────────────┤
+│  Generated FFI Bindings          │  bindings.dart — class-based ZenohDartBindings(DynamicLibrary)
+│  (auto-generated, never edited)  │
+├─────────────────────────────────┤
+│  C Shim (src/zenoh_dart.{h,c})   │  62 zd_* functions
+├─────────────────────────────────┤
+│  libzenohc.so (zenoh-c v1.7.2)   │  Rust-based zenoh — linked via DT_NEEDED
+└─────────────────────────────────┘
 ```
+
+### Why the C shim exists
+
+zenoh-c's public API uses six constructs that cannot cross the Dart FFI barrier:
+
+| Barrier | zenoh-c mechanism | Why `dart:ffi` can't call it |
+|---------|-------------------|------------------------------|
+| Generic macros | `z_open()`, `z_close()`, `z_drop()` are `_Generic` macros | Macros don't produce linkable symbols |
+| Opaque struct sizes | `z_owned_session_t`, etc. | Dart needs `sizeof` at runtime to allocate |
+| Closure callbacks | `z_owned_closure_*_t` across threads | Can't pass Dart closures as C function pointers |
+| Move semantics | `z_*_move()` inline functions | Inline functions don't produce symbols |
+| Options struct defaults | `z_*_options_default()` macros | Can't call macros or set fields on opaque structs |
+| Loan pattern | `z_loan()` / `z_loan_mut()` macros | Macros, plus Dart `Pointer<Opaque>` erases const/mut |
+
+The C shim flattens all six into plain C functions with scalar/pointer signatures that `dart:ffi` can bind directly. All symbols use the `zd_` prefix; `ffigen.yaml` filters on `zd_.*` so only shim functions appear in `bindings.dart`. The full audit with function-by-function analysis is in [`docs/c-shim/`](docs/c-shim/).
+
+### How native libraries load
+
+Only `libzenoh_dart.so` is loaded explicitly. The OS dynamic linker resolves `libzenohc.so` transitively via the `DT_NEEDED` entry in the ELF headers, with `RPATH=$ORIGIN` ensuring it finds the dependency in the same directory.
+
+On **Linux desktop**, `native_lib.dart` resolves the absolute path via `Isolate.resolvePackageUriSync()`, preferring `native/linux/x86_64/` (developer prebuilts) over `.dart_tool/lib/` (build hook output), then calls `DynamicLibrary.open()` eagerly on the main thread.
+
+On **Android**, a bare `DynamicLibrary.open('libzenoh_dart.so')` call is sufficient — the APK linker resolves from `lib/<abi>/` automatically.
+
+Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries for **distribution only** — they handle bundling into APKs via Flutter's native assets pipeline. The hooks do not participate in loading; that's handled entirely by `DynamicLibrary.open()` with manual path resolution.
+
+> **Why not `@Native`?** A [2x2 experiment](experiments/hooks-bundling/) proved that `@Native` annotations are the only way to get Dart's build hook system to resolve libraries transparently — `DynamicLibrary.open()` delegates to the OS linker, which knows nothing about hook metadata. So we [migrated to `@Native`](experiments/hooks-bundling/synthesis.md) (PR #18, 185 tests). Then inter-process TCP testing discovered that `@Native`'s lazy loading wraps `dlopen` in `NoActiveIsolateScope` (thread-isolate detachment), which causes tokio's waker vtable to crash when two Dart processes connect via zenoh. The hybrid approach (pre-load via `DynamicLibrary.open()` then let `@Native` re-use the handle) also [failed](docs/design/fix-rtld-local-interprocess-crash.md) — `NoActiveIsolateScope` taints the handle regardless. So we [reverted `@Native` entirely](docs/reviews/interprocess-crash-fix-review.md) (PR #19) back to class-based `ZenohDartBindings(DynamicLibrary)` and kept the build hooks for Flutter distribution only. The hooks register orphaned `CodeAsset` IDs that no `@Native` annotation references — they serve purely as a file-copy mechanism. This is unconventional but functional.
 
 ## Current Status
 
-**Phase 0 — Bootstrap: COMPLETE**
+**62 C shim functions, 18 Dart API classes, 193 integration tests, 7 CLI examples.**
 
-- 29 C shim functions wrapping zenoh-c v1.7.2
-- 5 Dart API classes: `Config`, `Session`, `KeyExpr`, `ZBytes`, `ZenohException`
-- 33 integration tests passing
+| Phase | What it added | Tests |
+|-------|---------------|-------|
+| 0 — Bootstrap | `Config`, `Session`, `KeyExpr`, `ZBytes`, `ZenohException` | 33 |
+| 1 — Put/Delete | `Session.put()`, `putBytes()`, `deleteResource()`; `z_put.dart`, `z_delete.dart` | 56 |
+| 2 — Subscribe | `Subscriber` with `Stream<Sample>` via NativePort callback bridge; `z_sub.dart` | 80 |
+| 3 — Publish | `Publisher`, `Encoding`, `CongestionControl`, `Priority`; matching listener; `z_pub.dart` | 120 |
+| 4 — SHM Pub/Sub | `ShmProvider`, `ShmMutBuffer` — zero-copy shared memory; `z_pub_shm.dart` | 148 |
+| 5 — Scout/Info | `ZenohId`, `WhatAmI`, `Hello`, `Zenoh.scout()`, `Session.zid`; `z_info.dart`, `z_scout.dart` | 185 |
 
-**Phase 1 — Put/Delete: COMPLETE**
+Phases 6-18 (query, liveliness, throughput, storage, advanced) are [specified](docs/phases/) but not yet implemented.
 
-- 31 C shim functions (added `zd_put`, `zd_delete`)
-- `Session.put()`, `Session.putBytes()`, `Session.deleteResource()` one-shot operations
-- CLI examples: `z_put.dart`, `z_delete.dart`
-- 56 integration tests passing
+### Patches
 
-**Phase 2 — Subscribe: COMPLETE**
+| Version | What changed |
+|---------|-------------|
+| v0.6.2 | Inter-process crash fix — reverted `@Native` to `DynamicLibrary.open()` (see [Why not @Native?](#how-native-libraries-load) above); 13 new inter-process TCP tests (193 total) |
+| v0.6.3 | Android native library support — target-aware build hook, `build_zenoh_android.sh` cross-compilation, SHM excluded on Android; validated E2E: C++ SHM pub -> zenohd -> WiFi -> Pixel 9a -> Flutter sub |
 
-- 34 C shim functions (added `zd_declare_subscriber`, `zd_subscriber_drop`, `zd_subscriber_sizeof`)
-- `Session.declareSubscriber()` returns a `Subscriber` with `Stream<Sample>` delivery via NativePort callback bridge
-- `Sample` class with `keyExpr`, `payload` (UTF-8 string), `payloadBytes` (`Uint8List` raw bytes), `kind`, `attachment` fields; `SampleKind` enum (`put`, `delete`)
-- CLI example: `z_sub.dart`
-- 80 integration tests passing
+## Building from Source
 
-**Phase 3 — Publisher: COMPLETE**
+### Prerequisites
 
-- 43 C shim functions (added 9 publisher functions: `zd_publisher_sizeof`, `zd_declare_publisher`, `zd_publisher_loan`, `zd_publisher_drop`, `zd_publisher_put`, `zd_publisher_delete`, `zd_publisher_keyexpr`, `zd_publisher_declare_background_matching_listener`, `zd_publisher_get_matching_status`)
-- `Session.declarePublisher()` returns a `Publisher` with `put()`, `putBytes()`, `deleteResource()`, `keyExpr`, `hasMatchingSubscribers()`, `matchingStatus` stream, and `close()`
-- `Encoding` class (10 MIME constants), `CongestionControl` enum, `Priority` enum
-- `Sample.encoding` field for subscriber encoding extraction
-- CLI example: `z_pub.dart`
-- 120 integration tests passing
+| Tool | Why | Minimum |
+|------|-----|---------|
+| [FVM](https://fvm.app/) | Dart/Flutter version manager — `dart` and `flutter` are **not on PATH**; all commands use `fvm dart` / `fvm flutter` | any |
+| Dart SDK | Installed via FVM | ^3.11.0 |
+| clang/clang++ | C shim compilation | any recent |
+| cmake | Build orchestration for zenoh-c (wraps Cargo) and C shim | 3.10+ |
+| ninja | CMake backend | any |
+| rustc/cargo | zenoh-c is a Rust crate; CMake invokes Cargo internally | stable, MSRV 1.75.0 |
+| patchelf | Rewrite RUNPATH on the C shim `.so` — CMake bakes the build machine's absolute path into RUNPATH, which is meaningless at runtime; `patchelf` replaces it with `$ORIGIN` so the OS linker finds `libzenohc.so` in the same directory | any |
 
-**Phase 4 — SHM Pub/Sub: COMPLETE**
-
-- 56 C shim functions (added 13 `zd_shm_*` functions guarded by `Z_FEATURE_SHARED_MEMORY`/`Z_FEATURE_UNSTABLE_API`)
-- `ShmProvider` class with `alloc()`, `allocGcDefragBlocking()`, `available`, and `close()`
-- `ShmMutBuffer` class with `data` pointer (zero-copy write), `length`, `toBytes()` (zero-copy conversion to `ZBytes`), and `dispose()`
-- SHM-published data received transparently by standard subscribers via `Publisher.putBytes()`
-- CLI example: `z_pub_shm.dart`
-- 148 integration tests passing
-
-**Phase 5 — Scout / Info: COMPLETE**
-
-- 62 C shim functions (added 6 `zd_info_*`/`zd_scout`/`zd_id_to_string`/`zd_whatami_to_view_string` functions)
-- `ZenohId` class: 16-byte identifier with `toHexString()`, equality, and hashCode
-- `WhatAmI` enum: `router`, `peer`, `client` values mapping zenoh-c bitmask
-- `Hello` class: scouting result with `zid`, `whatami`, and `locators` fields
-- `Session.zid`, `Session.routersZid()`, `Session.peersZid()` for session info queries
-- `Zenoh.scout()`: discovers zenoh entities on the network via NativePort callback bridge
-- CLI examples: `z_info.dart`, `z_scout.dart`
-- 185 integration tests passing
-
-**Patch v0.6.2 — Inter-process crash fix**
-
-- Reverted from `@Native` ffi-native bindings to class-based `ZenohDartBindings(DynamicLibrary)`
-- Root cause: `@Native` lazy loading via `NoActiveIsolateScope` caused tokio waker vtable crashes when two Dart processes connected via zenoh TCP
-- `ensureInitialized()` now loads `libzenoh_dart.so` eagerly via `DynamicLibrary.open()` with absolute path resolved from the package root
-- 62 C shim functions (unchanged); 193 integration tests passing (13 new inter-process TCP + pub/sub tests)
-
-**Patch v0.6.3 — Android native library support**
-
-- `native_lib.dart`: `Platform.isAndroid` short-circuit with bare `DynamicLibrary.open('libzenoh_dart.so')` — APK linker resolves automatically
-- `hook/build.dart`: target-aware prebuilt selection dispatching on `targetOS`/`targetArchitecture` (Android ABI mapping)
-- `build_zenoh_android.sh`: now cross-compiles both `libzenohc.so` (cargo-ndk) and `libzenoh_dart.so` (CMake + NDK toolchain) per ABI
-- SHM feature flags excluded on Android (zenoh-c cargo-ndk build doesn't include `shared-memory` feature)
-- Prebuilts at `native/android/<abi>/`; build hooks bundle them into APK automatically
-- Validated end-to-end: C++ SHM publisher → zenohd router → WiFi → Pixel 9a → Flutter subscriber
-
-Phases 6–18 are specified in [`docs/phases/`](docs/phases/) but not yet implemented.
-
-## Packages
-
-| Package | Path | Description |
-|---------|------|-------------|
-| `zenoh` | `packages/zenoh/` | Pure Dart FFI bindings for zenoh |
-
-## Prerequisites
-
-- [FVM](https://fvm.app/) (Flutter Version Manager) — Dart/Flutter are managed via FVM, not system PATH
-- Dart SDK ^3.11.0 (installed via FVM)
-- For building native libraries (Linux): clang, cmake, ninja, Rust (stable, MSRV 1.75.0)
-- For building native libraries (Android): Android NDK, cargo-ndk, cmake, ninja, Rust (stable)
-
-## Quick Start
-
-### 1. Build zenoh-c
+### 1. Clone and init submodules
 
 ```bash
-cmake -S extern/zenoh-c -B extern/zenoh-c/build -G Ninja \
+git clone --recurse-submodules https://github.com/hugo-bluecorn/zenoh_dart.git
+cd zenoh_dart
+
+# Or if already cloned:
+git submodule update --init extern/zenoh-c
+```
+
+Only `extern/zenoh-c` is required for building. The other submodules (`zenoh-cpp`, `zenoh-kotlin`, `zenoh-demos`, `cargo-ndk`, `zenoh`) are reference material and tooling.
+
+### 2. Build zenoh-c
+
+zenoh-c is a C API around Rust zenoh. CMake orchestrates Cargo underneath. `RUSTUP_TOOLCHAIN=stable` overrides `extern/zenoh-c/rust-toolchain.toml`, which pins an unreleased channel — safe because zenoh-c's MSRV is 1.75.0.
+
+SHM and unstable API flags are required since Phase 4. Without them, the C shim's `#ifdef Z_FEATURE_SHARED_MEMORY` guards exclude SHM functions, and linking fails against test expectations.
+
+```bash
+cmake \
+  -S extern/zenoh-c \
+  -B extern/zenoh-c/build \
+  -G Ninja \
   -DCMAKE_C_COMPILER=/usr/bin/clang \
   -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUILD_SHARED_LIBS=TRUE \
-  -DZENOHC_BUILD_IN_SOURCE_TREE=TRUE
+  -DZENOHC_BUILD_IN_SOURCE_TREE=TRUE \
+  -DZENOHC_BUILD_WITH_SHARED_MEMORY=TRUE \
+  -DZENOHC_BUILD_WITH_UNSTABLE_API=TRUE
 
 RUSTUP_TOOLCHAIN=stable cmake --build extern/zenoh-c/build --config Release
 ```
 
-### 2. Build C shim
+First build takes ~2-10 minutes (full Rust compile). Subsequent builds are incremental. Output: `extern/zenoh-c/target/release/libzenohc.so`.
+
+### 3. Build C shim
+
+The C shim's `CMakeLists.txt` lives in `src/` and uses three-tier discovery to find `libzenohc.so`: Android jniLibs -> `native/linux/x86_64/` prebuilt -> `extern/zenoh-c/target/release/` developer fallback. On a fresh build, it finds the zenoh-c you just built via the fallback tier.
+
+The C shim adds `-DZ_FEATURE_SHARED_MEMORY -DZ_FEATURE_UNSTABLE_API` compile definitions on non-Android builds, which must match the zenoh-c build flags above.
 
 ```bash
 cmake -S src -B build -G Ninja \
@@ -124,7 +133,11 @@ cmake -S src -B build -G Ninja \
 cmake --build build
 ```
 
-### 3. Place prebuilt libraries
+Output: `build/libzenoh_dart.so` (~49KB). It links against `libzenohc.so` via `DT_NEEDED` — the OS linker resolves the dependency at runtime using RUNPATH.
+
+### 4. Place prebuilt libraries
+
+`native_lib.dart` resolves libraries by looking in `packages/zenoh/native/linux/x86_64/` first, falling back to `.dart_tool/lib/`. Both `.so` files must be co-located — `libzenoh_dart.so` declares `DT_NEEDED: libzenohc.so`, and `RUNPATH=$ORIGIN` tells the OS linker to look in the same directory.
 
 ```bash
 mkdir -p packages/zenoh/native/linux/x86_64/
@@ -133,27 +146,13 @@ cp extern/zenoh-c/target/release/libzenohc.so packages/zenoh/native/linux/x86_64
 patchelf --set-rpath '$ORIGIN' packages/zenoh/native/linux/x86_64/libzenoh_dart.so
 ```
 
-### 4. Run tests
+### 5. Run tests
 
 ```bash
 cd packages/zenoh && fvm dart test
 ```
 
-> Build hooks resolve native libraries automatically — no `LD_LIBRARY_PATH` needed.
-
-### Android build
-
-```bash
-# Cross-compile libzenohc.so + libzenoh_dart.so for Android (arm64-v8a + x86_64)
-./scripts/build_zenoh_android.sh
-
-# Or single ABI
-./scripts/build_zenoh_android.sh --abi arm64-v8a
-```
-
-Prebuilts are placed in `packages/zenoh/native/android/<abi>/`. The build hook automatically bundles them into APKs via Flutter's native assets pipeline.
-
-> **Note:** SHM features are excluded on Android. The C shim's SHM functions are `#ifdef`-guarded and cleanly omitted.
+No `LD_LIBRARY_PATH` needed. `native_lib.dart` discovers the absolute path via `Isolate.resolvePackageUriSync()` and loads with `DynamicLibrary.open()`.
 
 ### 5. Try the CLI examples
 
@@ -166,47 +165,85 @@ fvm dart run example/z_put.dart -k demo/example/test -p 'Hello from Dart!'
 # Delete a key expression
 fvm dart run example/z_delete.dart -k demo/example/test
 
-# Subscribe to a key expression (runs until Ctrl-C; combine with z_put or z_pub in another terminal)
+# Subscribe (runs until Ctrl-C; combine with z_put or z_pub in another terminal)
 fvm dart run example/z_sub.dart -k 'demo/example/**'
 
-# Publish in a loop on a key expression (runs until Ctrl-C)
+# Publish in a loop (runs until Ctrl-C)
 fvm dart run example/z_pub.dart -k demo/example/test -p 'Hello from Dart!'
 
-# Publish via shared memory in a loop on a key expression (runs until Ctrl-C)
+# Publish via shared memory (runs until Ctrl-C)
 fvm dart run example/z_pub_shm.dart -k demo/example/test -p 'Hello from SHM!'
 
 # Print own session ZID and connected router/peer ZIDs
 fvm dart run example/z_info.dart
 
-# Discover zenoh entities on the network (scouts for routers, peers, and clients)
+# Discover zenoh entities on the network
 fvm dart run example/z_scout.dart
 ```
 
-## Phase Roadmap
+CLI flags match zenoh-c's examples exactly (`-k`/`--key`, `-p`/`--payload`, `-e`/`--connect`, `-l`/`--listen`).
 
-| Phase | Name | Description |
-|-------|------|-------------|
-| 0 | [Bootstrap](docs/phases/phase-00-bootstrap.md) | Session, Config, KeyExpr, ZBytes infrastructure — **COMPLETE** |
-| 1 | [Put / Delete](docs/phases/phase-01-put-delete.md) | Basic key-value put and delete operations — **COMPLETE** |
-| 2 | [Subscribe](docs/phases/phase-02-sub.md) | Subscriber for receiving publications — **COMPLETE** |
-| 3 | [Publish](docs/phases/phase-03-pub.md) | Publisher with matched listener support — **COMPLETE** |
-| 4 | [SHM Pub/Sub](docs/phases/phase-04-shm-pub-sub.md) | Shared-memory pub/sub for zero-copy — **COMPLETE** |
-| 5 | [Scout / Info](docs/phases/phase-05-scout-info.md) | Network discovery and session info — **COMPLETE** |
-| 6 | [Get / Queryable](docs/phases/phase-06-get-queryable.md) | Request/reply query pattern |
-| 7 | [SHM Get/Queryable](docs/phases/phase-07-shm-get-queryable.md) | Shared-memory queries |
-| 8 | [Channels](docs/phases/phase-08-channels.md) | Channel-based message delivery |
-| 9 | [Pull](docs/phases/phase-09-pull.md) | Pull-mode subscriber |
-| 10 | [Querier](docs/phases/phase-10-querier.md) | Dedicated querier abstraction |
-| 11 | [Liveliness](docs/phases/phase-11-liveliness.md) | Liveliness tokens and subscribers |
-| 12 | [Ping/Pong](docs/phases/phase-12-ping-pong.md) | Latency measurement tools |
-| 13 | [SHM Ping](docs/phases/phase-13-shm-ping.md) | Shared-memory ping/pong |
-| 14 | [Throughput](docs/phases/phase-14-throughput.md) | Throughput measurement tools |
-| 15 | [SHM Throughput](docs/phases/phase-15-shm-throughput.md) | Shared-memory throughput |
-| 16 | [Bytes](docs/phases/phase-16-bytes.md) | Advanced serialization/deserialization |
-| 17 | [Storage](docs/phases/phase-17-storage.md) | In-memory storage backend |
-| 18 | [Advanced](docs/phases/phase-18-advanced.md) | Advanced pub/sub with history |
+### Android
 
-## Development
+```bash
+# Cross-compile for Android (requires NDK, cargo-ndk, Rust)
+./scripts/build_zenoh_android.sh                  # arm64-v8a + x86_64
+./scripts/build_zenoh_android.sh --abi arm64-v8a  # single ABI
+```
+
+Build hooks bundle the prebuilts into APKs automatically. SHM is excluded on Android — POSIX `shm_open` is absent from Bionic, and zenoh-c's cargo-ndk build omits the `shared-memory` feature. The C shim's SHM functions are `#ifdef`-guarded and cleanly omitted.
+
+## Development Workflow
+
+This project is developed with [Claude Code](https://claude.ai/code) using two layers of separation designed around the LLM context window constraint.
+
+### Layer 1: TDD Workflow Plugin
+
+The `tdd-workflow` plugin provides four specialized agents that run as autonomous subprocesses within Claude Code sessions. Each agent has a specific mode (read-only or read-write) and a defined scope:
+
+| Agent | What it does | Mode |
+|-------|-------------|------|
+| **tdd-planner** | Reads phase specs + zenoh-c headers + zenoh-cpp wrappers; decomposes features into testable slices with Given/When/Then; writes `.tdd-progress.md` and `planning/` archive on approval | Read-write (approval-gated) |
+| **tdd-implementer** | Takes one slice at a time through RED (failing test) -> GREEN (minimal code to pass) -> REFACTOR; writes C shim, Dart API, and tests | Read-write |
+| **tdd-verifier** | Runs after each slice as blackbox validation — full test suite, static analysis, coverage check. Has no implementation context, only the code on disk | Read-only |
+| **tdd-releaser** | Validates all slices are terminal, updates CHANGELOG, pushes branch, creates PR | Read-write (Bash only) |
+
+A slice is one testable behavior — a C shim function, its Dart wrapper, and its test, bundled together. CLI examples get their own slices. The verifier runs proactively after each implementer slice, not just at the end.
+
+### Layer 2: Session Roles
+
+Each Claude Code instance runs in its own terminal with a dedicated role. The separation exists because Claude Code autocompacts conversation history as context fills. If architecture review and implementation share a session, the review history gets compacted away when build output fills the window. Isolating roles means:
+
+- **CA** (Architect) keeps its full review history across multiple review cycles
+- **CP** (Planner) keeps prior planning attempts and CA feedback across iterations
+- **CI** (Implementer) keeps build output, test results, and refactoring decisions across all slices in a feature
+- **CB** (Packaging) keeps cross-compilation research available without competing with other context
+
+| Session | Runs these commands | Never does |
+|---------|-------------------|------------|
+| **CA** — Architect | (none — read-only for code) | Write code, run TDD commands, merge PRs |
+| **CP** — Planner | `/tdd-plan` | Write code, make architecture calls |
+| **CI** — Implementer | `/tdd-implement`, `/tdd-release` | Plan features, write memory |
+| **CB** — Packaging | (advisory only) | Write code, run builds |
+
+**Memory model:** CA is the sole writer to shared memory (`MEMORY.md` in the auto-memory directory). CP, CI, and CB read it but never write. Their outputs are all durable artifacts — plans in `planning/`, code in git, slice status in `.tdd-progress.md`. This eliminates state conflicts: one author, one truth.
+
+**Feature lifecycle:** CA writes the issue and prompt -> CP runs `/tdd-plan` (spawns planner agent) -> CA reviews the plan -> CI runs `/tdd-implement` (spawns implementer + verifier per slice) -> CA verifies -> CI runs `/tdd-release` (spawns releaser) -> CA reviews PR.
+
+### Key files
+
+| What | Where |
+|------|-------|
+| Role skills (session initialization) | [`.claude/skills/role-{ca,ci,cp}/`](.claude/skills/) |
+| Role prompts (full session docs) | [`docs/dev-roles/`](docs/dev-roles/) |
+| TDD conventions and project rules | [`CLAUDE.md`](CLAUDE.md) |
+| Phase specifications (source of truth) | [`docs/phases/`](docs/phases/) |
+| Active TDD session state | `.tdd-progress.md` (when present) |
+| Planning archive | [`planning/`](planning/) |
+| Hooks experiment (2x2 matrix) | [`experiments/hooks-bundling/`](experiments/hooks-bundling/) |
+| C shim audit (6 FFI barrier patterns) | [`docs/c-shim/`](docs/c-shim/) |
+
+### Commands
 
 ```bash
 # Bootstrap monorepo
@@ -219,19 +256,30 @@ fvm dart analyze packages/zenoh
 cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml
 ```
 
-### Claude Code Roles
+## Phase Roadmap
 
-This project uses a four-session workflow with [Claude Code](https://claude.ai/code) for structured development. Each session has a dedicated role with scoped responsibilities:
-
-| Session | Role | Scope |
-|---------|------|-------|
-| **CA** | Architect / Reviewer | Decisions, plan review, PR verification, memory |
-| **CP** | Planner | Slice decomposition via `/tdd-plan` |
-| **CI** | Implementer | Code, tests, releases via `/tdd-implement` and `/tdd-release` |
-| **CB** | Packaging Advisor | Build, cross-compilation, distribution |
-
-Role definitions are in `.claude/skills/` (skills) and `docs/dev-roles/` (full session prompts). See [CLAUDE.md](CLAUDE.md) for the TDD workflow and conventions.
+| Phase | Name | Status |
+|-------|------|--------|
+| 0 | [Bootstrap](docs/phases/phase-00-bootstrap.md) | **COMPLETE** |
+| 1 | [Put / Delete](docs/phases/phase-01-put-delete.md) | **COMPLETE** |
+| 2 | [Subscribe](docs/phases/phase-02-sub.md) | **COMPLETE** |
+| 3 | [Publish](docs/phases/phase-03-pub.md) | **COMPLETE** |
+| 4 | [SHM Pub/Sub](docs/phases/phase-04-shm-pub-sub.md) | **COMPLETE** |
+| 5 | [Scout / Info](docs/phases/phase-05-scout-info.md) | **COMPLETE** |
+| 6 | [Get / Queryable](docs/phases/phase-06-get-queryable.md) | |
+| 7 | [SHM Get/Queryable](docs/phases/phase-07-shm-get-queryable.md) | |
+| 8 | [Channels](docs/phases/phase-08-channels.md) | |
+| 9 | [Pull](docs/phases/phase-09-pull.md) | |
+| 10 | [Querier](docs/phases/phase-10-querier.md) | |
+| 11 | [Liveliness](docs/phases/phase-11-liveliness.md) | |
+| 12 | [Ping/Pong](docs/phases/phase-12-ping-pong.md) | |
+| 13 | [SHM Ping](docs/phases/phase-13-shm-ping.md) | |
+| 14 | [Throughput](docs/phases/phase-14-throughput.md) | |
+| 15 | [SHM Throughput](docs/phases/phase-15-shm-throughput.md) | |
+| 16 | [Bytes](docs/phases/phase-16-bytes.md) | |
+| 17 | [Storage](docs/phases/phase-17-storage.md) | |
+| 18 | [Advanced](docs/phases/phase-18-advanced.md) | |
 
 ## License
 
-Apache 2.0 -- see [LICENSE](LICENSE).
+Apache 2.0 — see [LICENSE](LICENSE).
