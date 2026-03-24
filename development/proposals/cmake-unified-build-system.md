@@ -24,16 +24,13 @@ For Android, steps 1-4 are collapsed into `build_zenoh_android.sh`, but that scr
 
 ---
 
-## Finding: `extern/cmake` is Dead Weight
+## Finding: `extern/cmake` is the CMake Source Repo
 
 The `extern/cmake` submodule is **the CMake project source code itself** — 166MB, ~30,000 files, checked out from `gitlab.kitware.com/cmake/cmake.git` at v4.3.0-dev. It is NOT a cmake module library or toolchain collection.
 
-It provides zero value:
-- Developers use a system-installed `cmake` binary (apt/brew/snap)
-- None of our CMakeLists.txt files reference it
-- It doesn't contain custom modules, toolchains, or utilities we use
+**Decision: KEEP.** It serves as a local CMake reference manual — agents can RTFM directly from `extern/cmake/Modules/`, `extern/cmake/Help/`, and platform files without burning internet bandwidth on web fetches. Particularly valuable for cross-compilation module details (`Modules/Platform/Android*.cmake`), toolchain file patterns, and FindXXX module internals.
 
-**Recommendation**: Remove the submodule. If it was added for reference, the CMake online docs serve the same purpose without 166MB of repo bloat.
+It is not used in the build pipeline itself — developers use a system-installed `cmake` binary.
 
 ---
 
@@ -73,7 +70,7 @@ zenoh-dart/
     CMakeLists.txt         # MODIFIED — dual-mode (subdirectory or standalone)
   extern/
     zenoh-c/               # EXISTING — add_subdirectory() target
-    cmake/                 # REMOVE — 166MB CMake source repo
+    cmake/                 # KEEP — local CMake RTFM reference
   scripts/
     build_zenoh_android.sh # SIMPLIFIED — uses cmake presets
   packages/zenoh/
@@ -379,7 +376,7 @@ Configure + build + cargo + copy + patchelf all in one pipeline.
 | Root `CMakeLists.txt` | **NEW** | Superbuild entry point |
 | `CMakePresets.json` | **NEW** | Replaces 15+ manual flags |
 | `src/CMakeLists.txt` | **MODIFIED** | Dual-mode: target or discovery |
-| `extern/cmake` | **REMOVE** | 166MB of CMake source code |
+| `extern/cmake` | **KEEP** | Local CMake RTFM reference for agents |
 | `scripts/build_zenoh_android.sh` | **SIMPLIFIED** | Uses presets for Stage 2 |
 | `packages/zenoh/hook/build.dart` | Unchanged | Dart-side unaffected |
 | `packages/zenoh/lib/src/native_lib.dart` | Unchanged | Runtime loading unaffected |
@@ -416,8 +413,7 @@ The hybrid approach is pragmatic: `cargo-ndk` for Rust compilation, CMake preset
 
 This is a Phase-P2 (Packaging/Build) effort. Suggested execution:
 
-1. **Remove `extern/cmake`** — `git submodule deinit extern/cmake && git rm extern/cmake`
-2. **Add root `CMakeLists.txt`** — Superbuild orchestrator
+1. **Add root `CMakeLists.txt`** — Superbuild orchestrator
 3. **Add `CMakePresets.json`** — Platform presets
 4. **Modify `src/CMakeLists.txt`** — Add `if(TARGET zenohc::lib)` dual-mode
 5. **Update `build_zenoh_android.sh`** — Use presets for Stage 2
