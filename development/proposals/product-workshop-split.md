@@ -1,6 +1,6 @@
 # Proposal: Product / Workshop Repository Split
 
-**Date:** 2026-03-24
+**Date:** 2026-03-24 (revised 2026-03-24, pass 2)
 **Author:** CA (Code Architect)
 **Status:** Proposal — awaiting human review
 **Depends on:** CMake superbuild proposal (must complete first)
@@ -30,94 +30,113 @@ Split into two repositories:
 
 ### `zenoh_dart` — the product
 
-A flat, single-package repository. Root-level `pubspec.yaml`. `dart pub publish` from root. One submodule (`extern/zenoh-c/`). Clean README focused on usage and building.
+A single-package repository with structural publish safety. The Dart package lives in `package/` — `dart pub publish` runs from there and only publishes what's inside. Build infrastructure (CMake, C shim source, submodules, scripts) lives at the repo root, outside the publish boundary. No `.pubignore` needed.
 
 ### `zenoh_dart_dev` — the workshop
 
-The current repository, renamed. Retains full git history, all development scaffolding, all 7 submodules, all documentation. Continues to serve as the CA/CP/CI/CB workspace for ongoing development.
+The current repository, renamed. Retains full git history, all development scaffolding, all 7 submodules, all documentation. Frozen as a historical archive.
+
+---
+
+## Why `package/` Instead of Flat Root
+
+An earlier draft proposed a flat layout with all Dart files at the repo root. This requires `.pubignore` to exclude build infrastructure (`src/`, `extern/`, `scripts/`, `CMakeLists.txt`, etc.) from `dart pub publish`. `.pubignore` is a **deny-list** — you must remember to exclude every new file. Forgetting means accidental publish of build artifacts.
+
+The `package/` layout is an **allow-list** — only what's inside `package/` gets published. The boundary is structural, not a filter file.
+
+| Approach | Publish safety | Maintenance burden |
+|----------|---------------|-------------------|
+| Flat root + `.pubignore` | Deny-list — must exclude every new build file | Must update `.pubignore` whenever adding build infrastructure |
+| `package/` directory | Allow-list — only `package/` contents published | Zero maintenance — new build files at root are automatically excluded |
+
+Compared to current `packages/zenoh/`:
+- `package/` (singular) is honest about there being one package
+- One level of indirection instead of two (`../src/` vs `../../src/`)
+- No workspace, no Melos
 
 ---
 
 ## Product Repository Structure
 
 ```
-zenoh_dart/                   # Fresh repo — clean git history
-  lib/                        # Dart API (from packages/zenoh/lib/)
-    zenoh.dart                #   barrel export
-    src/
-      bindings.dart           #   auto-generated FFI bindings
-      native_lib.dart         #   DynamicLibrary.open() loading
-      session.dart            #   Session class
-      config.dart             #   Config class
-      key_expr.dart           #   KeyExpr class
-      z_bytes.dart            #   ZBytes class
-      publisher.dart          #   Publisher class
-      subscriber.dart         #   Subscriber class
-      sample.dart             #   Sample, SampleKind
-      encoding.dart           #   Encoding class
-      congestion_control.dart #   CongestionControl enum
-      priority.dart           #   Priority enum
-      shm_provider.dart       #   ShmProvider class
-      shm_mut_buffer.dart     #   ShmMutBuffer class
-      zenoh_id.dart           #   ZenohId class
-      what_am_i.dart          #   WhatAmI enum
-      hello.dart              #   Hello class
-      zenoh_exception.dart    #   ZenohException class
-  src/                        # C shim source
+zenoh_dart/                     # Fresh repo — clean git history
+  package/                      # PUBLISH BOUNDARY — dart pub publish runs here
+    lib/                        #   Dart API
+      zenoh.dart                #     barrel export
+      src/
+        bindings.dart           #     auto-generated FFI bindings
+        native_lib.dart         #     DynamicLibrary.open() loading
+        session.dart            #     Session class
+        config.dart             #     Config class
+        key_expr.dart           #     KeyExpr class
+        z_bytes.dart            #     ZBytes class
+        publisher.dart          #     Publisher class
+        subscriber.dart         #     Subscriber class
+        sample.dart             #     Sample, SampleKind
+        encoding.dart           #     Encoding class
+        congestion_control.dart #     CongestionControl enum
+        priority.dart           #     Priority enum
+        shm_provider.dart       #     ShmProvider class
+        shm_mut_buffer.dart     #     ShmMutBuffer class
+        zenoh_id.dart           #     ZenohId class
+        what_am_i.dart          #     WhatAmI enum
+        hello.dart              #     Hello class
+        zenoh_exception.dart    #     ZenohException class
+    hook/                       #   Dart build hooks
+      build.dart
+    native/                     #   Prebuilt shared libraries
+      linux/x86_64/
+        libzenoh_dart.so
+        libzenohc.so
+      android/arm64-v8a/
+        libzenoh_dart.so
+        libzenohc.so
+      android/x86_64/
+        libzenoh_dart.so
+        libzenohc.so
+    example/                    #   CLI examples
+      z_put.dart
+      z_delete.dart
+      z_sub.dart
+      z_pub.dart
+      z_pub_shm.dart
+      z_info.dart
+      z_scout.dart
+    test/                       #   Integration tests (193 tests)
+      session_test.dart
+      key_expr_test.dart
+      z_bytes_test.dart
+      put_test.dart
+      subscriber_test.dart
+      publisher_test.dart
+      shm_provider_test.dart
+      info_test.dart
+      scout_test.dart
+      interprocess_test.dart
+    pubspec.yaml                #   Package manifest — no workspace, no melos
+    ffigen.yaml                 #   FFI code generator config
+    analysis_options.yaml       #   Linting config
+    README.md                   #   User-facing — what, why, how
+    CHANGELOG.md
+    LICENSE                     #   Apache 2.0
+  src/                          # C shim source (OUTSIDE publish boundary)
     zenoh_dart.h
     zenoh_dart.c
-    CMakeLists.txt            # C shim build (refactored for flat layout)
-    dart/                     # Dart API DL headers
+    CMakeLists.txt              #   C shim build
+    dart/                       #   Dart API DL headers
       dart_api.h
       dart_api_dl.h
       dart_api_dl.c
       dart_native_api.h
-  hook/                       # Dart build hooks
-    build.dart
-  native/                     # Prebuilt shared libraries
-    linux/x86_64/
-      libzenoh_dart.so
-      libzenohc.so
-    android/arm64-v8a/
-      libzenoh_dart.so
-      libzenohc.so
-    android/x86_64/
-      libzenoh_dart.so
-      libzenohc.so
-  example/                    # CLI examples
-    z_put.dart
-    z_delete.dart
-    z_sub.dart
-    z_pub.dart
-    z_pub_shm.dart
-    z_info.dart
-    z_scout.dart
-  test/                       # Integration tests (193 tests)
-    session_test.dart
-    key_expr_test.dart
-    z_bytes_test.dart
-    put_test.dart
-    subscriber_test.dart
-    publisher_test.dart
-    shm_provider_test.dart
-    info_test.dart
-    scout_test.dart
-    interprocess_test.dart
   extern/
-    zenoh-c/                  # ONLY submodule — pinned at v1.7.2
+    zenoh-c/                    # ONLY submodule — pinned at v1.7.2
   scripts/
-    build_zenoh_android.sh    # Android cross-compilation
-  CMakeLists.txt              # Root superbuild (from superbuild proposal)
-  CMakePresets.json           # Platform presets
-  pubspec.yaml                # Flat — no workspace, no melos
-  ffigen.yaml                 # FFI code generator config
-  analysis_options.yaml       # Linting config
-  CLAUDE.md                   # Simplified — build, use, contribute
-  README.md                   # User-facing — what, why, how
-  CHANGELOG.md
-  LICENSE                     # Apache 2.0
+    build_zenoh_android.sh      # Android cross-compilation
+  CMakeLists.txt                # Root superbuild (from superbuild proposal)
+  CMakePresets.json             # Platform presets
+  CLAUDE.md                     # Simplified — build, use, contribute
   .gitignore
-  .gitmodules                 # Single entry: extern/zenoh-c
+  .gitmodules                   # Single entry: extern/zenoh-c
 ```
 
 **What's NOT in the product repo:**
@@ -130,16 +149,16 @@ zenoh_dart/                   # Fresh repo — clean git history
 - Dev role docs (`docs/dev-roles/`)
 - LaTeX source (`docs/c-shim/latex/`)
 - Melos dependency
-- Workspace indirection (`packages/zenoh/`)
+- `.pubignore` — not needed, publish boundary is structural
 
 ---
 
 ## Workshop Repository Structure
 
 ```
-zenoh_dart_dev/               # Current repo, renamed
+zenoh_dart_dev/               # Current repo, renamed — frozen archive
   packages/zenoh/             # Original monorepo structure (historical reference)
-  src/                        # C shim source (canonical — product repo copies from here)
+  src/                        # C shim source (canonical copy)
   extern/                     # All 7 submodules
     zenoh-c/                  #   v1.7.2 — primary dependency
     zenoh-cpp/                #   API design reference
@@ -160,7 +179,7 @@ zenoh_dart_dev/               # Current repo, renamed
   experiments/                # Hooks bundling experiments
   .claude/                    # Skills, roles, settings
   CLAUDE.md                   # Full development guidance (TDD, phases, conventions)
-  README.md                   # Development-focused
+  README.md                   # Points to zenoh_dart as the active repo
   ...full git history...
 ```
 
@@ -168,62 +187,65 @@ zenoh_dart_dev/               # Current repo, renamed
 
 ## Path Rewrites Required
 
-Flattening from `packages/zenoh/` to root changes path assumptions in several files:
+The `package/` layout changes path references from `packages/zenoh/` (two levels) to `package/` (one level). Paths from `package/` to repo-root resources use `../` instead of `../../`.
 
-### `ffigen.yaml`
+### `ffigen.yaml` (inside `package/`)
 
 | Field | Current | New |
 |-------|---------|-----|
-| `entry-points.include` | `../../src/zenoh_dart.h` | `src/zenoh_dart.h` |
-| `compiler-opts` | `-I../../extern/zenoh-c/include` | `-Iextern/zenoh-c/include` |
+| `entry-points.include` | `../../src/zenoh_dart.h` | `../src/zenoh_dart.h` |
+| `compiler-opts` | `-I../../extern/zenoh-c/include` | `-I../extern/zenoh-c/include` |
 | `output.bindings` | `lib/src/bindings.dart` | `lib/src/bindings.dart` (unchanged) |
 
 ### `src/CMakeLists.txt`
 
 | Reference | Current | New |
 |-----------|---------|-----|
-| `PACKAGE_ROOT` | `"${CMAKE_CURRENT_SOURCE_DIR}/.."` resolves to monorepo root | Same — resolves to product repo root (correct) |
+| `PACKAGE_ROOT` | `"${CMAKE_CURRENT_SOURCE_DIR}/.."` → monorepo root | `"${CMAKE_CURRENT_SOURCE_DIR}/.."` → product repo root (same semantics) |
 | zenoh-c headers | `${PACKAGE_ROOT}/extern/zenoh-c/include` | Same (unchanged) |
-| Android jniLibs | `${PACKAGE_ROOT}/android/src/main/jniLibs/` | Needs new path or removal (see below) |
-| Linux prebuilt | `${PACKAGE_ROOT}/native/linux/...` | `${PACKAGE_ROOT}/native/linux/...` (unchanged — `native/` moves up from `packages/zenoh/native/` to root `native/`) |
+| Android discovery | `${PACKAGE_ROOT}/android/src/main/jniLibs/` | `${PACKAGE_ROOT}/package/native/android/${ANDROID_ABI}/` (direct, no jniLibs) |
+| Linux prebuilt | `${PACKAGE_ROOT}/native/linux/...` | `${PACKAGE_ROOT}/package/native/linux/...` |
+| Developer fallback | `${PACKAGE_ROOT}/extern/zenoh-c/target/release/` | Same (unchanged) |
 
-### `native_lib.dart`
+Note: prebuilt discovery paths now include `package/` because `native/` lives inside the publish boundary (it ships with the package).
 
-| Logic | Current | New |
-|-------|---------|-----|
-| Package URI resolution | Resolves `package:zenoh/` → `packages/zenoh/lib/` → walks up to find `native/` | Resolves `package:zenoh/` → `lib/` → walks up to find `native/` at repo root |
-| Relative probing | Checks `packages/zenoh/native/linux/x86_64/` | Checks `native/linux/x86_64/` |
-
-This is the most delicate rewrite — the path resolution logic in `_resolveLibraryPath()` must be verified against the new directory structure. The package URI resolution via `Isolate.resolvePackageUriSync()` returns the physical path to `lib/`, and the code walks up to find `native/`. With a flat layout, walking up one level from `lib/` reaches the repo root where `native/` lives. Currently it walks up from `packages/zenoh/lib/` past `packages/zenoh/` to the monorepo root — but `native/` is at `packages/zenoh/native/`, so the code has special handling. The flat layout is actually simpler.
-
-### `hook/build.dart`
+### `native_lib.dart` (inside `package/lib/src/`)
 
 | Logic | Current | New |
 |-------|---------|-----|
-| `_nativeDir()` | Relative to `packages/zenoh/` package root | Relative to repo root (same thing in flat layout) |
+| Package URI resolution | `package:zenoh/` → `packages/zenoh/lib/` → walks up to `packages/zenoh/` → finds `native/` | `package:zenoh/` → `package/lib/` → walks up to `package/` → finds `native/` |
+| Relative probing | Checks `packages/zenoh/native/linux/x86_64/` | Checks `package/native/linux/x86_64/` (but from inside `package/`, just `native/linux/x86_64/` relative) |
 
-The hook runs from the package root. In flat layout, package root = repo root. Paths to `native/` remain the same relative to package root.
+The path resolution is actually simpler. `Isolate.resolvePackageUriSync('package:zenoh/')` returns the physical path to `package/lib/`. Walking up one directory reaches `package/` where `native/` lives. Currently the code walks up from `packages/zenoh/lib/` to `packages/zenoh/` — same depth, cleaner name.
+
+### `hook/build.dart` (inside `package/hook/`)
+
+| Logic | Current | New |
+|-------|---------|-----|
+| `_nativeDir()` | Relative to `packages/zenoh/` package root | Relative to `package/` (package root = `package/` in new layout) |
+
+The hook runs from the package root. In the new layout, package root = `package/`. Paths to `native/` remain the same relative to package root.
 
 ### `scripts/build_zenoh_android.sh`
 
 | Variable | Current | New |
 |----------|---------|-----|
-| `NATIVE_ANDROID_DIR` | `${PROJECT_ROOT}/packages/zenoh/native/android` | `${PROJECT_ROOT}/native/android` |
-| `JNILIBS_DIR` | `${PROJECT_ROOT}/android/src/main/jniLibs` | Remove or keep as build intermediate |
+| `NATIVE_ANDROID_DIR` | `${PROJECT_ROOT}/packages/zenoh/native/android` | `${PROJECT_ROOT}/package/native/android` |
+| `JNILIBS_DIR` | `${PROJECT_ROOT}/android/src/main/jniLibs` | Removed — cargo-ndk outputs directly to `native/android/<abi>/` |
 
 ### Root `CMakeLists.txt` (superbuild)
 
 | Reference | Current (from superbuild proposal) | New |
 |-----------|-----|-----|
-| `NATIVE_DIR` | `${CMAKE_CURRENT_SOURCE_DIR}/packages/zenoh/native` | `${CMAKE_CURRENT_SOURCE_DIR}/native` |
+| `NATIVE_DIR` | `${CMAKE_CURRENT_SOURCE_DIR}/packages/zenoh/native` | `${CMAKE_CURRENT_SOURCE_DIR}/package/native` |
 
-### `pubspec.yaml`
+### `pubspec.yaml` (inside `package/`)
 
 | Field | Current | New |
 |-------|---------|-----|
-| `name` | `zenoh` | `zenoh` (unchanged — this is the Dart package name) |
+| `name` | `zenoh` | `zenoh` (unchanged — Dart package name) |
 | `resolution` | `workspace` | Remove (no workspace) |
-| Root pubspec | Exists with `workspace:` and `melos` dev_dep | Deleted — single pubspec at root |
+| Root pubspec | Exists with `workspace:` and `melos` dev_dep | Deleted — only `package/pubspec.yaml` exists |
 
 ---
 
@@ -233,17 +255,15 @@ The current layout has `android/src/main/jniLibs/<abi>/` as an intermediate buil
 1. `build_zenoh_android.sh` — as cargo-ndk output directory
 2. `src/CMakeLists.txt` — Tier 1 Android discovery
 
-**Decision needed:** Keep `android/src/main/jniLibs/` as a build intermediate, or change cargo-ndk to output directly to `native/android/<abi>/`?
+**Decision: Eliminate the intermediate.** The jniLibs path was a Gradle convention from when we considered a Flutter plugin structure. With build hooks handling APK placement, jniLibs is unnecessary indirection.
 
-**Recommendation:** Output directly to `native/android/<abi>/`. The jniLibs path was a Gradle convention from when we considered a Flutter plugin structure. With build hooks handling APK placement, jniLibs is unnecessary indirection. The C shim's Tier 1 Android discovery can point to `native/android/<abi>/` instead.
-
-This simplifies the Android flow:
+New Android flow:
 ```
-cargo-ndk → native/android/<abi>/libzenohc.so     (direct)
-cmake     → native/android/<abi>/libzenoh_dart.so  (via install target)
+cargo-ndk → package/native/android/<abi>/libzenohc.so     (direct)
+cmake     → package/native/android/<abi>/libzenoh_dart.so  (via install target)
 ```
 
-No intermediate directory, no copy step between jniLibs and native/.
+No intermediate directory, no copy step. The C shim's Android discovery tier points directly to `package/native/android/<abi>/`.
 
 ---
 
@@ -271,16 +291,15 @@ The product repo gets a focused CLAUDE.md covering only:
 
 ## What Happens to Development Workflow
 
-After the split, the four-session workflow (CA/CP/CI/CB) operates in `zenoh_dart_dev`. When a feature is ready for release:
+After the split, `zenoh_dart_dev` is frozen as a historical archive. Active development moves to `zenoh_dart`.
 
-1. **CI implements and tests** in `zenoh_dart_dev` (monorepo structure)
-2. **CI copies changed files** to `zenoh_dart` (flat structure) with path adjustments
-3. **CI runs tests** in `zenoh_dart` to verify (193+ tests pass)
-4. **CI publishes** from `zenoh_dart`
+The four-session workflow (CA/CP/CI/CB) adapts to the product repo:
+- **CLAUDE.md** stays focused on build/use/contribute
+- **`.claude/`** directory can hold dev session configuration (gitignored, not in `package/`, never published)
+- **Phase docs** live in the developer's memory or in `.claude/` — not in the repo tree
+- **TDD plugin** works from any repo — it reads `.tdd-progress.md` at the project root
 
-Alternatively, development could move entirely to `zenoh_dart` (the product repo) and `zenoh_dart_dev` becomes a frozen archive. This depends on whether the workshop scaffolding (CLAUDE.md, phase docs, TDD plugin) can live alongside the clean product structure. Given that `.claude/` and `docs/` can be gitignored or kept in a separate branch, this is feasible.
-
-**Recommendation:** Develop in `zenoh_dart` (product repo) with a minimal development CLAUDE.md. Keep `zenoh_dart_dev` as a frozen archive of the development history. The workshop docs (phase specs, design docs) are historical — future phases can reference them from the archive but don't need them in the active repo.
+The workshop scaffolding that made `zenoh_dart_dev` heavy was mostly historical documentation (completed phases, design docs, experiments, audits). Future phases don't need those files in the working tree — they're reference material accessible in the archived dev repo.
 
 ---
 
@@ -288,14 +307,15 @@ Alternatively, development could move entirely to `zenoh_dart` (the product repo
 
 | # | Risk | Mitigation |
 |---|------|------------|
-| 1 | **Path rewrites break native_lib.dart resolution** | This is the highest-risk change. The `_resolveLibraryPath()` function has specific path probing logic. Write a test that verifies library resolution from the new layout before committing. |
-| 2 | **ffigen paths break** | Run `fvm dart run ffigen --config ffigen.yaml` after path changes and verify `bindings.dart` regenerates correctly. |
-| 3 | **Build hooks can't find native/** | Run `fvm dart test` — hooks fire during test and will fail immediately if paths are wrong. |
+| 1 | **Path rewrites break native_lib.dart resolution** | Highest-risk change. The `_resolveLibraryPath()` function probes specific paths. Write a test that verifies library resolution from the new layout before committing. The `package/` layout is actually simpler (one level up from `lib/` to `package/` where `native/` lives). |
+| 2 | **ffigen paths break** | Run `cd package && fvm dart run ffigen --config ffigen.yaml` after path changes and verify `bindings.dart` regenerates correctly. |
+| 3 | **Build hooks can't find native/** | Run `cd package && fvm dart test` — hooks fire during test and will fail immediately if paths are wrong. |
 | 4 | **Android build script paths wrong** | Run `./scripts/build_zenoh_android.sh --abi arm64-v8a` after changes (requires NDK). |
 | 5 | **GitHub repo rename breaks existing clones** | GitHub auto-redirects the old URL. Document the rename in both repos' READMEs. Existing clones need `git remote set-url origin`. |
 | 6 | **pub.dev package name conflict** | The Dart package name stays `zenoh` (in pubspec.yaml). The GitHub repo name (`zenoh_dart`) is separate from the package name. No conflict. |
 | 7 | **Loss of git blame for moved files** | Fresh repo = no history. Acceptable — `zenoh_dart_dev` retains full history. For any file's provenance, check the dev repo. |
-| 8 | **Two repos drift apart** | If development continues in `zenoh_dart_dev`, files must sync to `zenoh_dart`. Mitigated by the recommendation to develop directly in `zenoh_dart` and freeze `zenoh_dart_dev`. |
+| 8 | **`cd package` required for Dart commands** | All `fvm dart test`, `fvm dart run`, `fvm dart analyze` must run from `package/`. Minor ergonomic cost. Can alias in shell or document clearly. Same pattern as current `cd packages/zenoh`. |
+| 9 | **CMake install target must know about `package/`** | The superbuild's install target uses `NATIVE_DIR = .../package/native`. If someone uses `cmake --target install` without the superbuild, the path won't match. Mitigated by always using presets. |
 
 ---
 
@@ -307,12 +327,14 @@ This split depends on the CMake superbuild proposal being completed first. The s
 2. **Verify** 193 tests pass with new build system
 3. **Rename** current GitHub repo from `zenoh_dart` to `zenoh_dart_dev`
 4. **Create** fresh `zenoh_dart` repo on GitHub
-5. **Copy files** from `zenoh_dart_dev` to `zenoh_dart` with flat structure
-6. **Rewrite paths** — ffigen.yaml, native_lib.dart, CMakeLists.txt, hook/build.dart, build_zenoh_android.sh, pubspec.yaml
-7. **Remove jniLibs intermediate** — cargo-ndk outputs directly to `native/android/<abi>/`
-8. **Drop Melos** — remove workspace pubspec, use flat single-package pubspec
-9. **Write product CLAUDE.md** — focused on build/use/contribute
-10. **Write product README.md** — user-facing, clean
-11. **Verify** 193 tests pass in `zenoh_dart`
-12. **Update memory** — new repo locations, updated project structure
-13. **Freeze `zenoh_dart_dev`** — add prominent README note pointing to `zenoh_dart`
+5. **Create `package/` directory** — copy Dart package files from `zenoh_dart_dev/packages/zenoh/`
+6. **Copy build infrastructure** — `src/`, `scripts/`, `CMakeLists.txt`, `CMakePresets.json` to repo root
+7. **Add `extern/zenoh-c`** as single submodule
+8. **Rewrite paths** — ffigen.yaml (`../` instead of `../../`), native_lib.dart, src/CMakeLists.txt (prebuilt discovery adds `package/`), hook/build.dart, build_zenoh_android.sh
+9. **Eliminate jniLibs intermediate** — cargo-ndk outputs directly to `package/native/android/<abi>/`
+10. **Drop Melos** — single `package/pubspec.yaml`, no workspace, no root pubspec
+11. **Write product CLAUDE.md** — focused on build/use/contribute
+12. **Write product README.md** — user-facing, clean
+13. **Verify** 193 tests pass in `zenoh_dart` (run from `package/`)
+14. **Update memory** — new repo locations, updated project structure
+15. **Freeze `zenoh_dart_dev`** — add prominent README note pointing to `zenoh_dart`
