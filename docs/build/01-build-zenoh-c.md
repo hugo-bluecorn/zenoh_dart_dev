@@ -1,23 +1,57 @@
-# Build zenoh-c with Clang (standalone, Linux)
+# Build zenoh-c and C shim (Linux)
 
 ## Context
 
-The `zenoh_dart` Flutter FFI plugin has a `extern/zenoh-c` git submodule (v1.7.2, eclipse-zenoh/zenoh-c main branch). zenoh-c is a C API wrapper around Rust zenoh -- CMake orchestrates Cargo underneath. This document covers building it standalone with clang on Linux. Flutter plugin integration will be a separate follow-up.
+The `zenoh_dart` package has a `extern/zenoh-c` git submodule (v1.7.2, eclipse-zenoh/zenoh-c). zenoh-c is a C API wrapper around Rust zenoh — CMake orchestrates Cargo underneath. The root `CMakeLists.txt` is a superbuild that builds both zenoh-c and the C shim in one step.
 
 ## Prerequisites
 
 | Tool | Minimum version | Tested version |
 |------|----------------|---------------|
 | clang/clang++ | any recent | 18.1.3 |
-| cmake | 3.10+ | 3.28.3 |
+| cmake | 3.16+ (3.21+ for presets) | 3.28.3 |
 | ninja | any | 1.11.1 |
-| rustc/cargo | 1.75.0 (MSRV) | 1.92.0 |
+| rustc/cargo | 1.85.0 (pinned) | 1.85.0 |
 
-## Rust toolchain workaround
+## Rust version constraint
 
-`extern/zenoh-c/rust-toolchain.toml` pins channel `1.93.0` (unreleased at the time of this build). We set `RUSTUP_TOOLCHAIN=stable` to override this and use the installed stable toolchain instead. This is safe because zenoh-c's MSRV is 1.75.0.
+zenoh-c 1.7.2's transitive dependency `static_init` 1.0.3 fails to compile on Rust >= 1.86 (unresolved `parking_lot` crate error). The superbuild preset pins `+1.85.0` via `ZENOHC_CARGO_CHANNEL`, which makes cargo invoke `cargo +1.85.0 build ...`. This overrides `extern/zenoh-c/rust-toolchain.toml` (which pins an unreleased channel).
 
-## Steps
+Install with:
+```bash
+rustup toolchain install 1.85.0
+```
+
+## Superbuild (recommended)
+
+The superbuild configures, builds, and installs everything in two commands:
+
+```bash
+cmake --preset linux-x64
+cmake --build --preset linux-x64 --target install
+```
+
+This:
+1. Builds zenoh-c from source via `add_subdirectory(extern/zenoh-c)` (cargo, automated)
+2. Builds the C shim (`src/zenoh_dart.c`) against the `zenohc::lib` target
+3. Installs both `.so` files to `packages/zenoh/native/linux/x86_64/` with `RPATH=$ORIGIN`
+
+First build takes ~3 minutes (cargo). Subsequent builds are incremental (~2s for C shim-only changes).
+
+### C shim only
+
+If zenoh-c is already built and you only changed `src/zenoh_dart.{h,c}`:
+
+```bash
+cmake --preset linux-x64-shim-only
+cmake --build --preset linux-x64-shim-only --target install
+```
+
+This uses 3-tier discovery to find the existing `libzenohc.so` (prebuilt in `native/` or developer fallback in `extern/zenoh-c/target/release/`).
+
+## Manual build (advanced)
+
+For building zenoh-c standalone without the superbuild (e.g., debugging cargo issues):
 
 ### 1. Configure
 
@@ -34,16 +68,14 @@ cmake \
 ```
 
 Key flags:
-- `-DZENOHC_BUILD_IN_SOURCE_TREE=TRUE` -- places `target/` inside the submodule (not a detached build dir)
-- `-DBUILD_SHARED_LIBS=TRUE` -- produces `libzenohc.so` (needed for FFI)
+- `-DZENOHC_BUILD_IN_SOURCE_TREE=TRUE` — places `target/` inside the submodule (not a detached build dir)
+- `-DBUILD_SHARED_LIBS=TRUE` — produces `libzenohc.so` (needed for FFI)
 
 ### 2. Build
 
 ```bash
-RUSTUP_TOOLCHAIN=stable cmake --build extern/zenoh-c/build --config Release
+RUSTUP_TOOLCHAIN=1.85.0 cmake --build extern/zenoh-c/build --config Release
 ```
-
-First build takes ~2-10 minutes depending on hardware. Subsequent builds are incremental.
 
 ### 3. Verify
 
@@ -63,13 +95,23 @@ clang -fsyntax-only -I extern/zenoh-c/include -xc - <<< '#include "zenoh.h"'
 ### 4. Run tests
 
 ```bash
-RUSTUP_TOOLCHAIN=stable cmake --build extern/zenoh-c/build --target tests
+RUSTUP_TOOLCHAIN=1.85.0 cmake --build extern/zenoh-c/build --target tests
 ctest --test-dir extern/zenoh-c/build -R "^(unit|build)_" --output-on-failure
 ```
 
 Expected: 12/14 pass. Two tests (`unit_z_api_alignment_test`, `unit_z_api_liveliness`) are known flaky due to timing-dependent assertions in the upstream zenoh-c test suite.
 
 ## Build artifacts
+
+### Superbuild
+
+| Artifact | Path |
+|----------|------|
+| Shared library (zenoh-c) | `build/linux-x64/extern/zenoh-c/release/target/release/libzenohc.so` |
+| Shared library (C shim) | `build/linux-x64/src/libzenoh_dart.so` |
+| Installed prebuilts | `packages/zenoh/native/linux/x86_64/libzenohc.so`, `libzenoh_dart.so` |
+
+### Manual (standalone)
 
 | Artifact | Path |
 |----------|------|
@@ -84,5 +126,9 @@ All build artifacts are in `.gitignore`.
 ## Clean build
 
 ```bash
+# Superbuild
+rm -rf build/linux-x64
+
+# Manual (standalone)
 rm -rf extern/zenoh-c/build extern/zenoh-c/target
 ```

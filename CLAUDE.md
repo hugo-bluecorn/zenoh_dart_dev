@@ -67,53 +67,42 @@ Phases 6–18 (query/liveliness/throughput/storage/advanced) are specified in `d
 ```bash
 fvm dart ...
 fvm flutter ...
-fvm dart run melos ...
 ```
 
 ## Build & Development Commands
 
-### zenoh-c native library (prerequisite)
+### Native library build (Linux)
 
-The `extern/zenoh-c` submodule (v1.7.2) provides the native C API. **Developers** modifying the C shim or upgrading zenoh-c need to build it locally. Requires: clang, cmake, ninja, rustc/cargo (stable, MSRV 1.75.0).
+The superbuild orchestrates everything — zenoh-c (cargo) + C shim (clang) + install (with RPATH). Requires: clang, clang++, cmake 3.16+, ninja, rustc/cargo (Rust 1.85.0 via rustup).
 
 ```bash
-# Configure (one-time, or after CMake changes)
-cmake \
-  -S extern/zenoh-c \
-  -B extern/zenoh-c/build \
-  -G Ninja \
-  -DCMAKE_C_COMPILER=/usr/bin/clang \
-  -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_SHARED_LIBS=TRUE \
-  -DZENOHC_BUILD_IN_SOURCE_TREE=TRUE
-
-# Build (RUSTUP_TOOLCHAIN=stable works around rust-toolchain.toml pinning unreleased channel)
-RUSTUP_TOOLCHAIN=stable cmake --build extern/zenoh-c/build --config Release
+# Full build: zenoh-c from source + C shim + install to native/
+cmake --preset linux-x64
+cmake --build --preset linux-x64 --target install
 ```
 
-**Build artifacts:**
-- Shared library: `extern/zenoh-c/target/release/libzenohc.so`
-- Headers: `extern/zenoh-c/include/` (zenoh.h, zenoh_commons.h, zenoh_macros.h)
+First build takes ~3 minutes (cargo). Subsequent builds are incremental (~2s for C shim changes).
 
-See `docs/build/01-build-zenoh-c.md` for the full build plan and rationale.
+**Rust version constraint:** zenoh-c 1.7.2 requires Rust 1.85.0 — Rust >= 1.86 breaks the `static_init` transitive dependency. The preset pins `+1.85.0` via `ZENOHC_CARGO_CHANNEL`. Install with `rustup toolchain install 1.85.0`.
 
-### CMake zenohc discovery
-
-`src/CMakeLists.txt` finds `libzenohc.so` via three-tier discovery:
-1. **Android**: `android/src/main/jniLibs/${ANDROID_ABI}/libzenohc.so`
-2. **Linux prebuilt**: `native/linux/${CMAKE_SYSTEM_PROCESSOR}/libzenohc.so`
-3. **Developer fallback**: `extern/zenoh-c/target/release/libzenohc.so`
-
-RPATH is set to `$ORIGIN` on Linux for self-contained deployment.
-
-**C shim build:** Running `cmake --build build` from the repo root produces `build/libzenoh_dart.so`. After building, copy both shared libraries to the prebuilt location for build hooks:
+**C shim only** (when zenoh-c is already built):
 ```bash
-mkdir -p packages/zenoh/native/linux/x86_64/
-cp build/libzenoh_dart.so packages/zenoh/native/linux/x86_64/
-cp extern/zenoh-c/target/release/libzenohc.so packages/zenoh/native/linux/x86_64/
-patchelf --set-rpath '$ORIGIN' packages/zenoh/native/linux/x86_64/libzenoh_dart.so
+cmake --preset linux-x64-shim-only
+cmake --build --preset linux-x64-shim-only --target install
 ```
+
+See `docs/build/01-build-zenoh-c.md` for standalone build details and rationale.
+
+### CMake build system
+
+The root `CMakeLists.txt` is a superbuild that:
+1. Builds zenoh-c from source via `add_subdirectory(extern/zenoh-c)` (cargo, automated)
+2. Builds the C shim (`src/zenoh_dart.c`) against `zenohc::lib` target
+3. Installs both `.so` files to `packages/zenoh/native/linux/x86_64/` with `RPATH=$ORIGIN`
+
+`src/CMakeLists.txt` is dual-mode: uses `zenohc::lib` target when built via superbuild, falls back to 3-tier discovery (Android jniLibs → Linux prebuilt → developer fallback) when built standalone.
+
+Presets are defined in `CMakePresets.json`: `linux-x64`, `linux-x64-shim-only`, `android-arm64`, `android-x86_64`.
 
 ### Android cross-compilation
 
@@ -144,9 +133,6 @@ cd packages/zenoh && fvm dart test test/session_test.dart
 
 # Run a single test by name
 cd packages/zenoh && fvm dart test --name "opens session"
-
-# Melos bootstrap (from monorepo root)
-fvm dart run melos bootstrap
 ```
 
 ### CLI examples
