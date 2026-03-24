@@ -1,6 +1,10 @@
-# Zenoh Dart
+# Zenoh Dart — Development Workshop
 
-> **BUILD SYSTEM OVERHAUL IN PROGRESS** — The CMake setup is being restructured to support proper `install()` targets. The build instructions below may not work until this is complete.
+> ## *Lasciate ogne speranza, voi ch'intrate*
+>
+> **This is the development workshop repository.** It contains phase specs, design documents, experiments, audits, LaTeX papers, 7 git submodules, and the full archaeological record of building zenoh-dart from scratch. It is a complicated mess by design.
+>
+> **Looking for the package?** Go to **[zenoh_dart](https://github.com/hugo-bluecorn/zenoh_dart)** — the clean product repository with a single submodule, `package/` publish boundary, and 193 passing tests.
 
 Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protocol for real-time, distributed systems. This package wraps [zenoh-c](https://github.com/eclipse-zenoh/zenoh-c) v1.7.2 through a thin C shim layer, giving Dart and Flutter applications access to zenoh's wire protocol without native plugin boilerplate.
 
