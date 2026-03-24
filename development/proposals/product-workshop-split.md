@@ -1,9 +1,10 @@
 # Proposal: Product / Workshop Repository Split
 
-**Date:** 2026-03-24 (revised 2026-03-24, pass 2)
+**Date:** 2026-03-24 (revised 2026-03-24, pass 3)
 **Author:** CA (Code Architect)
+**Reviewed by:** CA2 (independent review session)
 **Status:** Proposal — awaiting human review
-**Depends on:** CMake superbuild proposal (must complete first)
+**Recommended sequence:** Complete CMake superbuild first (avoids double path-rewriting), but not a hard dependency — the split works with the existing standalone build system if the superbuild is deferred.
 
 ---
 
@@ -135,6 +136,7 @@ zenoh_dart/                     # Fresh repo — clean git history
   CMakeLists.txt                # Root superbuild (from superbuild proposal)
   CMakePresets.json             # Platform presets
   CLAUDE.md                     # Simplified — build, use, contribute
+  README.md                     # Repo-level — layout, building, points to package/README.md
   .gitignore
   .gitmodules                   # Single entry: extern/zenoh-c
 ```
@@ -217,6 +219,13 @@ Note: prebuilt discovery paths now include `package/` because `native/` lives in
 | Relative probing | Checks `packages/zenoh/native/linux/x86_64/` | Checks `package/native/linux/x86_64/` (but from inside `package/`, just `native/linux/x86_64/` relative) |
 
 The path resolution is actually simpler. `Isolate.resolvePackageUriSync('package:zenoh/')` returns the physical path to `package/lib/`. Walking up one directory reaches `package/` where `native/` lives. Currently the code walks up from `packages/zenoh/lib/` to `packages/zenoh/` — same depth, cleaner name.
+
+**Dead code cleanup:** The CWD fallback candidates list (current `native_lib.dart` lines ~57-62) includes monorepo-specific paths:
+```dart
+'packages/zenoh/native/linux/x86_64/$libraryName',     // ← remove
+'packages/zenoh/.dart_tool/lib/$libraryName',           // ← remove
+```
+These are harmless (won't match in the product repo) but contradict the purpose of the split. Remove them during the path rewrite step.
 
 ### `hook/build.dart` (inside `package/hook/`)
 
@@ -321,7 +330,7 @@ The workshop scaffolding that made `zenoh_dart_dev` heavy was mostly historical 
 
 ## Execution Sequence
 
-This split depends on the CMake superbuild proposal being completed first. The superbuild changes the same files (CMakeLists.txt, paths, build scripts), and doing both simultaneously doubles the path-rewriting work.
+**Recommended:** Complete the CMake superbuild proposal first — it changes the same files (CMakeLists.txt, paths, build scripts), and doing both simultaneously doubles the path-rewriting work. However, this is a scheduling preference, not a hard dependency. If the superbuild spike fails (`add_subdirectory(extern/zenoh-c)` doesn't work) or is deferred, the split proceeds with the existing standalone build system — `src/CMakeLists.txt` paths get updated for the `package/` layout and the 3-tier discovery continues to work.
 
 1. **Complete CMake superbuild** in current repo — root CMakeLists.txt, presets, dual-mode src/CMakeLists.txt
 2. **Verify** 193 tests pass with new build system
