@@ -16,3 +16,6 @@
 [submodule "extern/zenoh"]
 	path = extern/zenoh
 	url = https://github.com/eclipse-zenoh/zenoh.git
+[submodule "extern/cmake"]
+	path = extern/cmake
+	url = https://gitlab.kitware.com/cmake/cmake.git
