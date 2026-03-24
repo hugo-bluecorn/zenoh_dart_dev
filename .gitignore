@@ -36,8 +36,9 @@ migrate_working_dir/
 # TDD workflow
 .tdd-progress.md
 
-# Claude Code agent state
-.claude/
+# Claude Code — commit settings.json, skills/, rules/; ignore local/machine state
+.claude/settings.local.json
+.claude/agent-memory/
 
 # Coverage artifacts
 packages/*/coverage/

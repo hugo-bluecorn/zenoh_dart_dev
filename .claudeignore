@@ -1,0 +1,13 @@
+# Submodules — only extern/zenoh-c/include/ and extern/zenoh-cpp/include/ needed for reference
+extern/zenoh/
+extern/zenoh-demos/
+extern/zenoh-kotlin/
+extern/cargo-ndk/
+extern/zenoh-c/target/
+extern/zenoh-c/build/
+extern/zenoh-c/build-resources/
+extern/zenoh-cpp/build/
+
+# Build artifacts
+build/
+build_asan/
