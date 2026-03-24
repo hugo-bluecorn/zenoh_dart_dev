@@ -1,7 +1,8 @@
 # Build System Analysis & Proposal: Unified CMake Superbuild
 
-**Date:** 2026-03-24 (revised 2026-03-24, pass 2)
+**Date:** 2026-03-24 (revised 2026-03-24, pass 3)
 **Author:** CA (Code Architect)
+**Reviewed by:** CA2 (independent review session)
 **Status:** Proposal — awaiting human review
 
 ---
@@ -141,7 +142,9 @@ if(ZENOH_DART_BUILD_ZENOHC)
     # "+stable" makes cargo invoke `cargo +stable build ...`
     # This overrides extern/zenoh-c/rust-toolchain.toml which pins an unreleased version
     set(ZENOHC_CARGO_CHANNEL "+stable" CACHE STRING "" FORCE)
-    set(ZENOHC_BUILD_IN_SOURCE_TREE FALSE CACHE BOOL "" FORCE)
+    # Note: ZENOHC_BUILD_IN_SOURCE_TREE is irrelevant here — zenoh-c's condition
+    # (line 79) also checks CMAKE_SOURCE_DIR == CMAKE_CURRENT_SOURCE_DIR, which
+    # is always FALSE when used via add_subdirectory(). No need to set it.
     add_subdirectory(extern/zenoh-c)
     message(STATUS "zenoh-c: building from source (cargo)")
 else()
@@ -164,10 +167,15 @@ else()
     set(PREBUILT_DIR "${NATIVE_DIR}/linux/${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
-# Always install libzenoh_dart.so (the C shim we just built)
-install(FILES $<TARGET_FILE:zenoh_dart> DESTINATION "${PREBUILT_DIR}")
+# Install libzenoh_dart.so via install(TARGETS) — NOT install(FILES).
+# install(TARGETS) applies INSTALL_RPATH ("$ORIGIN") automatically via
+# chrpath/relinking. install(FILES) is a raw copy that skips RPATH editing.
+# This eliminates the patchelf dependency entirely.
+install(TARGETS zenoh_dart LIBRARY DESTINATION "${PREBUILT_DIR}")
 
-# Install libzenohc.so — source depends on build mode
+# Install libzenohc.so — source depends on build mode.
+# zenohc_shared is an IMPORTED target, so install(TARGETS) cannot be used.
+# install(FILES) is correct here — we don't own this library's RPATH.
 if(ZENOH_DART_BUILD_ZENOHC AND TARGET zenohc_shared)
     # Superbuild: copy from cargo output in build tree
     install(FILES $<TARGET_FILE:zenohc_shared> DESTINATION "${PREBUILT_DIR}")
@@ -176,23 +184,6 @@ else()
     # Only copy if source differs from destination (avoids self-copy)
     if(DEFINED ZENOHC_LIB_DIR AND NOT "${ZENOHC_LIB_DIR}" STREQUAL "${PREBUILT_DIR}")
         install(FILES "${ZENOHC_LIB_DIR}/libzenohc.so" DESTINATION "${PREBUILT_DIR}")
-    endif()
-endif()
-
-# Linux: fix RPATH on installed libzenoh_dart.so so it finds libzenohc.so
-# in the same directory at runtime (self-contained deployment)
-if(NOT ANDROID)
-    find_program(PATCHELF patchelf)
-    if(PATCHELF)
-        install(CODE "
-            execute_process(
-                COMMAND ${PATCHELF} --set-rpath \\$ORIGIN
-                    \"${PREBUILT_DIR}/libzenoh_dart.so\"
-            )
-            message(STATUS \"Set RPATH=\\$ORIGIN on libzenoh_dart.so\")
-        ")
-    else()
-        message(WARNING "patchelf not found — RPATH won't be patched on installed libraries. Install with: apt install patchelf")
     endif()
 endif()
 ```
@@ -236,10 +227,20 @@ if(TARGET zenohc::lib)
   # ── Superbuild mode: zenoh-c built by parent CMakeLists.txt ──
   # zenohc::lib's INTERFACE_INCLUDE_DIRECTORIES already provides the
   # zenoh-c headers, so no explicit target_include_directories needed.
+  # Note: headers come from two sources during cargo build:
+  #   1. Static headers (zenoh.h, zenoh_memory.h, zenoh_constants.h) copied
+  #      by configure_cargo_toml() to the generated include dir
+  #   2. Generated headers (zenoh_commons.h, zenoh_opaque.h, etc.) produced
+  #      by cbindgen during the cargo build step
+  # Both end up in the same INTERFACE_INCLUDE_DIRECTORIES path.
+  # Verify during spike that all headers are resolvable.
   message(STATUS "zenoh-c: linking against zenohc::lib target (superbuild)")
   target_link_libraries(zenoh_dart PRIVATE zenohc::lib)
 
-  # Resolve zenohc location for RPATH
+  # Resolve zenohc location for RPATH.
+  # Uses zenohc_shared directly (not zenohc::lib) because:
+  # 1. get_target_property() doesn't work on ALIAS targets before CMake 3.27
+  # 2. We always want the shared library location regardless of BUILD_SHARED_LIBS
   get_target_property(ZENOHC_LOC zenohc_shared IMPORTED_LOCATION)
   if(ZENOHC_LOC)
     get_filename_component(ZENOHC_LIB_DIR "${ZENOHC_LOC}" DIRECTORY)
@@ -297,7 +298,7 @@ endif()
 
 ```json
 {
-  "version": 6,
+  "version": 3,
   "configurePresets": [
     {
       "name": "linux-x64",
@@ -401,7 +402,7 @@ cd packages/zenoh && fvm dart test
 
 **After** (2 native build commands + unchanged Dart commands):
 ```bash
-# 1. Configure + build + cargo + copy + patchelf — all in one pipeline
+# 1. Configure + build + cargo + install (RPATH set automatically by CMake)
 cmake --preset linux-x64
 cmake --build --preset linux-x64 --target install
 # 2. (optional) Regenerate FFI bindings if C header changed
@@ -555,9 +556,8 @@ The hybrid approach is pragmatic: `cargo-ndk` for Rust compilation, CMake preset
 | 2 | zenoh-c subdirectory build writes to build tree, not source tree | Cargo output in `build/linux-x64/extern/zenoh-c/` instead of `extern/zenoh-c/target/` | Expected behavior. The install target copies to `native/`. Old `extern/zenoh-c/target/` from prior manual builds can be cleaned up. |
 | 3 | `ZENOHC_CARGO_CHANNEL "+stable"` — does `cargo +stable` actually override `rust-toolchain.toml`? | If not, cargo may try to use the pinned unreleased toolchain and fail | The `+channel` syntax is a rustup override that takes precedence over `rust-toolchain.toml`. This is the same mechanism as the current `RUSTUP_TOOLCHAIN=stable` env var, just invoked differently. Verify during spike. |
 | 4 | `add_subdirectory` pulls in zenoh-c's full cargo build time | First build takes 5-10 min | Same as current. Cargo is incremental — subsequent builds only rebuild if Rust sources change. C shim-only changes rebuild in ~2s. |
-| 5 | patchelf dependency for install target | RPATH won't be set without patchelf | WARNING, not FATAL_ERROR. Developer can install via `apt install patchelf`. The `.so` still works — just needs `LD_LIBRARY_PATH` if RPATH is missing (same as current without patchelf). |
-| 6 | CMakePresets.json requires CMake 3.21+ | Preset version 6 needs newer CMake | Root CMakeLists.txt works without presets (manual `-D` flags). Presets are convenience, not requirement. Can use preset version 3 (CMake 3.21) instead of version 6 if needed. |
-| 7 | Root project declares `LANGUAGES C CXX` but developer may not have `clang++` | Configure fails | Presets set `CMAKE_CXX_COMPILER=clang++`. If missing, cmake error is clear. CXX is needed because zenoh-c's `project()` declares both C and CXX. |
+| 5 | CMakePresets.json requires CMake 3.21+ | Developers with older CMake can't use presets | Root CMakeLists.txt works without presets (manual `-D` flags). Presets are convenience, not requirement. Version 3 is the minimum needed (toolchainFile support). |
+| 6 | Root project declares `LANGUAGES C CXX` but developer may not have `clang++` | Configure fails | Presets set `CMAKE_CXX_COMPILER=clang++`. If missing, cmake error is clear. CXX is needed because zenoh-c's `project()` declares both C and CXX. |
 
 ---
 
@@ -576,3 +576,5 @@ This is a Phase-P2 (Packaging/Build) effort. Suggested execution:
 9. **Update `docs/build/01-build-zenoh-c.md`** — Reflect new unified flow
 
 This is a CI-session task (direct edit, not TDD — build infrastructure, not testable behavior).
+
+**Note on helpers.cmake dependency:** The root CMakeLists.txt reuses `extern/zenoh-c/cmake/helpers.cmake`. Since zenoh-c is pinned at v1.7.2 via submodule, this is a controlled dependency — helpers won't change unexpectedly. When upgrading the zenoh-c submodule version, review the root CMakeLists.txt for compatibility with any helpers.cmake changes.
