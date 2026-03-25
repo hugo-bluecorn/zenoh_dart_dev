@@ -30,12 +30,10 @@ void main() {
       // Declare two queryables on the SAME key expression so both
       // receive the query. Wildcard overlap does not guarantee delivery
       // in peer mode, but same-keyexpr with target=ALL should.
-      final queryable1 =
-          sessionA.declareQueryable('zenoh/dart/test/q/multi/a');
+      final queryable1 = sessionA.declareQueryable('zenoh/dart/test/q/multi/a');
       addTearDown(queryable1.close);
 
-      final queryable2 =
-          sessionA.declareQueryable('zenoh/dart/test/q/multi/a');
+      final queryable2 = sessionA.declareQueryable('zenoh/dart/test/q/multi/a');
       addTearDown(queryable2.close);
 
       queryable1.stream.listen((query) {
@@ -69,8 +67,9 @@ void main() {
     });
 
     test('single queryable sends multiple replies to one query', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/multireply');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/q/multireply',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -82,22 +81,24 @@ void main() {
 
       await Future.delayed(Duration(milliseconds: 200));
 
-      final replies =
-          await sessionB.get('zenoh/dart/test/q/multireply').toList();
+      final replies = await sessionB
+          .get('zenoh/dart/test/q/multireply')
+          .toList();
 
       // zenoh-c supports multiple replies per query, but auto
       // consolidation deduplicates by keyexpr keeping only the latest.
       // With consolidation=none, all 3 should come through.
       expect(replies.length, greaterThanOrEqualTo(1));
-      final payloads =
-          replies.where((r) => r.isOk).map((r) => r.ok.payload).toList();
+      final payloads = replies
+          .where((r) => r.isOk)
+          .map((r) => r.ok.payload)
+          .toList();
       // The last reply is always delivered; all 3 may be present
       expect(payloads, contains('r3'));
     });
 
     test('encoding round-trip via queryable reply', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/enc');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q/enc');
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -111,22 +112,18 @@ void main() {
 
       await Future.delayed(Duration(milliseconds: 200));
 
-      final replies =
-          await sessionB.get('zenoh/dart/test/q/enc').toList();
+      final replies = await sessionB.get('zenoh/dart/test/q/enc').toList();
 
       expect(replies, hasLength(1));
       expect(replies.first.isOk, isTrue);
       expect(replies.first.ok.encoding, equals('application/json'));
     });
 
-    test('consolidation LATEST with two queryables on same keyexpr',
-        () async {
-      final queryable1 =
-          sessionA.declareQueryable('zenoh/dart/test/q/consol');
+    test('consolidation LATEST with two queryables on same keyexpr', () async {
+      final queryable1 = sessionA.declareQueryable('zenoh/dart/test/q/consol');
       addTearDown(queryable1.close);
 
-      final queryable2 =
-          sessionA.declareQueryable('zenoh/dart/test/q/consol');
+      final queryable2 = sessionA.declareQueryable('zenoh/dart/test/q/consol');
       addTearDown(queryable2.close);
 
       queryable1.stream.listen((query) {
@@ -161,10 +158,7 @@ void main() {
       final stopwatch = Stopwatch()..start();
 
       final replies = await sessionB
-          .get(
-            'zenoh/dart/test/q/customto',
-            timeout: Duration(seconds: 2),
-          )
+          .get('zenoh/dart/test/q/customto', timeout: Duration(seconds: 2))
           .toList();
 
       stopwatch.stop();
@@ -190,8 +184,7 @@ void main() {
 
       await Future.delayed(Duration(milliseconds: 200));
 
-      final replies =
-          await sessionB.get('zenoh/dart/test/q/complete').toList();
+      final replies = await sessionB.get('zenoh/dart/test/q/complete').toList();
 
       expect(replies, hasLength(1));
       expect(replies.first.isOk, isTrue);

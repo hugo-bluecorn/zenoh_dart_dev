@@ -41,8 +41,7 @@ void main() {
       await subscription.cancel();
 
       expect(stdout.toString(), contains('Declaring Queryable'));
-      expect(stdout.toString(),
-          contains('demo/example/zenoh-dart-queryable'));
+      expect(stdout.toString(), contains('demo/example/zenoh-dart-queryable'));
     });
 
     test('accepts --key flag', () async {
@@ -84,12 +83,12 @@ void main() {
       final qSubscription = qProcess.stdout
           .transform(const SystemEncoding().decoder)
           .listen((data) {
-        qStdout.write(data);
-        if (!completer.isCompleted &&
-            qStdout.toString().contains('Press CTRL-C')) {
-          completer.complete();
-        }
-      });
+            qStdout.write(data);
+            if (!completer.isCompleted &&
+                qStdout.toString().contains('Press CTRL-C')) {
+              completer.complete();
+            }
+          });
 
       try {
         // Wait for queryable to start and bind TCP listener

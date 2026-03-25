@@ -55,13 +55,15 @@ void main() {
       );
     });
 
-    test('declareQueryable with invalid key expression throws ZenohException',
-        () {
-      expect(
-        () => session.declareQueryable(''),
-        throwsA(isA<ZenohException>()),
-      );
-    });
+    test(
+      'declareQueryable with invalid key expression throws ZenohException',
+      () {
+        expect(
+          () => session.declareQueryable(''),
+          throwsA(isA<ZenohException>()),
+        );
+      },
+    );
 
     test('Queryable stream closes on undeclare', () async {
       final queryable = session.declareQueryable('demo/test/queryable/stream');
@@ -75,4 +77,3 @@ void main() {
     });
   });
 }
-

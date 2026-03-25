@@ -1,7 +1,6 @@
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
 
-
 void main() {
   group('QueryTarget', () {
     test('has correct values', () {
@@ -12,8 +11,7 @@ void main() {
     });
 
     test('values are distinct', () {
-      final indices =
-          QueryTarget.values.map((v) => v.index).toSet();
+      final indices = QueryTarget.values.map((v) => v.index).toSet();
       expect(indices.length, QueryTarget.values.length);
     });
   });

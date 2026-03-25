@@ -109,8 +109,6 @@ class Query {
   void dispose() {
     if (_disposed) return;
     _disposed = true;
-    bindings.zd_query_drop(
-      Pointer.fromAddress(_handle).cast(),
-    );
+    bindings.zd_query_drop(Pointer.fromAddress(_handle).cast());
   }
 }

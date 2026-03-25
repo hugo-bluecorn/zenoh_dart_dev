@@ -34,12 +34,7 @@ void main() {
     });
 
     test('accepts short flags', () async {
-      final result = await runZGet([
-        '-s',
-        'demo/short/**',
-        '-o',
-        '2000',
-      ]);
+      final result = await runZGet(['-s', 'demo/short/**', '-o', '2000']);
       expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
       expect(result.stdout as String, contains('demo/short/**'));
     });

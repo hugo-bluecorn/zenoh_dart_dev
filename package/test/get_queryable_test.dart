@@ -2,13 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
-import 'package:zenoh/src/config.dart';
-import 'package:zenoh/src/consolidation_mode.dart';
-import 'package:zenoh/src/query.dart';
-import 'package:zenoh/src/query_target.dart';
-import 'package:zenoh/src/queryable.dart';
-import 'package:zenoh/src/reply.dart';
-import 'package:zenoh/src/session.dart';
+import 'package:zenoh/zenoh.dart';
 
 void main() {
   group('Get/Queryable integration (TCP 17470)', () {
@@ -34,8 +28,7 @@ void main() {
     });
 
     test('basic get receives reply from queryable', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/basic');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q/basic');
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -46,8 +39,7 @@ void main() {
       // Small delay to let queryable register
       await Future.delayed(Duration(milliseconds: 200));
 
-      final replies =
-          await sessionB.get('zenoh/dart/test/q/basic').toList();
+      final replies = await sessionB.get('zenoh/dart/test/q/basic').toList();
 
       expect(replies, hasLength(1));
       expect(replies.first.isOk, isTrue);
@@ -56,8 +48,7 @@ void main() {
 
     test('get with parameters', () async {
       final receivedParams = Completer<String>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/params');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q/params');
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -72,15 +63,13 @@ void main() {
           .get('zenoh/dart/test/q/params', parameters: 'key=value')
           .toList();
 
-      final params = await receivedParams.future
-          .timeout(Duration(seconds: 5));
+      final params = await receivedParams.future.timeout(Duration(seconds: 5));
       expect(params, equals('key=value'));
     });
 
     test('get with payload', () async {
       final receivedPayload = Completer<Uint8List>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/payload');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q/payload');
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -96,19 +85,21 @@ void main() {
       await Future.delayed(Duration(milliseconds: 200));
 
       await sessionB
-          .get('zenoh/dart/test/q/payload',
-              payload: Uint8List.fromList([1, 2, 3]))
+          .get(
+            'zenoh/dart/test/q/payload',
+            payload: Uint8List.fromList([1, 2, 3]),
+          )
           .toList();
 
-      final payload = await receivedPayload.future
-          .timeout(Duration(seconds: 5));
+      final payload = await receivedPayload.future.timeout(
+        Duration(seconds: 5),
+      );
       expect(payload, equals(Uint8List.fromList([1, 2, 3])));
     });
 
     test('empty parameters', () async {
       final receivedParams = Completer<String>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/noparams');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q/noparams');
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -121,23 +112,20 @@ void main() {
 
       await sessionB.get('zenoh/dart/test/q/noparams').toList();
 
-      final params = await receivedParams.future
-          .timeout(Duration(seconds: 5));
+      final params = await receivedParams.future.timeout(Duration(seconds: 5));
       expect(params, isEmpty);
     });
 
     test('get timeout with no queryable', () async {
       final replies = await sessionB
-          .get('zenoh/dart/test/q/nonexistent',
-              timeout: Duration(seconds: 1))
+          .get('zenoh/dart/test/q/nonexistent', timeout: Duration(seconds: 1))
           .toList();
 
       expect(replies, isEmpty);
     });
 
     test('query dispose without reply', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/noreply');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q/noreply');
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -148,16 +136,16 @@ void main() {
       await Future.delayed(Duration(milliseconds: 200));
 
       final replies = await sessionB
-          .get('zenoh/dart/test/q/noreply',
-              timeout: Duration(seconds: 2))
+          .get('zenoh/dart/test/q/noreply', timeout: Duration(seconds: 2))
           .toList();
 
       expect(replies, isEmpty);
     });
 
     test('query dispose after reply is idempotent', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/idempotent');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/q/idempotent',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -173,8 +161,7 @@ void main() {
     });
 
     test('reply keyExpr matches query keyExpr', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/keycheck');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q/keycheck');
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -184,15 +171,11 @@ void main() {
 
       await Future.delayed(Duration(milliseconds: 200));
 
-      final replies =
-          await sessionB.get('zenoh/dart/test/q/keycheck').toList();
+      final replies = await sessionB.get('zenoh/dart/test/q/keycheck').toList();
 
       expect(replies, hasLength(1));
       expect(replies.first.isOk, isTrue);
-      expect(
-        replies.first.ok.keyExpr,
-        equals('zenoh/dart/test/q/keycheck'),
-      );
+      expect(replies.first.ok.keyExpr, equals('zenoh/dart/test/q/keycheck'));
     });
 
     test('Session.get() on closed session throws StateError', () {
@@ -200,57 +183,52 @@ void main() {
       closedSession.close();
       expect(
         () => closedSession.get('zenoh/dart/test/q/closed'),
-        throwsA(isA<StateError>().having(
-          (e) => e.message,
-          'message',
-          contains('closed'),
-        )),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('closed'),
+          ),
+        ),
       );
     });
 
     test('queryable close stops receiving queries', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/closedq');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q/closedq');
       // Close queryable immediately
       queryable.close();
 
       await Future.delayed(Duration(milliseconds: 200));
 
       final replies = await sessionB
-          .get('zenoh/dart/test/q/closedq',
-              timeout: Duration(seconds: 1))
+          .get('zenoh/dart/test/q/closedq', timeout: Duration(seconds: 1))
           .toList();
 
       expect(replies, isEmpty);
     });
 
     test('Query.reply with string value', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/strreply');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q/strreply');
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
-        query.reply(
-            'zenoh/dart/test/q/strreply', 'hello string reply');
+        query.reply('zenoh/dart/test/q/strreply', 'hello string reply');
         query.dispose();
       });
 
       await Future.delayed(Duration(milliseconds: 200));
 
-      final replies =
-          await sessionB.get('zenoh/dart/test/q/strreply').toList();
+      final replies = await sessionB.get('zenoh/dart/test/q/strreply').toList();
 
       expect(replies, hasLength(1));
       expect(replies.first.isOk, isTrue);
-      expect(
-        replies.first.ok.payload,
-        equals('hello string reply'),
-      );
+      expect(replies.first.ok.payload, equals('hello string reply'));
     });
 
     test('Query.replyBytes with raw bytes', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/q/bytereply');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/q/bytereply',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -263,8 +241,9 @@ void main() {
 
       await Future.delayed(Duration(milliseconds: 200));
 
-      final replies =
-          await sessionB.get('zenoh/dart/test/q/bytereply').toList();
+      final replies = await sessionB
+          .get('zenoh/dart/test/q/bytereply')
+          .toList();
 
       expect(replies, hasLength(1));
       expect(replies.first.isOk, isTrue);

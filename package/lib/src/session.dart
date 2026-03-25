@@ -282,11 +282,7 @@ class Session {
     _ensureOpen();
     final loanedSession =
         bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
-    return Queryable.declare(
-      loanedSession,
-      keyExpr,
-      complete: complete,
-    );
+    return Queryable.declare(loanedSession, keyExpr, complete: complete);
   }
 
   /// Sends a query on the given [selector] and returns a stream of replies.
@@ -328,8 +324,7 @@ class Session {
           final payloadBytes = message[2] as Uint8List;
           final kind = message[3] as int;
           final attachmentBytes = message[4] as Uint8List?;
-          final encodingStr =
-              message.length > 5 ? message[5] as String? : null;
+          final encodingStr = message.length > 5 ? message[5] as String? : null;
 
           final sample = Sample(
             keyExpr: keyExpr,
@@ -345,8 +340,9 @@ class Session {
         } else if (tag == 0) {
           // Error reply: [0, error_payload_bytes, error_encoding]
           final errorPayloadBytes = message[1] as Uint8List;
-          final errorEncoding =
-              message.length > 2 ? message[2] as String? : null;
+          final errorEncoding = message.length > 2
+              ? message[2] as String?
+              : null;
 
           final replyError = ReplyError(
             payloadBytes: errorPayloadBytes,

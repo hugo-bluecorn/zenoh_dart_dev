@@ -28,14 +28,10 @@ class Reply {
   final ReplyError? _error;
 
   /// Creates an ok reply containing a [Sample].
-  Reply.ok(Sample sample)
-      : _sample = sample,
-        _error = null;
+  Reply.ok(Sample sample) : _sample = sample, _error = null;
 
   /// Creates an error reply containing a [ReplyError].
-  Reply.error(ReplyError error)
-      : _sample = null,
-        _error = error;
+  Reply.error(ReplyError error) : _sample = null, _error = error;
 
   /// Returns true if this reply contains a successful sample.
   bool get isOk => _sample != null;
