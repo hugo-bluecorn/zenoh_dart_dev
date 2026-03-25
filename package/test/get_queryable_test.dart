@@ -372,6 +372,78 @@ void main() {
       // After get() consumes the ZBytes, accessing nativePtr should throw
       expect(() => zbytes.nativePtr, throwsA(isA<StateError>()));
     });
+
+    test('Query.replyBytes with ZBytes delivers correct payload', () async {
+      final queryable =
+          sessionA.declareQueryable('zenoh/dart/test/q7/replybytes');
+      addTearDown(queryable.close);
+
+      queryable.stream.listen((query) {
+        final replyPayload = ZBytes.fromUint8List(
+          Uint8List.fromList([0xDE, 0xAD]),
+        );
+        query.replyBytes('zenoh/dart/test/q7/replybytes', replyPayload);
+        query.dispose();
+      });
+
+      await Future.delayed(Duration(milliseconds: 200));
+
+      final replies =
+          await sessionB.get('zenoh/dart/test/q7/replybytes').toList();
+
+      expect(replies, hasLength(1));
+      expect(replies.first.isOk, isTrue);
+      expect(
+        replies.first.ok.payloadBytes,
+        equals(Uint8List.fromList([0xDE, 0xAD])),
+      );
+    });
+
+    test('Query.reply string convenience still works after replyBytes change',
+        () async {
+      final queryable =
+          sessionA.declareQueryable('zenoh/dart/test/q7/strconv');
+      addTearDown(queryable.close);
+
+      queryable.stream.listen((query) {
+        query.reply('zenoh/dart/test/q7/strconv', 'hello string');
+        query.dispose();
+      });
+
+      await Future.delayed(Duration(milliseconds: 200));
+
+      final replies =
+          await sessionB.get('zenoh/dart/test/q7/strconv').toList();
+
+      expect(replies, hasLength(1));
+      expect(replies.first.isOk, isTrue);
+      expect(replies.first.ok.payload, equals('hello string'));
+    });
+
+    test('ZBytes payload is consumed after Query.replyBytes', () async {
+      final queryable =
+          sessionA.declareQueryable('zenoh/dart/test/q7/replyconsumed');
+      addTearDown(queryable.close);
+
+      late ZBytes replyPayload;
+      queryable.stream.listen((query) {
+        replyPayload = ZBytes.fromUint8List(
+          Uint8List.fromList([0xCA, 0xFE]),
+        );
+        query.replyBytes('zenoh/dart/test/q7/replyconsumed', replyPayload);
+        // After replyBytes consumes the ZBytes, nativePtr should throw
+        expect(() => replyPayload.nativePtr, throwsA(isA<StateError>()));
+        query.dispose();
+      });
+
+      await Future.delayed(Duration(milliseconds: 200));
+
+      final replies =
+          await sessionB.get('zenoh/dart/test/q7/replyconsumed').toList();
+
+      expect(replies, hasLength(1));
+      expect(replies.first.isOk, isTrue);
+    });
   });
 }
 
