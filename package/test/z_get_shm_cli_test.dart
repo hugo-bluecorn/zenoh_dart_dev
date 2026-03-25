@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-
 void main() {
   final packageRoot = Directory.current.path;
 
@@ -35,8 +34,7 @@ void main() {
     });
 
     test('accepts short flags', () async {
-      final result =
-          await runZGetShm(['-s', 'demo/short/**', '-o', '2000']);
+      final result = await runZGetShm(['-s', 'demo/short/**', '-o', '2000']);
       expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
       expect(result.stdout as String, contains('demo/short/**'));
     });

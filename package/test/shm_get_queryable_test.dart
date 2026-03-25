@@ -48,8 +48,9 @@ void main() {
 
     test('SHM payload delivered to queryable via get', () async {
       final receivedPayload = Completer<Uint8List>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/shm-q/payload');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/shm-q/payload',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -73,51 +74,50 @@ void main() {
       final payload = await receivedPayload.future.timeout(
         Duration(seconds: 5),
       );
-      expect(
-        utf8.decode(payload),
-        equals('shm query data'),
-      );
+      expect(utf8.decode(payload), equals('shm query data'));
     });
 
-    test('non-SHM ZBytes.fromUint8List payload delivered to queryable via get',
-        () async {
-      final receivedPayload = Completer<Uint8List>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/shm-q/frombytes');
-      addTearDown(queryable.close);
+    test(
+      'non-SHM ZBytes.fromUint8List payload delivered to queryable via get',
+      () async {
+        final receivedPayload = Completer<Uint8List>();
+        final queryable = sessionA.declareQueryable(
+          'zenoh/dart/test/shm-q/frombytes',
+        );
+        addTearDown(queryable.close);
 
-      queryable.stream.listen((query) {
-        if (query.payloadBytes != null) {
-          receivedPayload.complete(query.payloadBytes!);
-        } else {
-          receivedPayload.completeError('No payload received');
-        }
-        query.reply('zenoh/dart/test/shm-q/frombytes', 'ok');
-        query.dispose();
-      });
+        queryable.stream.listen((query) {
+          if (query.payloadBytes != null) {
+            receivedPayload.complete(query.payloadBytes!);
+          } else {
+            receivedPayload.completeError('No payload received');
+          }
+          query.reply('zenoh/dart/test/shm-q/frombytes', 'ok');
+          query.dispose();
+        });
 
-      await Future.delayed(Duration(milliseconds: 200));
+        await Future.delayed(Duration(milliseconds: 200));
 
-      final zbytes =
-          ZBytes.fromUint8List(Uint8List.fromList(utf8.encode('from bytes')));
-      addTearDown(zbytes.dispose);
+        final zbytes = ZBytes.fromUint8List(
+          Uint8List.fromList(utf8.encode('from bytes')),
+        );
+        addTearDown(zbytes.dispose);
 
-      await sessionB
-          .get('zenoh/dart/test/shm-q/frombytes', payload: zbytes)
-          .toList();
+        await sessionB
+            .get('zenoh/dart/test/shm-q/frombytes', payload: zbytes)
+            .toList();
 
-      final payload = await receivedPayload.future.timeout(
-        Duration(seconds: 5),
-      );
-      expect(
-        utf8.decode(payload),
-        equals('from bytes'),
-      );
-    });
+        final payload = await receivedPayload.future.timeout(
+          Duration(seconds: 5),
+        );
+        expect(utf8.decode(payload), equals('from bytes'));
+      },
+    );
 
     test('SHM queryable reply received by get caller', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/shm-q/reply');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/shm-q/reply',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -128,8 +128,9 @@ void main() {
 
       await Future.delayed(Duration(milliseconds: 200));
 
-      final replies =
-          await sessionB.get('zenoh/dart/test/shm-q/reply').toList();
+      final replies = await sessionB
+          .get('zenoh/dart/test/shm-q/reply')
+          .toList();
 
       expect(replies, hasLength(1));
       expect(replies.first.isOk, isTrue);
@@ -144,8 +145,9 @@ void main() {
       addTearDown(providerB.close);
 
       final receivedPayload = Completer<Uint8List>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/shm-q/bidir');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/shm-q/bidir',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -178,16 +180,14 @@ void main() {
       // Verify get caller received the SHM reply
       expect(replies, hasLength(1));
       expect(replies.first.isOk, isTrue);
-      expect(
-        utf8.decode(replies.first.ok.payloadBytes),
-        equals('shm answer'),
-      );
+      expect(utf8.decode(replies.first.ok.payloadBytes), equals('shm answer'));
     });
 
     test('SHM queryable receives non-SHM query transparently', () async {
       final receivedPayload = Completer<Uint8List>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/shm-q/mixed-nonshm-q');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/shm-q/mixed-nonshm-q',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -206,7 +206,8 @@ void main() {
 
       // Send non-SHM payload
       final zbytes = ZBytes.fromUint8List(
-          Uint8List.fromList(utf8.encode('regular query')));
+        Uint8List.fromList(utf8.encode('regular query')),
+      );
       addTearDown(zbytes.dispose);
 
       final replies = await sessionB
@@ -230,8 +231,9 @@ void main() {
 
     test('non-SHM queryable receives SHM query transparently', () async {
       final receivedPayload = Completer<Uint8List>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/shm-q/mixed-shm-q');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/shm-q/mixed-shm-q',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -288,8 +290,7 @@ void main() {
     });
 
     test('returns false for ZBytes.fromUint8List', () {
-      final zbytes =
-          ZBytes.fromUint8List(Uint8List.fromList([1, 2, 3]));
+      final zbytes = ZBytes.fromUint8List(Uint8List.fromList([1, 2, 3]));
       addTearDown(zbytes.dispose);
       expect(zbytes.isShmBacked, isFalse);
     });

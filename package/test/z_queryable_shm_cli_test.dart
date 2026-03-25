@@ -39,10 +39,7 @@ void main() {
       await subscription.cancel();
 
       expect(stdout.toString(), contains('Declaring Queryable'));
-      expect(
-        stdout.toString(),
-        contains('demo/example/zenoh-dart-queryable'),
-      );
+      expect(stdout.toString(), contains('demo/example/zenoh-dart-queryable'));
     });
 
     test('accepts --key flag', () async {
