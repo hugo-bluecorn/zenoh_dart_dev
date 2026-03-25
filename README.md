@@ -4,7 +4,7 @@
 >
 > **This is the development workshop repository.** It contains phase specs, design documents, experiments, audits, LaTeX papers, 7 git submodules, and the full archaeological record of building zenoh-dart from scratch. It is a complicated mess by design.
 >
-> **Looking for the package?** Go to **[zenoh_dart](https://github.com/hugo-bluecorn/zenoh_dart)** — the clean product repository with a single submodule, `package/` publish boundary, and 193 passing tests.
+> **Looking for the package?** Go to **[zenoh_dart](https://github.com/hugo-bluecorn/zenoh_dart)** — the clean product repository with a single submodule, `package/` publish boundary, and 237 passing tests.
 
 Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protocol for real-time, distributed systems. This package wraps [zenoh-c](https://github.com/eclipse-zenoh/zenoh-c) v1.7.2 through a thin C shim layer, giving Dart and Flutter applications access to zenoh's wire protocol without native plugin boilerplate.
 
@@ -14,13 +14,13 @@ It runs anywhere Dart runs: CLI tools, Serverpod backends, Flutter apps on Linux
 
 ```
 ┌─────────────────────────────────┐
-│  Idiomatic Dart API              │  Session, Publisher, Subscriber, ShmProvider, ...
+│  Idiomatic Dart API              │  Session, Publisher, Subscriber, Queryable, Query, Reply, ShmProvider, ...
 │  package/lib/src/         │
 ├─────────────────────────────────┤
 │  Generated FFI Bindings          │  bindings.dart — class-based ZenohDartBindings(DynamicLibrary)
 │  (auto-generated, never edited)  │
 ├─────────────────────────────────┤
-│  C Shim (src/zenoh_dart.{h,c})   │  62 zd_* functions
+│  C Shim (src/zenoh_dart.{h,c})   │  72 zd_* functions
 ├─────────────────────────────────┤
 │  libzenohc.so (zenoh-c v1.7.2)   │  Rust-based zenoh — linked via DT_NEEDED
 └─────────────────────────────────┘
@@ -55,7 +55,7 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 
 ## Current Status
 
-**62 C shim functions, 18 Dart API classes, 193 integration tests, 7 CLI examples.**
+**72 C shim functions, 24 Dart API classes, 237 integration tests, 9 CLI examples.**
 
 | Phase | What it added | Tests |
 |-------|---------------|-------|
@@ -65,8 +65,9 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 | 3 — Publish | `Publisher`, `Encoding`, `CongestionControl`, `Priority`; matching listener; `z_pub.dart` | 120 |
 | 4 — SHM Pub/Sub | `ShmProvider`, `ShmMutBuffer` — zero-copy shared memory; `z_pub_shm.dart` | 148 |
 | 5 — Scout/Info | `ZenohId`, `WhatAmI`, `Hello`, `Zenoh.scout()`, `Session.zid`; `z_info.dart`, `z_scout.dart` | 185 |
+| 6 — Get/Queryable | `Session.get()` → `Stream<Reply>`; `Session.declareQueryable()` → `Queryable`; `Query`, `Reply`, `ReplyError`, `QueryTarget`, `ConsolidationMode`; `z_get.dart`, `z_queryable.dart` | 237 |
 
-Phases 6-18 (query, liveliness, throughput, storage, advanced) are [specified](development/phases/) but not yet implemented.
+Phases 7-18 (liveliness, throughput, storage, advanced) are [specified](development/phases/) but not yet implemented.
 
 ### Patches
 
@@ -187,6 +188,12 @@ fvm dart run example/z_info.dart
 
 # Discover zenoh entities on the network
 fvm dart run example/z_scout.dart
+
+# Send a query and receive replies (runs until timeout)
+fvm dart run example/z_get.dart -s 'demo/example/**' -t BEST_MATCHING
+
+# Declare a queryable and reply to incoming queries (runs until Ctrl-C)
+fvm dart run example/z_queryable.dart -k demo/example/zenoh-dart-queryable -p 'Reply from Dart!'
 ```
 
 CLI flags match zenoh-c's examples exactly (`-k`/`--key`, `-p`/`--payload`, `-e`/`--connect`, `-l`/`--listen`).
@@ -274,7 +281,7 @@ cd package && fvm dart run ffigen --config ffigen.yaml
 | 3 | [Publish](development/phases/phase-03-pub.md) | **COMPLETE** |
 | 4 | [SHM Pub/Sub](development/phases/phase-04-shm-pub-sub.md) | **COMPLETE** |
 | 5 | [Scout / Info](development/phases/phase-05-scout-info.md) | **COMPLETE** |
-| 6 | [Get / Queryable](development/phases/phase-06-get-queryable.md) | |
+| 6 | [Get / Queryable](development/phases/phase-06-get-queryable.md) | — **COMPLETE** |
 | 7 | [SHM Get/Queryable](development/phases/phase-07-shm-get-queryable.md) | |
 | 8 | [Channels](development/phases/phase-08-channels.md) | |
 | 9 | [Pull](development/phases/phase-09-pull.md) | |

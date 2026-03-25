@@ -40,20 +40,27 @@ zenoh_dart_dev/                 # git repo root (development workshop)
 **Phase 5 Scout/Info: COMPLETE** — 62 C shim functions, 185 integration tests. `ZenohId`, `WhatAmI`, `Hello` classes; `Session.zid`/`routersZid()`/`peersZid()`; `Zenoh.scout()`; CLI examples `z_info.dart` and `z_scout.dart`. `Sample.payloadBytes` (`Uint8List`) added as patch 0.6.1.
 **Patch v0.6.2: Inter-process crash fix** — Reverted from `@Native` ffi-native bindings to class-based `ZenohDartBindings(DynamicLibrary)` loaded eagerly via `DynamicLibrary.open()`. Root cause: `@Native` lazy loading via `NoActiveIsolateScope` caused tokio waker vtable crashes when two Dart processes connected via zenoh TCP. 62 C shim functions (unchanged), 193 integration tests (13 new inter-process TCP + pub/sub tests).
 **Patch v0.6.3: Android native library support** — `native_lib.dart` adds `Platform.isAndroid` short-circuit (bare `DynamicLibrary.open`); `hook/build.dart` is now target-aware (dispatches on `targetOS`/`targetArchitecture` for Android ABI mapping); `build_zenoh_android.sh` cross-compiles both `libzenohc.so` (cargo-ndk) and `libzenoh_dart.so` (CMake + NDK toolchain) per ABI; SHM feature flags excluded on Android (`if(NOT ANDROID)` in CMakeLists.txt). Prebuilts at `native/android/<abi>/`. Validated E2E: C++ SHM publisher → zenohd → WiFi → Pixel 9a → Flutter subscriber.
+**Phase 6 Get/Queryable: COMPLETE** — 72 C shim functions, 237 integration tests. `Session.get()` returns `Stream<Reply>`; `Session.declareQueryable()` returns `Queryable`; `Query`, `Reply`, `ReplyError`, `QueryTarget`, `ConsolidationMode` types; CLI examples `z_get.dart` and `z_queryable.dart`.
 
 Available Dart API classes:
 - `Zenoh` — Static utilities: `initLog(fallback)` for runtime logger initialization (call before `Session.open()`); `scout(config)` discovers zenoh entities on the network
 - `Config` — Session configuration with JSON5 insertion
-- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`; `declarePublisher(keyExpr)` returns a `Publisher`; `zid` returns own `ZenohId`; `routersZid()` and `peersZid()` return connected router/peer IDs
+- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`; `declarePublisher(keyExpr)` returns a `Publisher`; `get(selector)` returns `Stream<Reply>`; `declareQueryable(keyExpr)` returns a `Queryable`; `zid` returns own `ZenohId`; `routersZid()` and `peersZid()` return connected router/peer IDs
 - `KeyExpr` — Key expression creation and validation
 - `ZBytes` — Binary payload container with string round-trip; `markConsumed()` for FFI ownership semantics
 - `Publisher` — Declared publisher with `put()`, `putBytes()`, `deleteResource()`, `keyExpr`, `hasMatchingSubscribers()`, `matchingStatus` stream, and `close()`
+- `Query` — Received query with `keyExpr`, `parameters`, `payloadBytes`; reply via `reply()`/`replyBytes()`; `dispose()` frees the cloned query handle
+- `Queryable` — Callback-based queryable delivering queries via `Stream<Query>`; `close()` undeclares and frees the native queryable
+- `Reply` — Tagged union result from `Session.get()`: `isOk` flag, `ok` accessor returning `Sample`, `error` accessor returning `ReplyError`
+- `ReplyError` — Error reply with `payloadBytes` (`Uint8List`), `payload` (UTF-8 string), and optional `encoding` fields
 - `Subscriber` — Callback-based subscriber delivering samples via `Stream<Sample>`; `close()` undeclares and frees the native subscriber
 - `Sample` — Received data with `keyExpr`, `payload` (UTF-8 string), `payloadBytes` (`Uint8List` raw bytes), `kind` (`SampleKind`), optional `attachment`, and optional `encoding` fields
 - `SampleKind` — Enum with `put` and `delete` values
 - `Encoding` — MIME type wrapper with 10 predefined constants (`textPlain`, `applicationJson`, etc.) and custom constructor
 - `CongestionControl` — Enum with `block` and `drop` congestion control strategies
+- `ConsolidationMode` — Enum with `auto`, `none`, `monotonic`, `latest` values controlling reply deduplication in `Session.get()`
 - `Priority` — Enum with 7 priority levels from `realTime` to `background`
+- `QueryTarget` — Enum with `bestMatching`, `all`, `allComplete` values controlling which queryables respond to a `Session.get()` call
 - `ShmProvider` — POSIX shared memory provider with `alloc()`, `allocGcDefragBlocking()`, `available`, and `close()`
 - `ShmMutBuffer` — Mutable SHM buffer with `data` pointer (zero-copy write), `length`, `toBytes()` (zero-copy conversion to `ZBytes`), and `dispose()`
 - `ZenohId` — 16-byte session/entity identifier with `toHexString()`, equality, and hashCode
@@ -61,7 +68,7 @@ Available Dart API classes:
 - `Hello` — Scouting result with `zid` (`ZenohId`), `whatami` (`WhatAmI`), and `locators` (list of strings) fields
 - `ZenohException` — Error type for zenoh operations
 
-Phases 6–18 (query/liveliness/throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
+Phases 7–18 (liveliness/throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
 
 ## FVM Requirement
 
@@ -163,6 +170,12 @@ cd package && fvm dart run example/z_info.dart
 
 # Discover zenoh entities on the network (scouts for routers, peers, and clients)
 cd package && fvm dart run example/z_scout.dart
+
+# Send a query and receive replies (runs until timeout)
+cd package && fvm dart run example/z_get.dart -s 'demo/example/**' -t BEST_MATCHING
+
+# Declare a queryable and reply to incoming queries (runs until Ctrl-C)
+cd package && fvm dart run example/z_queryable.dart -k demo/example/zenoh-dart-queryable -p 'Reply from Dart!'
 ```
 
 CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When adding a new CLI example in any phase:
