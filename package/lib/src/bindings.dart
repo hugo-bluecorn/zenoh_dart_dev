@@ -1202,18 +1202,16 @@ class ZenohDartBindings {
   ///
   /// @param query        Const pointer to a loaned query (as uint8_t*).
   /// @param key_expr     Null-terminated key expression string.
-  /// @param payload      Pointer to payload data.
-  /// @param payload_len  Length of payload in bytes.
+  /// @param payload      Pointer to z_owned_bytes_t (consumed via z_bytes_move).
   /// @param encoding     MIME type string (NULL = default).
   /// @return 0 on success, negative on failure.
   int zd_query_reply(
     ffi.Pointer<ffi.Uint8> query,
     ffi.Pointer<ffi.Char> key_expr,
     ffi.Pointer<ffi.Uint8> payload,
-    int payload_len,
     ffi.Pointer<ffi.Char> encoding,
   ) {
-    return _zd_query_reply(query, key_expr, payload, payload_len, encoding);
+    return _zd_query_reply(query, key_expr, payload, encoding);
   }
 
   late final _zd_query_replyPtr =
@@ -1223,7 +1221,6 @@ class ZenohDartBindings {
             ffi.Pointer<ffi.Uint8>,
             ffi.Pointer<ffi.Char>,
             ffi.Pointer<ffi.Uint8>,
-            ffi.Int32,
             ffi.Pointer<ffi.Char>,
           )
         >
@@ -1234,7 +1231,6 @@ class ZenohDartBindings {
           ffi.Pointer<ffi.Uint8>,
           ffi.Pointer<ffi.Char>,
           ffi.Pointer<ffi.Uint8>,
-          int,
           ffi.Pointer<ffi.Char>,
         )
       >();

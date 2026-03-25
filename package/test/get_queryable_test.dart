@@ -237,7 +237,7 @@ void main() {
       queryable.stream.listen((query) {
         query.replyBytes(
           'zenoh/dart/test/q/bytereply',
-          Uint8List.fromList([0xDE, 0xAD]),
+          ZBytes.fromUint8List(Uint8List.fromList([0xDE, 0xAD])),
         );
         query.dispose();
       });

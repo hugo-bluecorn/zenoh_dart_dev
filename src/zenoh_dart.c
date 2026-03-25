@@ -1013,8 +1013,7 @@ FFI_PLUGIN_EXPORT int8_t zd_get(
 FFI_PLUGIN_EXPORT int8_t zd_query_reply(
     const uint8_t* query,
     const char* key_expr,
-    const uint8_t* payload,
-    int32_t payload_len,
+    uint8_t* payload,
     const char* encoding) {
   // Loan the cloned query
   const z_loaned_query_t* loaned = z_query_loan((z_owned_query_t*)query);
@@ -1024,10 +1023,6 @@ FFI_PLUGIN_EXPORT int8_t zd_query_reply(
   if (z_view_keyexpr_from_str(&ke, key_expr) != 0) {
     return -1;
   }
-
-  // Create payload bytes
-  z_owned_bytes_t owned_payload;
-  z_bytes_copy_from_buf(&owned_payload, payload, (size_t)payload_len);
 
   // Options
   z_query_reply_options_t opts;
@@ -1042,7 +1037,7 @@ FFI_PLUGIN_EXPORT int8_t zd_query_reply(
   int rc = z_query_reply(
       loaned,
       z_view_keyexpr_loan(&ke),
-      z_bytes_move(&owned_payload),
+      z_bytes_move((z_owned_bytes_t*)payload),
       &opts);
 
   return (int8_t)rc;

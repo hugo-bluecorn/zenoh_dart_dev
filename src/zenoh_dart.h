@@ -526,15 +526,13 @@ FFI_PLUGIN_EXPORT int8_t zd_get(
 ///
 /// @param query        Const pointer to a loaned query (as uint8_t*).
 /// @param key_expr     Null-terminated key expression string.
-/// @param payload      Pointer to payload data.
-/// @param payload_len  Length of payload in bytes.
+/// @param payload      Pointer to z_owned_bytes_t (consumed via z_bytes_move).
 /// @param encoding     MIME type string (NULL = default).
 /// @return 0 on success, negative on failure.
 FFI_PLUGIN_EXPORT int8_t zd_query_reply(
     const uint8_t* query,
     const char* key_expr,
-    const uint8_t* payload,
-    int32_t payload_len,
+    uint8_t* payload,
     const char* encoding);
 
 /// Drops (frees) an owned query.
