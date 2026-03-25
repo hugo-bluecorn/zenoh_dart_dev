@@ -951,8 +951,7 @@ FFI_PLUGIN_EXPORT int8_t zd_get(
     int64_t port,
     int8_t target,
     int8_t consolidation,
-    const uint8_t* payload,
-    int32_t payload_len,
+    uint8_t* payload,
     const char* encoding,
     uint64_t timeout_ms,
     const char* parameters) {
@@ -981,11 +980,9 @@ FFI_PLUGIN_EXPORT int8_t zd_get(
     opts.consolidation.mode = (z_consolidation_mode_t)consolidation;
   }
 
-  // Optional payload
-  z_owned_bytes_t owned_payload;
-  if (payload != NULL && payload_len > 0) {
-    z_bytes_copy_from_buf(&owned_payload, payload, (size_t)payload_len);
-    opts.payload = z_bytes_move(&owned_payload);
+  // Optional payload (z_owned_bytes_t*, consumed via move)
+  if (payload != NULL) {
+    opts.payload = z_bytes_move((z_owned_bytes_t*)payload);
   }
 
   // Optional encoding
@@ -1016,8 +1013,7 @@ FFI_PLUGIN_EXPORT int8_t zd_get(
 FFI_PLUGIN_EXPORT int8_t zd_query_reply(
     const uint8_t* query,
     const char* key_expr,
-    const uint8_t* payload,
-    int32_t payload_len,
+    uint8_t* payload,
     const char* encoding) {
   // Loan the cloned query
   const z_loaned_query_t* loaned = z_query_loan((z_owned_query_t*)query);
@@ -1027,10 +1023,6 @@ FFI_PLUGIN_EXPORT int8_t zd_query_reply(
   if (z_view_keyexpr_from_str(&ke, key_expr) != 0) {
     return -1;
   }
-
-  // Create payload bytes
-  z_owned_bytes_t owned_payload;
-  z_bytes_copy_from_buf(&owned_payload, payload, (size_t)payload_len);
 
   // Options
   z_query_reply_options_t opts;
@@ -1045,7 +1037,7 @@ FFI_PLUGIN_EXPORT int8_t zd_query_reply(
   int rc = z_query_reply(
       loaned,
       z_view_keyexpr_loan(&ke),
-      z_bytes_move(&owned_payload),
+      z_bytes_move((z_owned_bytes_t*)payload),
       &opts);
 
   return (int8_t)rc;
@@ -1174,6 +1166,14 @@ FFI_PLUGIN_EXPORT int zd_bytes_from_shm_mut(z_owned_bytes_t* bytes,
 
 FFI_PLUGIN_EXPORT void zd_shm_mut_drop(z_owned_shm_mut_t* buf) {
   z_shm_mut_drop(z_shm_mut_move(buf));
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_bytes_is_shm(const uint8_t* bytes) {
+  const z_owned_bytes_t* owned = (const z_owned_bytes_t*)bytes;
+  const z_loaned_bytes_t* loaned = z_bytes_loan(owned);
+  const z_loaned_shm_t* shm = NULL;
+  z_result_t rc = z_bytes_as_loaned_shm(loaned, &shm);
+  return (rc == 0) ? 1 : 0;
 }
 
 #endif // Z_FEATURE_SHARED_MEMORY && Z_FEATURE_UNSTABLE_API

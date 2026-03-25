@@ -1,9 +1,9 @@
-import 'dart:convert';
 import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
+import 'bytes.dart';
 import 'encoding.dart';
 import 'exceptions.dart';
 import 'native_lib.dart';
@@ -57,25 +57,22 @@ class Query {
   /// Throws [ZenohException] if the reply fails.
   void reply(String keyExpr, String value, {Encoding? encoding}) {
     _ensureNotDisposed();
-    final bytes = utf8.encode(value);
-    replyBytes(keyExpr, Uint8List.fromList(bytes), encoding: encoding);
+    final zbytes = ZBytes.fromString(value);
+    replyBytes(keyExpr, zbytes, encoding: encoding);
   }
 
-  /// Sends a reply to this query with raw bytes.
+  /// Sends a reply to this query with a [ZBytes] payload.
   ///
   /// The [keyExpr] should match the queryable's key expression.
+  /// The [payload] is consumed by this call (ownership transferred to zenoh).
   /// Optionally specify an [encoding] for the payload.
   ///
   /// Throws [StateError] if the query has been disposed.
   /// Throws [ZenohException] if the reply fails.
-  void replyBytes(String keyExpr, Uint8List payload, {Encoding? encoding}) {
+  void replyBytes(String keyExpr, ZBytes payload, {Encoding? encoding}) {
     _ensureNotDisposed();
 
     final keyExprNative = keyExpr.toNativeUtf8();
-    final payloadPtr = calloc<Uint8>(payload.length);
-    for (var i = 0; i < payload.length; i++) {
-      payloadPtr[i] = payload[i];
-    }
 
     Pointer<Utf8> encodingNative = nullptr;
     if (encoding != null) {
@@ -86,17 +83,17 @@ class Query {
       final rc = bindings.zd_query_reply(
         Pointer.fromAddress(_handle).cast(),
         keyExprNative.cast(),
-        payloadPtr,
-        payload.length,
+        payload.nativePtr.cast(),
         encoding != null ? encodingNative.cast() : nullptr,
       );
 
       if (rc != 0) {
         throw ZenohException('Failed to reply to query', rc);
       }
+
+      payload.markConsumed();
     } finally {
       calloc.free(keyExprNative);
-      calloc.free(payloadPtr);
       if (encoding != null) {
         calloc.free(encodingNative);
       }

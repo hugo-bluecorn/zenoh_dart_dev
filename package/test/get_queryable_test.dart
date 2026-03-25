@@ -67,7 +67,7 @@ void main() {
       expect(params, equals('key=value'));
     });
 
-    test('get with payload', () async {
+    test('get with payload (ZBytes)', () async {
       final receivedPayload = Completer<Uint8List>();
       final queryable = sessionA.declareQueryable('zenoh/dart/test/q/payload');
       addTearDown(queryable.close);
@@ -84,12 +84,10 @@ void main() {
 
       await Future.delayed(Duration(milliseconds: 200));
 
-      await sessionB
-          .get(
-            'zenoh/dart/test/q/payload',
-            payload: Uint8List.fromList([1, 2, 3]),
-          )
-          .toList();
+      final zbytes = ZBytes.fromUint8List(Uint8List.fromList([1, 2, 3]));
+      addTearDown(zbytes.dispose);
+
+      await sessionB.get('zenoh/dart/test/q/payload', payload: zbytes).toList();
 
       final payload = await receivedPayload.future.timeout(
         Duration(seconds: 5),
@@ -234,7 +232,7 @@ void main() {
       queryable.stream.listen((query) {
         query.replyBytes(
           'zenoh/dart/test/q/bytereply',
-          Uint8List.fromList([0xDE, 0xAD]),
+          ZBytes.fromUint8List(Uint8List.fromList([0xDE, 0xAD])),
         );
         query.dispose();
       });
@@ -251,6 +249,204 @@ void main() {
         replies.first.ok.payloadBytes,
         equals(Uint8List.fromList([0xDE, 0xAD])),
       );
+    });
+  });
+
+  group('Phase 7: Session.get with ZBytes payload (TCP 17472)', () {
+    late Session sessionA;
+    late Session sessionB;
+
+    setUp(() async {
+      sessionA = Session.open(
+        config: Config()
+          ..insertJson5('listen/endpoints', '["tcp/127.0.0.1:17472"]'),
+      );
+      await Future.delayed(Duration(milliseconds: 500));
+      sessionB = Session.open(
+        config: Config()
+          ..insertJson5('connect/endpoints', '["tcp/127.0.0.1:17472"]'),
+      );
+      await Future.delayed(Duration(milliseconds: 500));
+    });
+
+    tearDown(() async {
+      sessionB.close();
+      sessionA.close();
+    });
+
+    test('Session.get with no payload receives reply from queryable', () async {
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q7/basic');
+      addTearDown(queryable.close);
+
+      queryable.stream.listen((query) {
+        query.reply('zenoh/dart/test/q7/basic', 'hello');
+        query.dispose();
+      });
+
+      await Future.delayed(Duration(milliseconds: 200));
+
+      final replies = await sessionB.get('zenoh/dart/test/q7/basic').toList();
+
+      expect(replies, hasLength(1));
+      expect(replies.first.isOk, isTrue);
+      expect(replies.first.ok.payload, equals('hello'));
+    });
+
+    test(
+      'Session.get with ZBytes payload delivers payload to queryable',
+      () async {
+        final receivedPayload = Completer<Uint8List>();
+        final queryable = sessionA.declareQueryable(
+          'zenoh/dart/test/q7/zbytes',
+        );
+        addTearDown(queryable.close);
+
+        queryable.stream.listen((query) {
+          if (query.payloadBytes != null) {
+            receivedPayload.complete(query.payloadBytes!);
+          } else {
+            receivedPayload.completeError('No payload received');
+          }
+          query.reply('zenoh/dart/test/q7/zbytes', 'ok');
+          query.dispose();
+        });
+
+        await Future.delayed(Duration(milliseconds: 200));
+
+        final zbytes = ZBytes.fromUint8List(Uint8List.fromList([1, 2, 3]));
+        addTearDown(zbytes.dispose);
+
+        await sessionB
+            .get('zenoh/dart/test/q7/zbytes', payload: zbytes)
+            .toList();
+
+        final payload = await receivedPayload.future.timeout(
+          Duration(seconds: 5),
+        );
+        expect(payload, equals(Uint8List.fromList([1, 2, 3])));
+      },
+    );
+
+    test('Session.get with null payload sends no payload', () async {
+      final receivedHasPayload = Completer<bool>();
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/q7/nullp');
+      addTearDown(queryable.close);
+
+      queryable.stream.listen((query) {
+        receivedHasPayload.complete(query.payloadBytes != null);
+        query.reply('zenoh/dart/test/q7/nullp', 'ok');
+        query.dispose();
+      });
+
+      await Future.delayed(Duration(milliseconds: 200));
+
+      await sessionB.get('zenoh/dart/test/q7/nullp').toList();
+
+      final hasPayload = await receivedHasPayload.future.timeout(
+        Duration(seconds: 5),
+      );
+      expect(hasPayload, isFalse);
+    });
+
+    test('ZBytes payload is consumed after Session.get', () async {
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/q7/consumed',
+      );
+      addTearDown(queryable.close);
+
+      queryable.stream.listen((query) {
+        query.reply('zenoh/dart/test/q7/consumed', 'ok');
+        query.dispose();
+      });
+
+      await Future.delayed(Duration(milliseconds: 200));
+
+      final zbytes = ZBytes.fromUint8List(Uint8List.fromList([1, 2, 3]));
+
+      await sessionB
+          .get('zenoh/dart/test/q7/consumed', payload: zbytes)
+          .toList();
+
+      // After get() consumes the ZBytes, accessing nativePtr should throw
+      expect(() => zbytes.nativePtr, throwsA(isA<StateError>()));
+    });
+
+    test('Query.replyBytes with ZBytes delivers correct payload', () async {
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/q7/replybytes',
+      );
+      addTearDown(queryable.close);
+
+      queryable.stream.listen((query) {
+        final replyPayload = ZBytes.fromUint8List(
+          Uint8List.fromList([0xDE, 0xAD]),
+        );
+        query.replyBytes('zenoh/dart/test/q7/replybytes', replyPayload);
+        query.dispose();
+      });
+
+      await Future.delayed(Duration(milliseconds: 200));
+
+      final replies = await sessionB
+          .get('zenoh/dart/test/q7/replybytes')
+          .toList();
+
+      expect(replies, hasLength(1));
+      expect(replies.first.isOk, isTrue);
+      expect(
+        replies.first.ok.payloadBytes,
+        equals(Uint8List.fromList([0xDE, 0xAD])),
+      );
+    });
+
+    test(
+      'Query.reply string convenience still works after replyBytes change',
+      () async {
+        final queryable = sessionA.declareQueryable(
+          'zenoh/dart/test/q7/strconv',
+        );
+        addTearDown(queryable.close);
+
+        queryable.stream.listen((query) {
+          query.reply('zenoh/dart/test/q7/strconv', 'hello string');
+          query.dispose();
+        });
+
+        await Future.delayed(Duration(milliseconds: 200));
+
+        final replies = await sessionB
+            .get('zenoh/dart/test/q7/strconv')
+            .toList();
+
+        expect(replies, hasLength(1));
+        expect(replies.first.isOk, isTrue);
+        expect(replies.first.ok.payload, equals('hello string'));
+      },
+    );
+
+    test('ZBytes payload is consumed after Query.replyBytes', () async {
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/q7/replyconsumed',
+      );
+      addTearDown(queryable.close);
+
+      late ZBytes replyPayload;
+      queryable.stream.listen((query) {
+        replyPayload = ZBytes.fromUint8List(Uint8List.fromList([0xCA, 0xFE]));
+        query.replyBytes('zenoh/dart/test/q7/replyconsumed', replyPayload);
+        // After replyBytes consumes the ZBytes, nativePtr should throw
+        expect(() => replyPayload.nativePtr, throwsA(isA<StateError>()));
+        query.dispose();
+      });
+
+      await Future.delayed(Duration(milliseconds: 200));
+
+      final replies = await sessionB
+          .get('zenoh/dart/test/q7/replyconsumed')
+          .toList();
+
+      expect(replies, hasLength(1));
+      expect(replies.first.isOk, isTrue);
     });
   });
 }

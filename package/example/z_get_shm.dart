@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:ffi';
+
 import 'package:args/args.dart';
 import 'package:zenoh/zenoh.dart';
 
@@ -41,15 +44,29 @@ Future<void> main(List<String> arguments) async {
   }
   final session = Session.open(config: config);
 
-  print("Sending Query '$selector'...");
+  print('Creating SHM Provider...');
+  final provider = ShmProvider(size: 65536);
 
-  final zbytes = payloadStr != null
-      ? ZBytes.fromString(payloadStr)
-      : null;
+  ZBytes? shmBytes;
+  ShmMutBuffer? buffer;
+
+  final value = payloadStr ?? 'Get from Dart SHM!';
+  final encodedBytes = utf8.encode(value);
+  buffer = provider.allocGcDefragBlocking(encodedBytes.length);
+  if (buffer != null) {
+    final dataPtr = buffer.data;
+    for (var i = 0; i < encodedBytes.length; i++) {
+      dataPtr[i] = encodedBytes[i];
+    }
+    shmBytes = buffer.toBytes();
+  }
+
+  final label = shmBytes != null ? '[SHM] ' : '';
+  print("${label}Sending Query '$selector'...");
 
   final stream = session.get(
     selector,
-    payload: zbytes,
+    payload: shmBytes,
     target: target,
     timeout: Duration(milliseconds: timeoutMs),
   );
@@ -62,5 +79,8 @@ Future<void> main(List<String> arguments) async {
     }
   }
 
+  shmBytes?.dispose();
+  buffer?.dispose();
+  provider.close();
   session.close();
 }

@@ -505,8 +505,8 @@ FFI_PLUGIN_EXPORT void zd_queryable_drop(uint8_t* queryable);
 /// @param port           The Dart native port to post replies to.
 /// @param target         Query target (0=bestMatching, 1=all, 2=allComplete).
 /// @param consolidation  Consolidation mode (-1=auto, 0=none, 1=monotonic, 2=latest).
-/// @param payload        Pointer to payload data (NULL = no payload).
-/// @param payload_len    Length of payload in bytes.
+/// @param payload        Pointer to z_owned_bytes_t (NULL = no payload).
+///                       Consumed via z_bytes_move if non-NULL.
 /// @param encoding       MIME type string (NULL = default).
 /// @param timeout_ms     Timeout in milliseconds.
 /// @param parameters     Additional query parameters (NULL = none).
@@ -517,8 +517,7 @@ FFI_PLUGIN_EXPORT int8_t zd_get(
     int64_t port,
     int8_t target,
     int8_t consolidation,
-    const uint8_t* payload,
-    int32_t payload_len,
+    uint8_t* payload,
     const char* encoding,
     uint64_t timeout_ms,
     const char* parameters);
@@ -527,15 +526,13 @@ FFI_PLUGIN_EXPORT int8_t zd_get(
 ///
 /// @param query        Const pointer to a loaned query (as uint8_t*).
 /// @param key_expr     Null-terminated key expression string.
-/// @param payload      Pointer to payload data.
-/// @param payload_len  Length of payload in bytes.
+/// @param payload      Pointer to z_owned_bytes_t (consumed via z_bytes_move).
 /// @param encoding     MIME type string (NULL = default).
 /// @return 0 on success, negative on failure.
 FFI_PLUGIN_EXPORT int8_t zd_query_reply(
     const uint8_t* query,
     const char* key_expr,
-    const uint8_t* payload,
-    int32_t payload_len,
+    uint8_t* payload,
     const char* encoding);
 
 /// Drops (frees) an owned query.
@@ -638,6 +635,15 @@ FFI_PLUGIN_EXPORT int zd_bytes_from_shm_mut(z_owned_bytes_t* bytes,
 
 /// Drops (frees) a mutable SHM buffer.
 FFI_PLUGIN_EXPORT void zd_shm_mut_drop(z_owned_shm_mut_t* buf);
+
+/// Checks whether owned bytes are backed by shared memory.
+///
+/// Uses z_bytes_as_loaned_shm() to probe the bytes. If the call succeeds
+/// (returns 0), the bytes are SHM-backed.
+///
+/// @param bytes  Pointer to a z_owned_bytes_t (cast to uint8_t*).
+/// @return 1 if SHM-backed, 0 otherwise.
+FFI_PLUGIN_EXPORT int8_t zd_bytes_is_shm(const uint8_t* bytes);
 
 #endif // Z_FEATURE_SHARED_MEMORY && Z_FEATURE_UNSTABLE_API
 

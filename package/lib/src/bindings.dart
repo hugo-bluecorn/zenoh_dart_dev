@@ -1137,8 +1137,8 @@ class ZenohDartBindings {
   /// @param port           The Dart native port to post replies to.
   /// @param target         Query target (0=bestMatching, 1=all, 2=allComplete).
   /// @param consolidation  Consolidation mode (-1=auto, 0=none, 1=monotonic, 2=latest).
-  /// @param payload        Pointer to payload data (NULL = no payload).
-  /// @param payload_len    Length of payload in bytes.
+  /// @param payload        Pointer to z_owned_bytes_t (NULL = no payload).
+  /// Consumed via z_bytes_move if non-NULL.
   /// @param encoding       MIME type string (NULL = default).
   /// @param timeout_ms     Timeout in milliseconds.
   /// @param parameters     Additional query parameters (NULL = none).
@@ -1150,7 +1150,6 @@ class ZenohDartBindings {
     int target,
     int consolidation,
     ffi.Pointer<ffi.Uint8> payload,
-    int payload_len,
     ffi.Pointer<ffi.Char> encoding,
     int timeout_ms,
     ffi.Pointer<ffi.Char> parameters,
@@ -1162,7 +1161,6 @@ class ZenohDartBindings {
       target,
       consolidation,
       payload,
-      payload_len,
       encoding,
       timeout_ms,
       parameters,
@@ -1179,7 +1177,6 @@ class ZenohDartBindings {
             ffi.Int8,
             ffi.Int8,
             ffi.Pointer<ffi.Uint8>,
-            ffi.Int32,
             ffi.Pointer<ffi.Char>,
             ffi.Uint64,
             ffi.Pointer<ffi.Char>,
@@ -1195,7 +1192,6 @@ class ZenohDartBindings {
           int,
           int,
           ffi.Pointer<ffi.Uint8>,
-          int,
           ffi.Pointer<ffi.Char>,
           int,
           ffi.Pointer<ffi.Char>,
@@ -1206,18 +1202,16 @@ class ZenohDartBindings {
   ///
   /// @param query        Const pointer to a loaned query (as uint8_t*).
   /// @param key_expr     Null-terminated key expression string.
-  /// @param payload      Pointer to payload data.
-  /// @param payload_len  Length of payload in bytes.
+  /// @param payload      Pointer to z_owned_bytes_t (consumed via z_bytes_move).
   /// @param encoding     MIME type string (NULL = default).
   /// @return 0 on success, negative on failure.
   int zd_query_reply(
     ffi.Pointer<ffi.Uint8> query,
     ffi.Pointer<ffi.Char> key_expr,
     ffi.Pointer<ffi.Uint8> payload,
-    int payload_len,
     ffi.Pointer<ffi.Char> encoding,
   ) {
-    return _zd_query_reply(query, key_expr, payload, payload_len, encoding);
+    return _zd_query_reply(query, key_expr, payload, encoding);
   }
 
   late final _zd_query_replyPtr =
@@ -1227,7 +1221,6 @@ class ZenohDartBindings {
             ffi.Pointer<ffi.Uint8>,
             ffi.Pointer<ffi.Char>,
             ffi.Pointer<ffi.Uint8>,
-            ffi.Int32,
             ffi.Pointer<ffi.Char>,
           )
         >
@@ -1238,7 +1231,6 @@ class ZenohDartBindings {
           ffi.Pointer<ffi.Uint8>,
           ffi.Pointer<ffi.Char>,
           ffi.Pointer<ffi.Uint8>,
-          int,
           ffi.Pointer<ffi.Char>,
         )
       >();
@@ -1531,6 +1523,24 @@ class ZenohDartBindings {
       );
   late final _zd_shm_mut_drop = _zd_shm_mut_dropPtr
       .asFunction<void Function(ffi.Pointer<ffi.Opaque>)>();
+
+  /// Checks whether owned bytes are backed by shared memory.
+  ///
+  /// Uses z_bytes_as_loaned_shm() to probe the bytes. If the call succeeds
+  /// (returns 0), the bytes are SHM-backed.
+  ///
+  /// @param bytes  Pointer to a z_owned_bytes_t (cast to uint8_t*).
+  /// @return 1 if SHM-backed, 0 otherwise.
+  int zd_bytes_is_shm(ffi.Pointer<ffi.Uint8> bytes) {
+    return _zd_bytes_is_shm(bytes);
+  }
+
+  late final _zd_bytes_is_shmPtr =
+      _lookup<ffi.NativeFunction<ffi.Int8 Function(ffi.Pointer<ffi.Uint8>)>>(
+        'zd_bytes_is_shm',
+      );
+  late final _zd_bytes_is_shm = _zd_bytes_is_shmPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Uint8>)>();
 }
 
 final class UnnamedStruct extends ffi.Struct {
