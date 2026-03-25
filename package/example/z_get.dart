@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:args/args.dart';
 import 'package:zenoh/zenoh.dart';
 
@@ -45,11 +43,13 @@ Future<void> main(List<String> arguments) async {
 
   print("Sending Query '$selector'...");
 
+  final zbytes = payloadStr != null
+      ? ZBytes.fromString(payloadStr)
+      : null;
+
   final stream = session.get(
     selector,
-    payload: payloadStr != null
-        ? Uint8List.fromList(payloadStr.codeUnits)
-        : null,
+    payload: zbytes,
     target: target,
     timeout: Duration(milliseconds: timeoutMs),
   );

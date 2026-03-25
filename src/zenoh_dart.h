@@ -505,8 +505,8 @@ FFI_PLUGIN_EXPORT void zd_queryable_drop(uint8_t* queryable);
 /// @param port           The Dart native port to post replies to.
 /// @param target         Query target (0=bestMatching, 1=all, 2=allComplete).
 /// @param consolidation  Consolidation mode (-1=auto, 0=none, 1=monotonic, 2=latest).
-/// @param payload        Pointer to payload data (NULL = no payload).
-/// @param payload_len    Length of payload in bytes.
+/// @param payload        Pointer to z_owned_bytes_t (NULL = no payload).
+///                       Consumed via z_bytes_move if non-NULL.
 /// @param encoding       MIME type string (NULL = default).
 /// @param timeout_ms     Timeout in milliseconds.
 /// @param parameters     Additional query parameters (NULL = none).
@@ -517,8 +517,7 @@ FFI_PLUGIN_EXPORT int8_t zd_get(
     int64_t port,
     int8_t target,
     int8_t consolidation,
-    const uint8_t* payload,
-    int32_t payload_len,
+    uint8_t* payload,
     const char* encoding,
     uint64_t timeout_ms,
     const char* parameters);

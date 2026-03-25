@@ -299,7 +299,7 @@ class Session {
   Stream<Reply> get(
     String selector, {
     String? parameters,
-    Uint8List? payload,
+    ZBytes? payload,
     Encoding? encoding,
     QueryTarget target = QueryTarget.bestMatching,
     ConsolidationMode consolidation = ConsolidationMode.auto,
@@ -359,17 +359,10 @@ class Session {
 
     final selectorNative = selector.toNativeUtf8();
     Pointer<Utf8> parametersNative = nullptr;
-    Pointer<Uint8> payloadPtr = nullptr;
     Pointer<Utf8> encodingNative = nullptr;
 
     if (parameters != null) {
       parametersNative = parameters.toNativeUtf8();
-    }
-    if (payload != null && payload.isNotEmpty) {
-      payloadPtr = calloc<Uint8>(payload.length);
-      for (var i = 0; i < payload.length; i++) {
-        payloadPtr[i] = payload[i];
-      }
     }
     if (encoding != null) {
       encodingNative = encoding.mimeType.toNativeUtf8();
@@ -382,8 +375,7 @@ class Session {
         receivePort.sendPort.nativePort,
         target.index,
         consolidation.value,
-        payload != null && payload.isNotEmpty ? payloadPtr : nullptr,
-        payload != null ? payload.length : 0,
+        payload != null ? payload.nativePtr.cast() : nullptr,
         encoding != null ? encodingNative.cast() : nullptr,
         timeoutMs,
         parameters != null ? parametersNative.cast() : nullptr,
@@ -394,10 +386,15 @@ class Session {
         controller.close();
         throw ZenohException('Get query failed', rc);
       }
+
+      // Mark ZBytes as consumed -- ownership transferred to zenoh-c via
+      // z_bytes_move in zd_get
+      if (payload != null) {
+        payload.markConsumed();
+      }
     } finally {
       calloc.free(selectorNative);
       if (parameters != null) calloc.free(parametersNative);
-      if (payload != null && payload.isNotEmpty) calloc.free(payloadPtr);
       if (encoding != null) calloc.free(encodingNative);
     }
 

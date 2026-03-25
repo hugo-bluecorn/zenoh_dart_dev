@@ -951,8 +951,7 @@ FFI_PLUGIN_EXPORT int8_t zd_get(
     int64_t port,
     int8_t target,
     int8_t consolidation,
-    const uint8_t* payload,
-    int32_t payload_len,
+    uint8_t* payload,
     const char* encoding,
     uint64_t timeout_ms,
     const char* parameters) {
@@ -981,11 +980,9 @@ FFI_PLUGIN_EXPORT int8_t zd_get(
     opts.consolidation.mode = (z_consolidation_mode_t)consolidation;
   }
 
-  // Optional payload
-  z_owned_bytes_t owned_payload;
-  if (payload != NULL && payload_len > 0) {
-    z_bytes_copy_from_buf(&owned_payload, payload, (size_t)payload_len);
-    opts.payload = z_bytes_move(&owned_payload);
+  // Optional payload (z_owned_bytes_t*, consumed via move)
+  if (payload != NULL) {
+    opts.payload = z_bytes_move((z_owned_bytes_t*)payload);
   }
 
   // Optional encoding

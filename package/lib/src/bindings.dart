@@ -1137,8 +1137,8 @@ class ZenohDartBindings {
   /// @param port           The Dart native port to post replies to.
   /// @param target         Query target (0=bestMatching, 1=all, 2=allComplete).
   /// @param consolidation  Consolidation mode (-1=auto, 0=none, 1=monotonic, 2=latest).
-  /// @param payload        Pointer to payload data (NULL = no payload).
-  /// @param payload_len    Length of payload in bytes.
+  /// @param payload        Pointer to z_owned_bytes_t (NULL = no payload).
+  /// Consumed via z_bytes_move if non-NULL.
   /// @param encoding       MIME type string (NULL = default).
   /// @param timeout_ms     Timeout in milliseconds.
   /// @param parameters     Additional query parameters (NULL = none).
@@ -1150,7 +1150,6 @@ class ZenohDartBindings {
     int target,
     int consolidation,
     ffi.Pointer<ffi.Uint8> payload,
-    int payload_len,
     ffi.Pointer<ffi.Char> encoding,
     int timeout_ms,
     ffi.Pointer<ffi.Char> parameters,
@@ -1162,7 +1161,6 @@ class ZenohDartBindings {
       target,
       consolidation,
       payload,
-      payload_len,
       encoding,
       timeout_ms,
       parameters,
@@ -1179,7 +1177,6 @@ class ZenohDartBindings {
             ffi.Int8,
             ffi.Int8,
             ffi.Pointer<ffi.Uint8>,
-            ffi.Int32,
             ffi.Pointer<ffi.Char>,
             ffi.Uint64,
             ffi.Pointer<ffi.Char>,
@@ -1195,7 +1192,6 @@ class ZenohDartBindings {
           int,
           int,
           ffi.Pointer<ffi.Uint8>,
-          int,
           ffi.Pointer<ffi.Char>,
           int,
           ffi.Pointer<ffi.Char>,
