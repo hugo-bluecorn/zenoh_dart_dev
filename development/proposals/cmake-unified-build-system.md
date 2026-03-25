@@ -376,7 +376,7 @@ endif()
 
 ### Linux — Full Developer Build
 
-**Before** (8 commands, documented across CLAUDE.md and docs/build/):
+**Before** (8 commands, documented across CLAUDE.md and development/build/):
 ```bash
 # 1. Configure zenoh-c
 cmake -S extern/zenoh-c -B extern/zenoh-c/build -G Ninja \
@@ -573,7 +573,7 @@ This is a Phase-P2 (Packaging/Build) effort. Suggested execution:
 6. **Verify Linux** — `cmake --preset linux-x64 && cmake --build --preset linux-x64 --target install && cd package && fvm dart test` (193 tests pass)
 7. **Verify Android** — `./scripts/build_zenoh_android.sh && cd package && fvm dart test` (if device available)
 8. **Update CLAUDE.md** — Replace manual build commands with preset commands
-9. **Update `docs/build/01-build-zenoh-c.md`** — Reflect new unified flow
+9. **Update `development/build/01-build-zenoh-c.md`** — Reflect new unified flow
 
 This is a CI-session task (direct edit, not TDD — build infrastructure, not testable behavior).
 

@@ -94,7 +94,7 @@ cmake --preset linux-x64-shim-only
 cmake --build --preset linux-x64-shim-only --target install
 ```
 
-See `docs/build/01-build-zenoh-c.md` for standalone build details and rationale.
+See `development/build/01-build-zenoh-c.md` for standalone build details and rationale.
 
 ### CMake build system
 
@@ -241,7 +241,7 @@ This project uses a four-session role pattern for structured development:
 
 **Memory model:** CA is the sole memory writer. CP, CI, and CB read only.
 
-See `docs/dev-roles/` for session prompts:
+See `development/dev-roles/` for session prompts:
 - `ca-architect.md` — architect/reviewer role
 - `cp-planner.md` — planner role
 - `ci-implementer.md` — implementer role

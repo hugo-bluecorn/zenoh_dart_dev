@@ -2,7 +2,7 @@
 
 > **This spec supersedes `development/phases/phase-03-pub.md`.** It incorporates
 > patterns established in Phases 0-2 and cross-cutting decisions from
-> `docs/design/cross-cutting-patterns.md`.
+> `development/design/cross-cutting-patterns.md`.
 
 ## Project Context
 
@@ -158,17 +158,17 @@ FFI_PLUGIN_EXPORT int zd_publisher_get_matching_status(
 
 ### New file: `package/lib/src/encoding.dart`
 
-See `docs/design/cross-cutting-patterns.md` Section 2.2 for the full class.
+See `development/design/cross-cutting-patterns.md` Section 2.2 for the full class.
 Pure Dart, no FFI. `static const` values for common MIME types plus a
 constructor for custom encodings.
 
 ### New file: `package/lib/src/congestion_control.dart`
 
-See `docs/design/cross-cutting-patterns.md` Section 3.1.
+See `development/design/cross-cutting-patterns.md` Section 3.1.
 
 ### New file: `package/lib/src/priority.dart`
 
-See `docs/design/cross-cutting-patterns.md` Section 3.2.
+See `development/design/cross-cutting-patterns.md` Section 3.2.
 
 ### New file: `package/lib/src/publisher.dart`
 
@@ -295,7 +295,7 @@ Behavior:
 ## Deferred Options
 
 The following fields exist in zenoh-c v1.7.2 but are **not** exposed in Phase 3.
-See `docs/design/cross-cutting-patterns.md` Section 3.4 for rationale.
+See `development/design/cross-cutting-patterns.md` Section 3.4 for rationale.
 
 | Field | Struct | Default | Future Phase |
 |-------|--------|---------|--------------|

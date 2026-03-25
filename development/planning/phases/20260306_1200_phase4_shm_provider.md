@@ -107,7 +107,7 @@ Slice 1 includes all setup: zenoh-c rebuild, CMake definitions, C shim declarati
 
 ## References
 
-- Design spec: `docs/design/phase-04-shm-revised.md`
-- Cross-cutting patterns: `docs/design/cross-cutting-patterns.md`
+- Design spec: `development/design/phase-04-shm-revised.md`
+- Cross-cutting patterns: `development/design/cross-cutting-patterns.md`
 - zenoh-c SHM example: `extern/zenoh-c/examples/z_pub_shm.c`
 - zenoh-c SHM headers: search for `z_shm_provider`, `z_owned_shm_mut_t` in `extern/zenoh-c/include/`

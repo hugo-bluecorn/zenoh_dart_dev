@@ -6,8 +6,8 @@
 > **Audience**: CI (implementer), CP (planner), CA (architect review).
 >
 > **Companion docs**:
-> - `docs/design/xplr-counter-migration-analysis.md` — xplr analysis
-> - `docs/design/flutter-counter-app-design.md` — Flutter app design
+> - `development/design/xplr-counter-migration-analysis.md` — xplr analysis
+> - `development/design/flutter-counter-app-design.md` — Flutter app design
 
 ## 1. Current Test Landscape (Phases 0-2)
 

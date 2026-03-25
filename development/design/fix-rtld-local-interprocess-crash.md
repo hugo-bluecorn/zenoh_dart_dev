@@ -5,7 +5,7 @@
 > (commit `a9e6625`) and **failed** — `@Native`'s `NoActiveIsolateScope` taints
 > the handle even after pre-load. The actual fix reverted `@Native` entirely to
 > class-based `ZenohDartBindings(DynamicLibrary)`. See
-> `docs/reviews/interprocess-crash-fix-review.md` for the final implementation.
+> `development/reviews/interprocess-crash-fix-review.md` for the final implementation.
 
 **Type:** Bugfix (critical)
 **Scope:** Dart initialization path (`native_lib.dart`)
@@ -17,7 +17,7 @@ After the hooks migration (PR #18), two separate Dart processes that connect
 via zenoh TCP crash the listener process. The crash is a SIGSEGV on a tokio
 worker thread (`pc=0`, `isolate_group=nil`).
 
-Full investigation: `docs/reviews/rtld-local-crash-investigation.md`
+Full investigation: `development/reviews/rtld-local-crash-investigation.md`
 
 ### Root Cause
 

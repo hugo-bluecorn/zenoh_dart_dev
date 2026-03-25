@@ -148,8 +148,8 @@ zenoh_dart/                     # Fresh repo — clean git history
 - `.claude/skills/`, `.claude/settings.json` — dev session configuration
 - `extern/zenoh-cpp/`, `extern/zenoh-kotlin/`, `extern/zenoh-demos/` — reference submodules
 - `extern/cargo-ndk/`, `extern/zenoh/`, `extern/cmake/` — dev tools and reference
-- Dev role docs (`docs/dev-roles/`)
-- LaTeX source (`docs/c-shim/latex/`)
+- Dev role docs (`development/dev-roles/`)
+- LaTeX source (`development/c-shim/latex/`)
 - Melos dependency
 - `.pubignore` — not needed, publish boundary is structural
 

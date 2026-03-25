@@ -2,7 +2,7 @@
 
 **Created:** 2026-03-11T20:00:00Z
 **Feature:** Critical bugfix — promote libzenohc.so from RTLD_LOCAL to RTLD_GLOBAL
-**Design Spec:** docs/design/fix-rtld-local-interprocess-crash.md
+**Design Spec:** development/design/fix-rtld-local-interprocess-crash.md
 
 ---
 

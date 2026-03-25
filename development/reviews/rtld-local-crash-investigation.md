@@ -167,7 +167,7 @@ dlopen.
 > `a9e6625`) and **failed**. `@Native`'s `NoActiveIsolateScope` taints the
 > dlopen handle even when pre-loaded. The actual fix reverted `@Native` entirely
 > to class-based `ZenohDartBindings(DynamicLibrary)` (commit `93e29e5`). See
-> `docs/reviews/interprocess-crash-fix-review.md` for details.
+> `development/reviews/interprocess-crash-fix-review.md` for details.
 
 **Hybrid approach (failed):** Keep `@Native` annotations for bindings (needed for
 pub.dev distribution and build hook integration), but pre-load both libraries
@@ -179,7 +179,7 @@ returns the already-loaded handle (refcount increment). This effectively makes
 the loading behave like `DynamicLibrary.open()` while keeping `@Native` for
 symbol resolution.
 
-See `docs/design/fix-rtld-local-interprocess-crash.md` for the original
+See `development/design/fix-rtld-local-interprocess-crash.md` for the original
 design specification.
 
 ### Relevant Upstream Issues

@@ -2,7 +2,7 @@
 
 **Created:** 2026-03-11T21:00:00Z
 **Feature:** Critical bugfix — pre-load native libraries via DynamicLibrary.open() before @Native triggers
-**Design Spec:** docs/design/fix-rtld-local-interprocess-crash.md (original spec; fix approach revised)
+**Design Spec:** development/design/fix-rtld-local-interprocess-crash.md (original spec; fix approach revised)
 
 ---
 

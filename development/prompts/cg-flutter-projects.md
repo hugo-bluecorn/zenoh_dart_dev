@@ -15,7 +15,7 @@ Flutter apps that would showcase `zenoh_dart`'s communication patterns.
 
 You do NOT write implementation code. You produce design documents that a
 future implementation session (or the CF session from
-`docs/prompts/cf-flutter-examples.md`) would use as specifications.
+`development/prompts/cf-flutter-examples.md`) would use as specifications.
 
 ## How These Ideas Were Generated
 
@@ -130,7 +130,7 @@ Read these before starting work:
 | `docs/flutter-project-ideas.md` | The 7 project ideas with pattern mappings and coverage matrix |
 | `docs/synthesis-phases-vs-patterns.md` | Complete pattern-to-phase mapping, FFI analysis, coverage gaps |
 | `development/phases/phase-NN-*.md` | Per-phase specs (API surface, C shim, Dart API, CLI examples) |
-| `docs/prompts/cf-flutter-examples.md` | CF session prompt for per-phase demo apps (complementary work) |
+| `development/prompts/cf-flutter-examples.md` | CF session prompt for per-phase demo apps (complementary work) |
 | `CLAUDE.md` | Project architecture, build commands, conventions |
 
 ## Constraints

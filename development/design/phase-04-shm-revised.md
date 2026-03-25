@@ -2,7 +2,7 @@
 
 > **This spec supersedes `development/phases/phase-04-shm-pub-sub.md`.** It incorporates
 > patterns established in Phases 0-3 and cross-cutting decisions from
-> `docs/design/cross-cutting-patterns.md`.
+> `development/design/cross-cutting-patterns.md`.
 
 ## Project Context
 

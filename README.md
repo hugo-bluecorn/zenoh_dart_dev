@@ -39,7 +39,7 @@ zenoh-c's public API uses six constructs that cannot cross the Dart FFI barrier:
 | Options struct defaults | `z_*_options_default()` macros | Can't call macros or set fields on opaque structs |
 | Loan pattern | `z_loan()` / `z_loan_mut()` macros | Macros, plus Dart `Pointer<Opaque>` erases const/mut |
 
-The C shim flattens all six into plain C functions with scalar/pointer signatures that `dart:ffi` can bind directly. All symbols use the `zd_` prefix; `ffigen.yaml` filters on `zd_.*` so only shim functions appear in `bindings.dart`. The full audit with function-by-function analysis is in [`docs/c-shim/`](docs/c-shim/).
+The C shim flattens all six into plain C functions with scalar/pointer signatures that `dart:ffi` can bind directly. All symbols use the `zd_` prefix; `ffigen.yaml` filters on `zd_.*` so only shim functions appear in `bindings.dart`. The full audit with function-by-function analysis is in [`development/c-shim/`](development/c-shim/).
 
 ### How native libraries load
 
@@ -51,7 +51,7 @@ On **Android**, a bare `DynamicLibrary.open('libzenoh_dart.so')` call is suffici
 
 Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries for **distribution only** — they handle bundling into APKs via Flutter's native assets pipeline. The hooks do not participate in loading; that's handled entirely by `DynamicLibrary.open()` with manual path resolution.
 
-> **Why not `@Native`?** A [2x2 experiment](experiments/hooks-bundling/) proved that `@Native` annotations are the only way to get Dart's build hook system to resolve libraries transparently — `DynamicLibrary.open()` delegates to the OS linker, which knows nothing about hook metadata. So we [migrated to `@Native`](experiments/hooks-bundling/synthesis.md) (PR #18, 185 tests). Then inter-process TCP testing discovered that `@Native`'s lazy loading wraps `dlopen` in `NoActiveIsolateScope` (thread-isolate detachment), which causes tokio's waker vtable to crash when two Dart processes connect via zenoh. The hybrid approach (pre-load via `DynamicLibrary.open()` then let `@Native` re-use the handle) also [failed](docs/design/fix-rtld-local-interprocess-crash.md) — `NoActiveIsolateScope` taints the handle regardless. So we [reverted `@Native` entirely](docs/reviews/interprocess-crash-fix-review.md) (PR #19) back to class-based `ZenohDartBindings(DynamicLibrary)` and kept the build hooks for Flutter distribution only. The hooks register orphaned `CodeAsset` IDs that no `@Native` annotation references — they serve purely as a file-copy mechanism. This is unconventional but functional.
+> **Why not `@Native`?** A [2x2 experiment](experiments/hooks-bundling/) proved that `@Native` annotations are the only way to get Dart's build hook system to resolve libraries transparently — `DynamicLibrary.open()` delegates to the OS linker, which knows nothing about hook metadata. So we [migrated to `@Native`](experiments/hooks-bundling/synthesis.md) (PR #18, 185 tests). Then inter-process TCP testing discovered that `@Native`'s lazy loading wraps `dlopen` in `NoActiveIsolateScope` (thread-isolate detachment), which causes tokio's waker vtable to crash when two Dart processes connect via zenoh. The hybrid approach (pre-load via `DynamicLibrary.open()` then let `@Native` re-use the handle) also [failed](development/design/fix-rtld-local-interprocess-crash.md) — `NoActiveIsolateScope` taints the handle regardless. So we [reverted `@Native` entirely](development/reviews/interprocess-crash-fix-review.md) (PR #19) back to class-based `ZenohDartBindings(DynamicLibrary)` and kept the build hooks for Flutter distribution only. The hooks register orphaned `CodeAsset` IDs that no `@Native` annotation references — they serve purely as a file-copy mechanism. This is unconventional but functional.
 
 ## Current Status
 
@@ -243,13 +243,13 @@ Each Claude Code instance runs in its own terminal with a dedicated role. The se
 | What | Where |
 |------|-------|
 | Role skills (session initialization) | [`.claude/skills/role-{ca,ci,cp}/`](.claude/skills/) |
-| Role prompts (full session docs) | [`docs/dev-roles/`](docs/dev-roles/) |
+| Role prompts (full session docs) | [`development/dev-roles/`](development/dev-roles/) |
 | TDD conventions and project rules | [`CLAUDE.md`](CLAUDE.md) |
 | Phase specifications (source of truth) | [`development/phases/`](development/phases/) |
 | Active TDD session state | `.tdd-progress.md` (when present) |
 | Planning archive | [`planning/`](planning/) |
 | Hooks experiment (2x2 matrix) | [`experiments/hooks-bundling/`](experiments/hooks-bundling/) |
-| C shim audit (6 FFI barrier patterns) | [`docs/c-shim/`](docs/c-shim/) |
+| C shim audit (6 FFI barrier patterns) | [`development/c-shim/`](development/c-shim/) |
 
 ### Commands
 

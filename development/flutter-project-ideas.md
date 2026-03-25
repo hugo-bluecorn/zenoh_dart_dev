@@ -6,7 +6,7 @@ Each project idea maps to specific phases and patterns from
 `docs/synthesis-phases-vs-patterns.md`.
 
 These are **separate projects** from the per-phase demo apps described in
-`docs/prompts/cf-flutter-examples.md`. Those demo apps mirror CLI examples
+`development/prompts/cf-flutter-examples.md`. Those demo apps mirror CLI examples
 one-to-one. These projects are **composite applications** that combine multiple
 zenoh patterns into realistic use cases.
 
@@ -355,5 +355,5 @@ If building these incrementally as `zenoh_dart` phases land:
 |----------|---------|
 | `docs/synthesis-phases-vs-patterns.md` | Maps phases to zenoh patterns — the analytical foundation for this document |
 | `development/phases/phase-NN-*.md` | Per-phase specifications — defines the API surface each project idea draws from |
-| `docs/prompts/cf-flutter-examples.md` | Per-phase demo apps (one screen, one pattern) — complementary to these composite projects |
-| `docs/prompts/cg-flutter-projects.md` | Continuation prompt for expanding these ideas (see below) |
+| `development/prompts/cf-flutter-examples.md` | Per-phase demo apps (one screen, one pattern) — complementary to these composite projects |
+| `development/prompts/cg-flutter-projects.md` | Continuation prompt for expanding these ideas (see below) |

@@ -6,8 +6,8 @@
 > **Audience**: CI (implementer), CA (architect review).
 >
 > **Companion docs**:
-> - `docs/design/xplr-counter-migration-analysis.md` — xplr analysis
-> - `docs/design/dart-client-integration-testing.md` — testing framework
+> - `development/design/xplr-counter-migration-analysis.md` — xplr analysis
+> - `development/design/dart-client-integration-testing.md` — testing framework
 >
 > **Prerequisites**: Phase 3 (publisher + payloadBytes fix) must be complete
 > before the Flutter app can receive binary counter data.
@@ -342,7 +342,7 @@ enters the endpoint in the settings screen (persisted).
 - Connect to host via `tcp/10.0.2.2:7447` (emulator host loopback)
 - Verify full play/pause/stop/reset cycle
 
-See `docs/design/dart-client-integration-testing.md` for the testing
+See `development/design/dart-client-integration-testing.md` for the testing
 framework that supports these integration tests.
 
 ## 12. Implementation Steps

@@ -177,8 +177,8 @@ slice list with live status tracking.
 - `package/test/subscriber_test.dart` -- two-session integration test patterns
 
 ### Documentation
-- `docs/design/phase-03-pub-revised.md` -- feature specification
-- `docs/design/cross-cutting-patterns.md` -- shared patterns across phases
+- `development/design/phase-03-pub-revised.md` -- feature specification
+- `development/design/cross-cutting-patterns.md` -- shared patterns across phases
 - `extern/zenoh-c/examples/z_pub.c` -- C reference for CLI example
 - `extern/zenoh-cpp/include/zenoh/api/session.hxx` -- C++ publisher API
 - `extern/zenoh-cpp/include/zenoh/api/publisher.hxx` -- C++ Publisher class
