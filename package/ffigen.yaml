@@ -198,3 +198,27 @@ type-map:
       lib: ffi
       c-type: Opaque
       dart-type: Opaque
+    z_owned_ring_handler_sample_t:
+      lib: ffi
+      c-type: Opaque
+      dart-type: Opaque
+    z_loaned_ring_handler_sample_t:
+      lib: ffi
+      c-type: Opaque
+      dart-type: Opaque
+    z_moved_ring_handler_sample_t:
+      lib: ffi
+      c-type: Opaque
+      dart-type: Opaque
+    z_owned_sample_t:
+      lib: ffi
+      c-type: Opaque
+      dart-type: Opaque
+    z_loaned_sample_t:
+      lib: ffi
+      c-type: Opaque
+      dart-type: Opaque
+    z_moved_sample_t:
+      lib: ffi
+      c-type: Opaque
+      dart-type: Opaque

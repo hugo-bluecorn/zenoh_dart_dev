@@ -1177,3 +1177,141 @@ FFI_PLUGIN_EXPORT int8_t zd_bytes_is_shm(const uint8_t* bytes) {
 }
 
 #endif // Z_FEATURE_SHARED_MEMORY && Z_FEATURE_UNSTABLE_API
+
+// ---------------------------------------------------------------------------
+// Pull Subscriber (ring channel)
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT int32_t zd_ring_handler_sample_sizeof(void) {
+  return (int32_t)sizeof(z_owned_ring_handler_sample_t);
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_declare_pull_subscriber(
+    uint8_t* subscriber_out, uint8_t* handler_out,
+    const uint8_t* session, const char* key_expr,
+    int32_t capacity) {
+  // Validate key expression
+  z_view_keyexpr_t ke;
+  if (z_view_keyexpr_from_str(&ke, key_expr) != 0) {
+    return -1;
+  }
+
+  // Create ring channel
+  z_owned_closure_sample_t closure;
+  z_ring_channel_sample_new(
+      &closure,
+      (z_owned_ring_handler_sample_t*)handler_out,
+      (size_t)capacity);
+
+  // Declare subscriber with ring closure
+  int rc = z_declare_subscriber(
+      (const z_loaned_session_t*)session,
+      (z_owned_subscriber_t*)subscriber_out,
+      z_view_keyexpr_loan(&ke),
+      z_closure_sample_move(&closure),
+      NULL);
+
+  if (rc != 0) {
+    // On failure, drop the ring handler (closure was not consumed)
+    z_ring_handler_sample_drop(
+        z_ring_handler_sample_move((z_owned_ring_handler_sample_t*)handler_out));
+  }
+
+  return (int8_t)rc;
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_pull_subscriber_try_recv(
+    const uint8_t* handler,
+    char** out_keyexpr, uint8_t** out_payload, int32_t* out_payload_len,
+    int8_t* out_kind, char** out_encoding,
+    uint8_t** out_attachment, int32_t* out_attachment_len) {
+  const z_loaned_ring_handler_sample_t* h =
+      z_ring_handler_sample_loan((const z_owned_ring_handler_sample_t*)handler);
+
+  z_owned_sample_t sample;
+  z_result_t res = z_ring_handler_sample_try_recv(h, &sample);
+
+  if (res == Z_CHANNEL_DISCONNECTED) {
+    return 1;  // channel disconnected
+  }
+  if (res == Z_CHANNEL_NODATA) {
+    return 2;  // buffer empty
+  }
+
+  // res == Z_OK: extract sample fields
+  const z_loaned_sample_t* s = z_sample_loan(&sample);
+
+  // 1. Key expression
+  z_view_string_t key_view;
+  z_keyexpr_as_view_string(z_sample_keyexpr(s), &key_view);
+  const z_loaned_string_t* key_loaned = z_view_string_loan(&key_view);
+  size_t key_len = z_string_len(key_loaned);
+  const char* key_data = z_string_data(key_loaned);
+  *out_keyexpr = (char*)malloc(key_len + 1);
+  memcpy(*out_keyexpr, key_data, key_len);
+  (*out_keyexpr)[key_len] = '\0';
+
+  // 2. Payload as bytes (via string conversion, matching existing pattern)
+  const z_loaned_bytes_t* payload_loaned = z_sample_payload(s);
+  size_t payload_byte_len = z_bytes_len(payload_loaned);
+  if (payload_byte_len > 0) {
+    z_owned_string_t payload_str;
+    z_bytes_to_string(payload_loaned, &payload_str);
+    const z_loaned_string_t* pl_loaned = z_string_loan(&payload_str);
+    size_t pl_len = z_string_len(pl_loaned);
+    const char* pl_data = z_string_data(pl_loaned);
+    *out_payload = (uint8_t*)malloc(pl_len);
+    memcpy(*out_payload, pl_data, pl_len);
+    *out_payload_len = (int32_t)pl_len;
+    z_string_drop(z_string_move(&payload_str));
+  } else {
+    *out_payload = NULL;
+    *out_payload_len = 0;
+  }
+
+  // 3. Kind
+  *out_kind = (int8_t)z_sample_kind(s);
+
+  // 4. Encoding
+  const z_loaned_encoding_t* encoding = z_sample_encoding(s);
+  z_owned_string_t enc_str;
+  z_encoding_to_string(encoding, &enc_str);
+  const z_loaned_string_t* enc_loaned = z_string_loan(&enc_str);
+  size_t enc_len = z_string_len(enc_loaned);
+  const char* enc_data = z_string_data(enc_loaned);
+  if (enc_len > 0) {
+    *out_encoding = (char*)malloc(enc_len + 1);
+    memcpy(*out_encoding, enc_data, enc_len);
+    (*out_encoding)[enc_len] = '\0';
+  } else {
+    *out_encoding = NULL;
+  }
+  z_string_drop(z_string_move(&enc_str));
+
+  // 5. Attachment (nullable)
+  const z_loaned_bytes_t* attachment = z_sample_attachment(s);
+  if (attachment != NULL) {
+    z_owned_string_t att_str;
+    z_bytes_to_string(attachment, &att_str);
+    const z_loaned_string_t* att_loaned = z_string_loan(&att_str);
+    size_t att_len = z_string_len(att_loaned);
+    const char* att_data = z_string_data(att_loaned);
+    *out_attachment = (uint8_t*)malloc(att_len);
+    memcpy(*out_attachment, att_data, att_len);
+    *out_attachment_len = (int32_t)att_len;
+    z_string_drop(z_string_move(&att_str));
+  } else {
+    *out_attachment = NULL;
+    *out_attachment_len = 0;
+  }
+
+  // Drop the owned sample
+  z_sample_drop(z_sample_move(&sample));
+
+  return 0;  // success
+}
+
+FFI_PLUGIN_EXPORT void zd_ring_handler_sample_drop(uint8_t* handler) {
+  z_owned_ring_handler_sample_t* h = (z_owned_ring_handler_sample_t*)handler;
+  z_ring_handler_sample_drop(z_ring_handler_sample_move(h));
+}

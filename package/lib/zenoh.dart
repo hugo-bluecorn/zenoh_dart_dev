@@ -11,6 +11,7 @@ export 'src/hello.dart';
 export 'src/id.dart';
 export 'src/keyexpr.dart';
 export 'src/priority.dart';
+export 'src/pull_subscriber.dart';
 export 'src/publisher.dart';
 export 'src/query.dart';
 export 'src/query_target.dart';

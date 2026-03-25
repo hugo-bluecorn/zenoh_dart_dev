@@ -647,4 +647,49 @@ FFI_PLUGIN_EXPORT int8_t zd_bytes_is_shm(const uint8_t* bytes);
 
 #endif // Z_FEATURE_SHARED_MEMORY && Z_FEATURE_UNSTABLE_API
 
+// ---------------------------------------------------------------------------
+// Pull Subscriber (ring channel)
+// ---------------------------------------------------------------------------
+
+/// Returns the size of z_owned_ring_handler_sample_t in bytes.
+FFI_PLUGIN_EXPORT int32_t zd_ring_handler_sample_sizeof(void);
+
+/// Declares a pull subscriber using a ring channel buffer.
+///
+/// @param subscriber_out  Pointer to an uninitialized z_owned_subscriber_t (as uint8_t*).
+/// @param handler_out     Pointer to an uninitialized z_owned_ring_handler_sample_t (as uint8_t*).
+/// @param session         Const pointer to a loaned session (as uint8_t*).
+/// @param key_expr        Null-terminated key expression string.
+/// @param capacity        Ring buffer capacity.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_declare_pull_subscriber(
+    uint8_t* subscriber_out, uint8_t* handler_out,
+    const uint8_t* session, const char* key_expr,
+    int32_t capacity);
+
+/// Tries to receive a sample from the ring handler.
+///
+/// Return codes: 0=sample available, 1=channel disconnected, 2=buffer empty.
+/// When 0, all out_ parameters are populated (malloc'd; caller must free).
+///
+/// @param handler           Const pointer to an owned ring handler (as uint8_t*).
+/// @param out_keyexpr       Out: malloc'd null-terminated key expression string.
+/// @param out_payload       Out: malloc'd payload bytes.
+/// @param out_payload_len   Out: payload length.
+/// @param out_kind          Out: sample kind (0=put, 1=delete).
+/// @param out_encoding      Out: malloc'd null-terminated encoding string (or NULL).
+/// @param out_attachment     Out: malloc'd attachment bytes (or NULL).
+/// @param out_attachment_len Out: attachment length.
+/// @return 0=sample, 1=disconnected, 2=empty.
+FFI_PLUGIN_EXPORT int8_t zd_pull_subscriber_try_recv(
+    const uint8_t* handler,
+    char** out_keyexpr, uint8_t** out_payload, int32_t* out_payload_len,
+    int8_t* out_kind, char** out_encoding,
+    uint8_t** out_attachment, int32_t* out_attachment_len);
+
+/// Drops (frees) the ring handler.
+///
+/// @param handler  Pointer to a z_owned_ring_handler_sample_t (as uint8_t*).
+FFI_PLUGIN_EXPORT void zd_ring_handler_sample_drop(uint8_t* handler);
+
 #endif // ZENOH_DART_H

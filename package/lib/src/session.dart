@@ -16,6 +16,7 @@ import 'id.dart';
 import 'keyexpr.dart';
 import 'native_lib.dart';
 import 'priority.dart';
+import 'pull_subscriber.dart';
 import 'publisher.dart';
 import 'query_target.dart';
 import 'queryable.dart';
@@ -266,6 +267,50 @@ class Session {
     } finally {
       ke.dispose();
     }
+  }
+
+  /// Declares a pull subscriber on the given [keyExpr].
+  ///
+  /// Returns a [PullSubscriber] that buffers samples in a ring channel of
+  /// the given [capacity]. Use [PullSubscriber.tryRecv] to poll for samples.
+  /// Call [PullSubscriber.close] when done.
+  ///
+  /// Throws [ZenohException] if the key expression is invalid.
+  /// Throws [StateError] if the session has been closed.
+  PullSubscriber declarePullSubscriber(
+    String keyExpr, {
+    int capacity = 256,
+  }) {
+    _ensureOpen();
+
+    final subscriberSize = bindings.zd_subscriber_sizeof();
+    final handlerSize = bindings.zd_ring_handler_sample_sizeof();
+    final subscriberHandle = calloc<Uint8>(subscriberSize);
+    final handlerHandle = calloc<Uint8>(handlerSize);
+
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+    final keyExprNative = keyExpr.toNativeUtf8();
+
+    try {
+      final rc = bindings.zd_declare_pull_subscriber(
+        subscriberHandle,
+        handlerHandle,
+        loanedSession.cast(),
+        keyExprNative.cast(),
+        capacity,
+      );
+
+      if (rc != 0) {
+        calloc.free(subscriberHandle);
+        calloc.free(handlerHandle);
+        throw ZenohException('Failed to declare pull subscriber', rc);
+      }
+    } finally {
+      calloc.free(keyExprNative);
+    }
+
+    return PullSubscriber(subscriberHandle, handlerHandle, keyExpr);
   }
 
   /// Declares a queryable on the given [keyExpr].
