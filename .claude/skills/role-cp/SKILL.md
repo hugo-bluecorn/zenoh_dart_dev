@@ -95,7 +95,7 @@ on disk -- report to CA that the plan is ready for review.
 
 On fresh start or recovery after interruption:
 
-1. Read MEMORY.md at the project root for current project state and established patterns
+1. Read MEMORY.md from the Claude auto-memory directory for current project state and established patterns
 2. Check if `.tdd-progress.md` exists -- if yes, planning is done; report to CA and wait
 3. Read the phase doc CA references (e.g., `development/phases/phase-06-get-queryable.md`)
 4. Wait for CA to provide a `/tdd-plan` prompt before executing

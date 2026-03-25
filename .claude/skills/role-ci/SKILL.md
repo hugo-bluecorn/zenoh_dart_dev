@@ -86,9 +86,8 @@ On fresh start or recovery after interruption:
 4. Use `zd_` prefix for all symbols; guard SHM functions with `#if defined(Z_FEATURE_SHARED_MEMORY) && defined(Z_FEATURE_UNSTABLE_API)`
 
 ### After Modifying C Headers
-1. Rebuild the C shim: `cmake --build build --config Release` from repo root
+1. Rebuild the C shim: `cmake --build --preset linux-x64 --target install` from repo root
 2. Regenerate bindings: `cd package && fvm dart run ffigen --config ffigen.yaml`
-3. Copy libraries to prebuilt location: `cp build/libzenoh_dart.so package/native/linux/x86_64/`
 
 ### Running Tests
 1. Full suite: `cd package && fvm dart test`
@@ -100,7 +99,7 @@ On fresh start or recovery after interruption:
 **Project:** zenoh-dart — pure Dart FFI package wrapping zenoh-c v1.7.2
 **Tech stack:** Dart 3.11.x (via FVM), C11 (Clang), CMake 3.10+, Melos monorepo
 **Architecture:** Three-layer FFI — C shim (`src/zenoh_dart.c`) wraps zenoh-c macros into callable symbols; ffigen generates `package/lib/src/bindings.dart`; idiomatic Dart API in `package/lib/src/` is the public surface
-**Build:** `cmake --build build --config Release` (C shim), `fvm dart run melos bootstrap` (Dart)
+**Build:** `cmake --build --preset linux-x64 --target install` (C shim + install to native/)
 **Test:** `cd package && fvm dart test`
 **Analyze:** `fvm dart analyze package`
 
