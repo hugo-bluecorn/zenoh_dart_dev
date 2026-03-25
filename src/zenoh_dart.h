@@ -465,6 +465,108 @@ FFI_PLUGIN_EXPORT int zd_whatami_to_view_string(int whatami,
                                                 z_view_string_t* out);
 
 // ---------------------------------------------------------------------------
+// Queryable
+// ---------------------------------------------------------------------------
+
+/// Returns the size of z_owned_queryable_t in bytes.
+FFI_PLUGIN_EXPORT int32_t zd_queryable_sizeof(void);
+
+/// Returns the size of z_owned_query_t in bytes.
+FFI_PLUGIN_EXPORT int32_t zd_query_sizeof(void);
+
+/// Declares a queryable on the given key expression.
+///
+/// Incoming queries are posted to the Dart isolate via the given native port.
+///
+/// @param queryable_out  Pointer to an uninitialized z_owned_queryable_t.
+/// @param session        Const pointer to a loaned session (as uint8_t*).
+/// @param key_expr       Null-terminated key expression string.
+/// @param port           The Dart native port to post queries to.
+/// @param complete       Whether this queryable is complete (1) or not (0).
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_declare_queryable(
+    uint8_t* queryable_out,
+    const uint8_t* session,
+    const char* key_expr,
+    int64_t port,
+    int8_t complete);
+
+/// Drops (undeclares and frees) a queryable.
+///
+/// @param queryable  Pointer to a z_owned_queryable_t to drop.
+FFI_PLUGIN_EXPORT void zd_queryable_drop(uint8_t* queryable);
+
+/// Performs a get query on the given selector.
+///
+/// Replies are posted to the Dart isolate via the given native port.
+///
+/// @param session        Const pointer to a loaned session (as uint8_t*).
+/// @param selector       Null-terminated selector string.
+/// @param port           The Dart native port to post replies to.
+/// @param target         Query target (0=bestMatching, 1=all, 2=allComplete).
+/// @param consolidation  Consolidation mode (-1=auto, 0=none, 1=monotonic, 2=latest).
+/// @param payload        Pointer to payload data (NULL = no payload).
+/// @param payload_len    Length of payload in bytes.
+/// @param encoding       MIME type string (NULL = default).
+/// @param timeout_ms     Timeout in milliseconds.
+/// @param parameters     Additional query parameters (NULL = none).
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_get(
+    const uint8_t* session,
+    const char* selector,
+    int64_t port,
+    int8_t target,
+    int8_t consolidation,
+    const uint8_t* payload,
+    int32_t payload_len,
+    const char* encoding,
+    uint64_t timeout_ms,
+    const char* parameters);
+
+/// Sends a reply to a query.
+///
+/// @param query        Const pointer to a loaned query (as uint8_t*).
+/// @param key_expr     Null-terminated key expression string.
+/// @param payload      Pointer to payload data.
+/// @param payload_len  Length of payload in bytes.
+/// @param encoding     MIME type string (NULL = default).
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_query_reply(
+    const uint8_t* query,
+    const char* key_expr,
+    const uint8_t* payload,
+    int32_t payload_len,
+    const char* encoding);
+
+/// Drops (frees) an owned query.
+///
+/// @param query  Pointer to a z_owned_query_t to drop.
+FFI_PLUGIN_EXPORT void zd_query_drop(uint8_t* query);
+
+/// Returns the key expression of a query as a null-terminated string.
+///
+/// @param query  Const pointer to a loaned query (as uint8_t*).
+/// @return Null-terminated key expression string.
+FFI_PLUGIN_EXPORT const char* zd_query_keyexpr(const uint8_t* query);
+
+/// Returns the parameters of a query as a null-terminated string.
+///
+/// @param query  Const pointer to a loaned query (as uint8_t*).
+/// @return Null-terminated parameters string (empty string if no parameters).
+FFI_PLUGIN_EXPORT const char* zd_query_parameters(const uint8_t* query);
+
+/// Copies the payload of a query into a caller-provided buffer.
+///
+/// @param query        Const pointer to a loaned query (as uint8_t*).
+/// @param payload_out  Pointer to a buffer to receive the payload.
+/// @param max_len      Maximum number of bytes to copy.
+/// @return Number of bytes copied, or negative on failure.
+FFI_PLUGIN_EXPORT int32_t zd_query_payload(
+    const uint8_t* query,
+    uint8_t* payload_out,
+    int32_t max_len);
+
+// ---------------------------------------------------------------------------
 // Shared Memory (SHM)
 // ---------------------------------------------------------------------------
 #if defined(Z_FEATURE_SHARED_MEMORY) && defined(Z_FEATURE_UNSTABLE_API)
