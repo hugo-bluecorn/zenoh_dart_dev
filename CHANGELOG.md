@@ -1,4 +1,21 @@
 # Changelog
+## 0.8.0
+
+### Changed
+- `Session.get()` payload parameter widened from `Uint8List?` to `ZBytes?` —
+  accepts SHM-backed bytes for zero-copy query payloads
+- `Query.replyBytes()` payload parameter widened from `Uint8List` to `ZBytes` —
+  accepts SHM-backed bytes for zero-copy reply payloads
+- `zd_get()` and `zd_query_reply()` C shim signatures updated: raw
+  `uint8_t* + len` replaced with `z_owned_bytes_t*` (consumed)
+
+### Added
+- `ZBytes.isShmBacked` property — detects whether bytes are backed by
+  shared memory (SHM feature-guarded, returns false on Android)
+- 1 new C shim function `zd_bytes_is_shm()` (72 → 73 total)
+- CLI examples: `z_get_shm.dart`, `z_queryable_shm.dart`
+- 25 new integration tests (237 → 262 total)
+
 ## 0.7.0
 
 ### Added
