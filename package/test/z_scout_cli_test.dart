@@ -4,9 +4,8 @@ import 'package:test/test.dart';
 
 void main() {
   // Get the package root (where pubspec.yaml lives)
-  // Tests run from packages/zenoh/
+  // Tests run from package/
   final packageRoot = Directory.current.path;
-  final repoRoot = '$packageRoot/../..';
   final dartBin = '/home/hugo-bluecorn/fvm/versions/stable/bin/dart';
 
   group('z_scout CLI', () {
@@ -90,7 +89,7 @@ Future<void> main() async {
       // resolve the package:zenoh import via workspace package_config.json
       final result = await Process.run(dartBin, [
         'run',
-        '--packages=$repoRoot/.dart_tool/package_config.json',
+        '--packages=$packageRoot/.dart_tool/package_config.json',
         tempScript.path,
       ], workingDirectory: packageRoot).timeout(const Duration(seconds: 15));
 

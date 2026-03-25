@@ -274,7 +274,7 @@ zenoh-dart/
           settings/
       pubspec.yaml
         dependencies:
-          zenoh: { path: ../../packages/zenoh }
+          zenoh: { path: ../../package }
           flutter_riverpod: ...
     cpp_counter/                  # COPY from xplr apps/cpp_app
       CMakeLists.txt

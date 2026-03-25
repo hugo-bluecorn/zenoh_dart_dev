@@ -57,8 +57,6 @@ String? _resolveLibraryPath(String libraryName) {
   final candidates = <String>[
     'native/linux/x86_64/$libraryName',
     '.dart_tool/lib/$libraryName',
-    'packages/zenoh/native/linux/x86_64/$libraryName',
-    'packages/zenoh/.dart_tool/lib/$libraryName',
   ];
   for (final candidate in candidates) {
     final file = File(candidate);
@@ -85,12 +83,19 @@ void ensureInitialized() {
     lib = DynamicLibrary.open('libzenoh_dart.so');
   } else {
     final libPath = _resolveLibraryPath('libzenoh_dart.so');
-    if (libPath == null) {
-      throw StateError(
-        'Could not find libzenoh_dart.so. Ensure the build hook has run.',
-      );
+    if (libPath != null) {
+      lib = DynamicLibrary.open(libPath);
+    } else {
+      // Last resort: let the OS linker resolve via RUNPATH/LD_LIBRARY_PATH.
+      // This handles Flutter desktop (RUNPATH=$ORIGIN/lib in the runner binary).
+      try {
+        lib = DynamicLibrary.open('libzenoh_dart.so');
+      } catch (e) {
+        throw StateError(
+          'Could not find libzenoh_dart.so. Ensure the build hook has run.',
+        );
+      }
     }
-    lib = DynamicLibrary.open(libPath);
   }
 
   _bindings = ZenohDartBindings(lib);

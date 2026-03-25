@@ -17,7 +17,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ZENOHC_DIR="${PROJECT_ROOT}/extern/zenoh-c"
-JNILIBS_DIR="${PROJECT_ROOT}/android/src/main/jniLibs"
+NATIVE_ANDROID_DIR="${PROJECT_ROOT}/package/native/android"
 API_LEVEL="${API_LEVEL:-24}"
 
 # Default ABIs
@@ -73,27 +73,27 @@ for abi in "${ABIS[@]}"; do
   rustup target add "${target}"
 done
 
-# Build for each ABI
+# Build zenoh-c for each ABI, outputting directly to package/native/android/
 # cargo-ndk requires running from the crate directory (--manifest-path is not
 # well supported by cargo-ndk's internal cargo metadata invocation).
 cd "${ZENOHC_DIR}"
 
 for abi in "${ABIS[@]}"; do
   echo "Building zenoh-c for ${abi} (API level ${API_LEVEL})..."
-  mkdir -p "${JNILIBS_DIR}/${abi}"
+  mkdir -p "${NATIVE_ANDROID_DIR}/${abi}"
 
   RUSTUP_TOOLCHAIN=stable cargo ndk \
     -t "${abi}" \
     --platform "${API_LEVEL}" \
-    -o "${JNILIBS_DIR}" \
+    -o "${NATIVE_ANDROID_DIR}" \
     build --release
 
-  echo "Built: ${JNILIBS_DIR}/${abi}/libzenohc.so"
+  echo "Built: ${NATIVE_ANDROID_DIR}/${abi}/libzenohc.so"
 done
 
 # --- C shim cross-compilation ---
 # Build libzenoh_dart.so for each ABI using CMake with the NDK toolchain.
-# src/CMakeLists.txt already has full Android support (tier-1 jniLibs discovery).
+# src/CMakeLists.txt discovers libzenohc.so from package/native/android/<abi>/.
 
 command -v cmake >/dev/null 2>&1 || { echo "Error: cmake not found"; exit 1; }
 command -v ninja >/dev/null 2>&1 || { echo "Error: ninja not found"; exit 1; }
@@ -115,19 +115,8 @@ for abi in "${ABIS[@]}"; do
 
   cmake --build "${BUILD_DIR}" --config Release
 
-  cp "${BUILD_DIR}/libzenoh_dart.so" "${JNILIBS_DIR}/${abi}/"
-  echo "Built: ${JNILIBS_DIR}/${abi}/libzenoh_dart.so"
-done
-
-# --- Copy prebuilts to native/android/<abi>/ for build hooks ---
-NATIVE_ANDROID_DIR="${PROJECT_ROOT}/packages/zenoh/native/android"
-
-for abi in "${ABIS[@]}"; do
-  DEST="${NATIVE_ANDROID_DIR}/${abi}"
-  mkdir -p "${DEST}"
-  cp "${JNILIBS_DIR}/${abi}/libzenohc.so" "${DEST}/"
-  cp "${JNILIBS_DIR}/${abi}/libzenoh_dart.so" "${DEST}/"
-  echo "Copied prebuilts to: ${DEST}/"
+  cp "${BUILD_DIR}/libzenoh_dart.so" "${NATIVE_ANDROID_DIR}/${abi}/"
+  echo "Built: ${NATIVE_ANDROID_DIR}/${abi}/libzenoh_dart.so"
 done
 
 echo ""

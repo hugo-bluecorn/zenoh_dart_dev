@@ -1,4 +1,4 @@
-# Migration Spec: packages/zenoh/ to @Native + Build Hooks
+# Migration Spec: package/ to @Native + Build Hooks
 
 > **Date**: 2026-03-10
 > **Author**: CA (Architect)
@@ -8,7 +8,7 @@
 
 ## Objective
 
-Migrate `packages/zenoh/` from `DynamicLibrary.open()` to `@Native`
+Migrate `package/` from `DynamicLibrary.open()` to `@Native`
 annotations with a build hook, eliminating `LD_LIBRARY_PATH` from all
 commands. The public Dart API does not change — this is an internal
 plumbing migration.
@@ -27,7 +27,7 @@ examples, CMake build system.
 
 ### Step 1: Add hook dependencies to pubspec.yaml
 
-Add to `packages/zenoh/pubspec.yaml` dependencies:
+Add to `package/pubspec.yaml` dependencies:
 
 ```yaml
 dependencies:
@@ -39,7 +39,7 @@ dependencies:
 
 ### Step 2: Create hook/build.dart
 
-Create `packages/zenoh/hook/build.dart`:
+Create `package/hook/build.dart`:
 
 ```dart
 import 'package:code_assets/code_assets.dart';
@@ -81,21 +81,21 @@ the `@DefaultAsset` URI in the generated bindings.
 ### Step 3: Place and patch prebuilt libraries
 
 ```bash
-mkdir -p packages/zenoh/native/linux/x86_64/
-cp build/libzenoh_dart.so packages/zenoh/native/linux/x86_64/
-cp extern/zenoh-c/target/release/libzenohc.so packages/zenoh/native/linux/x86_64/
-patchelf --set-rpath '$ORIGIN' packages/zenoh/native/linux/x86_64/libzenoh_dart.so
+mkdir -p package/native/linux/x86_64/
+cp build/libzenoh_dart.so package/native/linux/x86_64/
+cp extern/zenoh-c/target/release/libzenohc.so package/native/linux/x86_64/
+patchelf --set-rpath '$ORIGIN' package/native/linux/x86_64/libzenoh_dart.so
 ```
 
 Verify:
 ```bash
-readelf -d packages/zenoh/native/linux/x86_64/libzenoh_dart.so | grep RUNPATH
+readelf -d package/native/linux/x86_64/libzenoh_dart.so | grep RUNPATH
 # Should show: (RUNPATH) Library runpath: [$ORIGIN]
 ```
 
 ### Step 4: Reconfigure ffigen for @Native output
 
-Edit `packages/zenoh/ffigen.yaml` — add the `ffi-native` section:
+Edit `package/ffigen.yaml` — add the `ffi-native` section:
 
 ```yaml
 ffi-native:
@@ -109,7 +109,7 @@ instead of the `ZenohDartBindings` class.
 ### Step 5: Regenerate bindings
 
 ```bash
-cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml
+cd package && fvm dart run ffigen --config ffigen.yaml
 ```
 
 The generated `lib/src/bindings.dart` will change from:
@@ -208,7 +208,7 @@ The mechanical transformation for each file:
 ### Step 8: Run dart analyze
 
 ```bash
-fvm dart analyze packages/zenoh
+fvm dart analyze package
 ```
 
 Must pass with no errors. The migration is mechanical — any errors
@@ -217,7 +217,7 @@ indicate a missed call site or import.
 ### Step 9: Run the full test suite WITHOUT LD_LIBRARY_PATH
 
 ```bash
-cd packages/zenoh && fvm dart test
+cd package && fvm dart test
 ```
 
 **This is the critical verification.** All 185 existing tests must pass
@@ -231,8 +231,8 @@ If tests fail: the `@Native` resolution or DT_NEEDED chain has an issue.
 ### Step 10: Verify CLI examples WITHOUT LD_LIBRARY_PATH
 
 ```bash
-cd packages/zenoh && fvm dart run example/z_info.dart
-cd packages/zenoh && fvm dart run example/z_scout.dart
+cd package && fvm dart run example/z_info.dart
+cd package && fvm dart run example/z_scout.dart
 ```
 
 These should produce output without `LD_LIBRARY_PATH`. Use `z_info.dart`
@@ -245,16 +245,16 @@ Remove `LD_LIBRARY_PATH` from all commands in:
 
 1. **CLAUDE.md** — Test commands, CLI example commands, build instructions
 2. **README.md** — CLI examples section, test commands
-3. **packages/zenoh/README.md** (if it exists)
+3. **package/README.md** (if it exists)
 
 Replace:
 ```bash
-cd packages/zenoh && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build fvm dart test
+cd package && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build fvm dart test
 ```
 
 With:
 ```bash
-cd packages/zenoh && fvm dart test
+cd package && fvm dart test
 ```
 
 **Important**: Keep the `LD_LIBRARY_PATH` in the zenoh-c build
@@ -279,8 +279,8 @@ Suggested commit sequence:
 
 1. `fvm dart test` passes (all 185 tests) **without LD_LIBRARY_PATH**
 2. `fvm dart run example/z_info.dart` works **without LD_LIBRARY_PATH**
-3. `fvm dart analyze packages/zenoh` passes with no issues
-4. No `DynamicLibrary.open` in `packages/zenoh/lib/src/`
+3. `fvm dart analyze package` passes with no issues
+4. No `DynamicLibrary.open` in `package/lib/src/`
 5. `hook/build.dart` declares two CodeAsset entries
 6. `@DefaultAsset` URI matches primary CodeAsset name
 7. Prebuilt `libzenoh_dart.so` has RUNPATH `$ORIGIN`

@@ -91,6 +91,6 @@ configuration. CA decides whether and how to proceed.
 | zenoh-c build artifacts | `extern/zenoh-c/target/release/` |
 | zenoh-c CMake config | `extern/zenoh-c/CMakeLists.txt` |
 | Prebuilt placement | `native/<platform>/<arch>/` |
-| Package pubspec | `packages/zenoh/pubspec.yaml` |
+| Package pubspec | `package/pubspec.yaml` |
 | Root workspace pubspec | `pubspec.yaml` |
 | Packaging research | `memory/cb-packaging-research.md` |

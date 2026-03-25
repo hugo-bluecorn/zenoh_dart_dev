@@ -1,5 +1,5 @@
 # Auto-generated FFI bindings — treat as generated
-packages/zenoh/lib/src/bindings.dart linguist-generated=true
+package/lib/src/bindings.dart linguist-generated=true
 
 # Native shared libraries
 *.so filter=lfs diff=lfs merge=lfs -text

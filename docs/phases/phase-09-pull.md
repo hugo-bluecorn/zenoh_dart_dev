@@ -93,7 +93,7 @@ class PullSubscriber {
 }
 ```
 
-### Modify `packages/zenoh/lib/src/session.dart`
+### Modify `package/lib/src/session.dart`
 
 ```dart
 class Session {
@@ -107,12 +107,12 @@ class Session {
 
 ## CLI Example to Create
 
-### `packages/zenoh/bin/z_pull.dart`
+### `package/bin/z_pull.dart`
 
 Mirrors `extern/zenoh-c/examples/z_pull.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_pull.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_pull.dart [OPTIONS]
 
 Options:
     -k, --key <KEYEXPR>      (default: 'demo/example/**')
@@ -128,8 +128,8 @@ Behavior:
 
 ## Verification
 
-1. `fvm dart analyze packages/zenoh` — no errors
-2. **Integration test**: Run `packages/zenoh/bin/z_pull.dart` + `packages/zenoh/bin/z_pub.dart` — pull subscriber receives periodic samples
+1. `fvm dart analyze package` — no errors
+2. **Integration test**: Run `package/bin/z_pull.dart` + `package/bin/z_pub.dart` — pull subscriber receives periodic samples
 3. **Unit test**: PullSubscriber.tryRecv() returns null when empty
 4. **Unit test**: Ring buffer drops old samples when full
 5. **Unit test**: PullSubscriber.isConnected returns false after close

@@ -52,7 +52,7 @@ Each experiment:
 - Tests the same 6 verification criteria
 - Records results in a `lessons-learned.md`
 
-The existing `packages/zenoh/` package is the **control** — untouched
+The existing `package/` package is the **control** — untouched
 throughout.
 
 ## Why This Matters

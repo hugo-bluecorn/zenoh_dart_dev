@@ -16,7 +16,7 @@ issues) is completely silent.
 
 ## What to Do
 
-### 1. Create `packages/zenoh/lib/src/zenoh.dart`
+### 1. Create `package/lib/src/zenoh.dart`
 
 A minimal static utility class mirroring C++ `zenoh::init_log_from_env_or()`:
 
@@ -60,7 +60,7 @@ class Zenoh {
 }
 ```
 
-### 2. Export from `packages/zenoh/lib/zenoh.dart`
+### 2. Export from `package/lib/zenoh.dart`
 
 Add this line to the barrel export file:
 
@@ -68,7 +68,7 @@ Add this line to the barrel export file:
 export 'src/zenoh.dart';
 ```
 
-### 3. Update `packages/zenoh/bin/z_put.dart`
+### 3. Update `package/bin/z_put.dart`
 
 Add `Zenoh.initLog('error');` as the first line inside `main()`, before the
 print statement:
@@ -95,12 +95,12 @@ void main(List<String> arguments) {
 }
 ```
 
-### 4. Update `packages/zenoh/bin/z_delete.dart`
+### 4. Update `package/bin/z_delete.dart`
 
 Same pattern — add `Zenoh.initLog('error');` before the session open. Read the
 file first to see its current structure.
 
-### 5. Add a test to `packages/zenoh/test/zenoh_test.dart`
+### 5. Add a test to `package/test/zenoh_test.dart`
 
 Create a new test file with minimal coverage:
 
@@ -127,7 +127,7 @@ void main() {
 ### 6. Verify
 
 ```bash
-cd packages/zenoh
+cd package
 
 # Analyze
 fvm dart analyze

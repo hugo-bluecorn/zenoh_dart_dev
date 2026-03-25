@@ -1950,7 +1950,7 @@ final class z_owned_shm_provider_t extends ffi.Struct {
 
 /// An owned Zenoh task.
 final class z_owned_task_t extends ffi.Struct {
-  @ffi.Array.multi([24])
+  @ffi.Array.multi([32])
   external ffi.Array<ffi.Uint8> _0;
 }
 

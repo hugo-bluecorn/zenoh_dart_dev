@@ -219,7 +219,7 @@ Phase 4.1**. Rationale:
 
 ## Dart API Surface
 
-### New file: `packages/zenoh/lib/src/shm_provider.dart`
+### New file: `package/lib/src/shm_provider.dart`
 
 ```dart
 /// Manages a shared memory pool for zero-copy data transfer.
@@ -256,7 +256,7 @@ class ShmProvider {
 }
 ```
 
-### New file: `packages/zenoh/lib/src/shm_buffer.dart`
+### New file: `package/lib/src/shm_buffer.dart`
 
 ```dart
 /// A mutable shared memory buffer for zero-copy writes.
@@ -286,18 +286,18 @@ class ShmMutBuffer {
 }
 ```
 
-### Modify `packages/zenoh/lib/zenoh.dart`
+### Modify `package/lib/zenoh.dart`
 
 Add exports for `ShmProvider`, `ShmMutBuffer`.
 
 ## CLI Example to Create
 
-### `packages/zenoh/bin/z_pub_shm.dart`
+### `package/bin/z_pub_shm.dart`
 
 Mirrors `extern/zenoh-c/examples/z_pub_shm.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_pub_shm.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_pub_shm.dart [OPTIONS]
 
 Options:
     -k, --key <KEYEXPR>           (default: 'demo/example/zenoh-dart-pub')
@@ -355,8 +355,8 @@ phase to keep scope manageable:
 ## Verification
 
 1. `cmake --build build` -- C shim compiles with 12 new functions (guarded by SHM flags)
-2. `cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml` -- regenerate bindings
-3. `fvm dart analyze packages/zenoh` -- no errors
+2. `cd package && fvm dart run ffigen --config ffigen.yaml` -- regenerate bindings
+3. `fvm dart analyze package` -- no errors
 4. **Unit tests:**
    - ShmProvider creation with valid size succeeds
    - ShmProvider.close is idempotent (double-close safe)

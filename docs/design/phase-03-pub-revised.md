@@ -22,7 +22,7 @@ C shim layer. See `docs/phases/phase-00-bootstrap.md` for full architecture.
 ### Phase 2 (z_sub) -- completed
 - C shim: `zd_declare_subscriber`, `zd_subscriber_drop`, NativePort callback bridge
 - Dart: `Sample`, `SampleKind`, `Subscriber` with `Stream<Sample>`
-- CLI: `packages/zenoh/bin/z_sub.dart`
+- CLI: `package/bin/z_sub.dart`
 
 ## This Phase's Goal
 
@@ -156,21 +156,21 @@ FFI_PLUGIN_EXPORT int zd_publisher_get_matching_status(
 
 ## Dart API Surface
 
-### New file: `packages/zenoh/lib/src/encoding.dart`
+### New file: `package/lib/src/encoding.dart`
 
 See `docs/design/cross-cutting-patterns.md` Section 2.2 for the full class.
 Pure Dart, no FFI. `static const` values for common MIME types plus a
 constructor for custom encodings.
 
-### New file: `packages/zenoh/lib/src/congestion_control.dart`
+### New file: `package/lib/src/congestion_control.dart`
 
 See `docs/design/cross-cutting-patterns.md` Section 3.1.
 
-### New file: `packages/zenoh/lib/src/priority.dart`
+### New file: `package/lib/src/priority.dart`
 
 See `docs/design/cross-cutting-patterns.md` Section 3.2.
 
-### New file: `packages/zenoh/lib/src/publisher.dart`
+### New file: `package/lib/src/publisher.dart`
 
 ```dart
 /// A declared zenoh publisher for efficient repeated publishing.
@@ -212,7 +212,7 @@ class Publisher {
 }
 ```
 
-### Modify `packages/zenoh/lib/src/sample.dart`
+### Modify `package/lib/src/sample.dart`
 
 Add `encoding` field:
 
@@ -234,12 +234,12 @@ class Sample {
 }
 ```
 
-### Modify `packages/zenoh/lib/src/subscriber.dart`
+### Modify `package/lib/src/subscriber.dart`
 
 Update the ReceivePort listener to extract the 5th element (encoding) from
 the Dart_CObject array.
 
-### Modify `packages/zenoh/lib/src/session.dart`
+### Modify `package/lib/src/session.dart`
 
 Add method:
 
@@ -260,18 +260,18 @@ Publisher declarePublisher(
 });
 ```
 
-### Modify `packages/zenoh/lib/zenoh.dart`
+### Modify `package/lib/zenoh.dart`
 
 Add exports for `Publisher`, `Encoding`, `CongestionControl`, `Priority`.
 
 ## CLI Example to Create
 
-### `packages/zenoh/bin/z_pub.dart`
+### `package/bin/z_pub.dart`
 
 Mirrors `extern/zenoh-c/examples/z_pub.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_pub.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_pub.dart [OPTIONS]
 
 Options:
     -k, --key <KEYEXPR>           (default: 'demo/example/zenoh-dart-pub')
@@ -309,8 +309,8 @@ See `docs/design/cross-cutting-patterns.md` Section 3.4 for rationale.
 ## Verification
 
 1. `cmake --build build` -- C shim compiles with 8 new functions
-2. `cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml` -- regenerate bindings
-3. `fvm dart analyze packages/zenoh` -- no errors
+2. `cd package && fvm dart run ffigen --config ffigen.yaml` -- regenerate bindings
+3. `fvm dart analyze package` -- no errors
 4. **Unit tests:**
    - Declare publisher, put once, close -- no crash
    - Publisher.put with encoding option succeeds

@@ -13,18 +13,18 @@ After the hooks migration (PR #18), `@Native` loads `libzenohc.so` with `RTLD_LO
 ## Slice Decomposition
 
 ### Slice 1: C Shim Function and Dart Initialization Integration (Build Step)
-- **Source:** `src/zenoh_dart.{h,c}`, `packages/zenoh/lib/src/native_lib.dart`
+- **Source:** `src/zenoh_dart.{h,c}`, `package/lib/src/native_lib.dart`
 - **Tests:** None new (existing 185 tests = regression guard)
 - **Key:** Add `zd_promote_zenohc_global()`, modify `ensureInitialized()`, rebuild, regenerate ffigen
 
 ### Slice 2: Inter-Process Connection Without Crash
-- **Source:** `packages/zenoh/test/helpers/interprocess_connect.dart`
-- **Tests:** `packages/zenoh/test/interprocess_test.dart` (3 tests)
+- **Source:** `package/test/helpers/interprocess_connect.dart`
+- **Tests:** `package/test/interprocess_test.dart` (3 tests)
 - **Key:** Two Dart processes connect via TCP without SIGSEGV; helper accepts `--port` CLI arg
 
 ### Slice 3: Inter-Process Pub/Sub Data Exchange
-- **Source:** `packages/zenoh/test/helpers/interprocess_subscriber.dart`
-- **Tests:** `packages/zenoh/test/interprocess_test.dart` (3 more tests)
+- **Source:** `package/test/helpers/interprocess_subscriber.dart`
+- **Tests:** `package/test/interprocess_test.dart` (3 more tests)
 - **Key:** Payload round-trip across processes; helper accepts `--port` and `--key` CLI args
 
 ## Decisions

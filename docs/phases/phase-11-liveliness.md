@@ -82,7 +82,7 @@ FFI_PLUGIN_EXPORT int zd_liveliness_get(
 
 ## Dart API Surface
 
-### New file: `packages/zenoh/lib/src/liveliness.dart`
+### New file: `package/lib/src/liveliness.dart`
 
 ```dart
 /// A liveliness token that announces presence on the network.
@@ -105,7 +105,7 @@ class Liveliness {
 }
 ```
 
-### Modify `packages/zenoh/lib/src/session.dart`
+### Modify `package/lib/src/session.dart`
 
 ```dart
 class Session {
@@ -116,10 +116,10 @@ class Session {
 
 ## CLI Examples to Create
 
-### `packages/zenoh/bin/z_liveliness.dart`
+### `package/bin/z_liveliness.dart`
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_liveliness.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_liveliness.dart [OPTIONS]
 
 Options:
     -k, --key <KEYEXPR>  (default: 'group1/zenoh-dart')
@@ -127,10 +127,10 @@ Options:
 
 Behavior: declare token, sleep until SIGINT, close.
 
-### `packages/zenoh/bin/z_sub_liveliness.dart`
+### `package/bin/z_sub_liveliness.dart`
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_sub_liveliness.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_sub_liveliness.dart [OPTIONS]
 
 Options:
     -k, --key <KEYEXPR>    (default: 'group1/**')
@@ -139,10 +139,10 @@ Options:
 
 Behavior: subscribe, print alive/dropped events, run until SIGINT.
 
-### `packages/zenoh/bin/z_get_liveliness.dart`
+### `package/bin/z_get_liveliness.dart`
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_get_liveliness.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_get_liveliness.dart [OPTIONS]
 
 Options:
     -k, --key <KEYEXPR>    (default: 'group1/**')
@@ -153,7 +153,7 @@ Behavior: query alive tokens, print results, exit.
 
 ## Verification
 
-1. `fvm dart analyze packages/zenoh` — no errors
+1. `fvm dart analyze package` — no errors
 2. **Integration test**: Run `z_sub_liveliness.dart`, then start `z_liveliness.dart` — subscriber sees PUT, stop token — subscriber sees DELETE
 3. **Integration test**: Start `z_liveliness.dart`, then `z_get_liveliness.dart` — get returns the alive token
 4. **Unit test**: LivelinessToken.close() undeclares cleanly

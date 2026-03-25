@@ -7,24 +7,24 @@
 ## Question
 
 Should the zenoh-dart monorepo create a separate `zenoh_flutter` package
-(Flutter plugin) in `packages/zenoh_flutter/`, or is the pure Dart `zenoh`
+(Flutter plugin) in `package_flutter/`, or is the pure Dart `zenoh`
 package sufficient for Flutter applications?
 
 ## Background
 
 The zenoh-dart monorepo was originally structured to support multiple packages
 (`packages/*` workspace glob in Melos). The provisional thinking was:
-- `packages/zenoh/` — pure Dart FFI package (CLI, Serverpod, any Dart runtime)
-- `packages/zenoh_flutter/` — Flutter plugin wrapping `package:zenoh` with
+- `package/` — pure Dart FFI package (CLI, Serverpod, any Dart runtime)
+- `package_flutter/` — Flutter plugin wrapping `package:zenoh` with
   platform-specific native library bundling
 
-As of 2026-03-07, only `packages/zenoh/` exists. This analysis evaluates
+As of 2026-03-07, only `package/` exists. This analysis evaluates
 whether `zenoh_flutter` is needed, given the current state of Dart 3.11 /
 Flutter 3.41 and the native_assets feature.
 
 ## Current Native Library Loading
 
-**File**: `packages/zenoh/lib/src/native_lib.dart`
+**File**: `package/lib/src/native_lib.dart`
 
 The package uses `DynamicLibrary.open()` with bare library names:
 - Linux/Android: `libzenoh_dart.so`
@@ -67,13 +67,13 @@ placement themselves.
 
 ### Approach B: Pure Dart + zenoh_flutter Plugin Wrapper
 
-Add `packages/zenoh_flutter/` as a thin Flutter plugin that bundles the
+Add `package_flutter/` as a thin Flutter plugin that bundles the
 native libraries and re-exports the Dart API.
 
 **What zenoh_flutter would contain:**
 
 ```
-packages/zenoh_flutter/
+package_flutter/
   pubspec.yaml               # flutter plugin: { ffiPlugin: true }
   lib/zenoh_flutter.dart     # export 'package:zenoh/zenoh.dart';
   android/
@@ -114,10 +114,10 @@ Use Dart's native_assets feature (stable since Dart 3.10 / Flutter 3.38) to
 bundle native libraries from the pure Dart package itself — no separate
 Flutter plugin needed.
 
-**What this adds to packages/zenoh/:**
+**What this adds to package/:**
 
 ```
-packages/zenoh/
+package/
   hook/build.dart            # Dart build hook
   pubspec.yaml               # adds: hooks, code_assets, native_toolchain_c
 ```

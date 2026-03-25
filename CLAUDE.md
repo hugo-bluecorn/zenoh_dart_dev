@@ -4,26 +4,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Pure Dart FFI package providing bindings for [Zenoh](https://zenoh.io/) (a pub/sub/query protocol) via a C shim layer wrapping zenoh-c v1.7.2. This is a Melos monorepo with the main package at `packages/zenoh/`.
+Pure Dart FFI package providing bindings for [Zenoh](https://zenoh.io/) (a pub/sub/query protocol) via a C shim layer wrapping zenoh-c v1.7.2. This is the development workshop repo — see `development/proposals/dev-prod-sync.md` for the dev/prod split rationale.
 
-## Monorepo Structure
+## Repository Structure
 
 ```
-zenoh-dart/                     # git repo root
-  pubspec.yaml                  # Dart workspace + Melos config
-  packages/
-    zenoh/                      # pure Dart FFI package
-      hook/                     # build hook for CodeAsset registration (distribution)
-      native/                   # prebuilt native libraries (linux/x86_64/, android/<abi>/)
-  src/                          # C shim source (monorepo level)
+zenoh_dart_dev/                 # git repo root (development workshop)
+  package/                      # Dart package (publish boundary)
+    lib/                        # Dart API source
+    hook/                       # build hook for CodeAsset registration (distribution)
+    native/                     # prebuilt native libraries (linux/x86_64/, android/<abi>/)
+    example/                    # CLI examples
+    test/                       # integration tests
+    pubspec.yaml
+  src/                          # C shim source
     zenoh_dart.{h,c}
     CMakeLists.txt
   extern/                       # git submodules
     zenoh-c/ (v1.7.2)
     zenoh-cpp/ (v1.7.2)
     zenoh-kotlin/ zenoh-demos/ cargo-ndk/
-  docs/phases/                  # phase specs (source of truth)
-  scripts/                      # build scripts
+  docs/                         # phase specs, design docs, reviews
+  development/                  # proposals, research
+  scripts/                      # build + sync scripts
 ```
 
 ## Current Status
@@ -98,7 +101,7 @@ See `docs/build/01-build-zenoh-c.md` for standalone build details and rationale.
 The root `CMakeLists.txt` is a superbuild that:
 1. Builds zenoh-c from source via `add_subdirectory(extern/zenoh-c)` (cargo, automated)
 2. Builds the C shim (`src/zenoh_dart.c`) against `zenohc::lib` target
-3. Installs both `.so` files to `packages/zenoh/native/linux/x86_64/` with `RPATH=$ORIGIN`
+3. Installs both `.so` files to `package/native/linux/x86_64/` with `RPATH=$ORIGIN`
 
 `src/CMakeLists.txt` is dual-mode: uses `zenohc::lib` target when built via superbuild, falls back to 3-tier discovery (Android jniLibs → Linux prebuilt → developer fallback) when built standalone.
 
@@ -109,7 +112,7 @@ Presets are defined in `CMakePresets.json`: `linux-x64`, `linux-x64-shim-only`, 
 ```bash
 # Build libzenohc.so + libzenoh_dart.so for Android ABIs
 # Requires: Rust, Android NDK, cargo-ndk, cmake, ninja
-# Outputs to packages/zenoh/native/android/<abi>/
+# Outputs to package/native/android/<abi>/
 ./scripts/build_zenoh_android.sh                  # arm64-v8a + x86_64
 ./scripts/build_zenoh_android.sh --abi arm64-v8a  # single ABI
 ```
@@ -120,46 +123,46 @@ Presets are defined in `CMakePresets.json`: `linux-x64`, `linux-x64-shim-only`, 
 
 ```bash
 # Regenerate FFI bindings after modifying src/zenoh_dart.h
-cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml
+cd package && fvm dart run ffigen --config ffigen.yaml
 
 # Analyze Dart code
-fvm dart analyze packages/zenoh
+fvm dart analyze package
 
 # Run all tests (build hooks resolve native libs automatically)
-cd packages/zenoh && fvm dart test
+cd package && fvm dart test
 
 # Run a single test file
-cd packages/zenoh && fvm dart test test/session_test.dart
+cd package && fvm dart test test/session_test.dart
 
 # Run a single test by name
-cd packages/zenoh && fvm dart test --name "opens session"
+cd package && fvm dart test --name "opens session"
 ```
 
 ### CLI examples
 
-CLI examples live in `packages/zenoh/example/`. Build hooks resolve native libraries automatically — no `LD_LIBRARY_PATH` needed.
+CLI examples live in `package/example/`. Build hooks resolve native libraries automatically — no `LD_LIBRARY_PATH` needed.
 
 ```bash
 # Put data on a key expression
-cd packages/zenoh && fvm dart run example/z_put.dart -k demo/example/test -p 'Hello from Dart!'
+cd package && fvm dart run example/z_put.dart -k demo/example/test -p 'Hello from Dart!'
 
 # Delete a key expression
-cd packages/zenoh && fvm dart run example/z_delete.dart -k demo/example/test
+cd package && fvm dart run example/z_delete.dart -k demo/example/test
 
 # Subscribe to a key expression (runs until Ctrl-C)
-cd packages/zenoh && fvm dart run example/z_sub.dart -k 'demo/example/**'
+cd package && fvm dart run example/z_sub.dart -k 'demo/example/**'
 
 # Publish in a loop on a key expression (runs until Ctrl-C)
-cd packages/zenoh && fvm dart run example/z_pub.dart -k demo/example/test -p 'Hello from Dart!'
+cd package && fvm dart run example/z_pub.dart -k demo/example/test -p 'Hello from Dart!'
 
 # Publish via shared memory in a loop on a key expression (runs until Ctrl-C)
-cd packages/zenoh && fvm dart run example/z_pub_shm.dart -k demo/example/test -p 'Hello from SHM!'
+cd package && fvm dart run example/z_pub_shm.dart -k demo/example/test -p 'Hello from SHM!'
 
 # Print own session ZID and connected router/peer ZIDs
-cd packages/zenoh && fvm dart run example/z_info.dart
+cd package && fvm dart run example/z_info.dart
 
 # Discover zenoh entities on the network (scouts for routers, peers, and clients)
-cd packages/zenoh && fvm dart run example/z_scout.dart
+cd package && fvm dart run example/z_scout.dart
 ```
 
 CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When adding a new CLI example in any phase:
@@ -173,16 +176,16 @@ CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When
 
 Native C code in `src/` is compiled into a shared library and loaded at runtime via `dart:ffi`.
 
-**Data flow:** Dart API (`packages/zenoh/lib/zenoh.dart`) → Generated bindings (`packages/zenoh/lib/src/bindings.dart`) → Native C (`src/zenoh_dart.{h,c}`) → `libzenohc.so` (resolved by OS linker via DT_NEEDED)
+**Data flow:** Dart API (`package/lib/zenoh.dart`) → Generated bindings (`package/lib/src/bindings.dart`) → Native C (`src/zenoh_dart.{h,c}`) → `libzenohc.so` (resolved by OS linker via DT_NEEDED)
 
 ### Key Conventions
 
 - **Short-lived native functions**: Call directly from any isolate (e.g., `zd_put()`)
 - **Long-lived native functions**: Must run on a helper isolate to avoid blocking. Uses `SendPort`/`ReceivePort` request-response pattern with `Completer`-based futures.
 - **`zd_` prefix**: All C shim symbols (functions, structs, enums, typedefs) must use the `zd_` prefix to avoid collisions with zenoh-c's `z_`/`zc_` namespace. The ffigen.yaml filters on `zd_.*` — symbols without this prefix won't appear in bindings.dart.
-- **Binding generation**: `packages/zenoh/lib/src/bindings.dart` is auto-generated as a class-based `ZenohDartBindings(DynamicLibrary)` — never edit manually. Regenerate with `fvm dart run ffigen --config ffigen.yaml` after changing `src/zenoh_dart.h`. The analyzer excludes this file (`analysis_options.yaml`).
+- **Binding generation**: `package/lib/src/bindings.dart` is auto-generated as a class-based `ZenohDartBindings(DynamicLibrary)` — never edit manually. Regenerate with `fvm dart run ffigen --config ffigen.yaml` after changing `src/zenoh_dart.h`. The analyzer excludes this file (`analysis_options.yaml`).
 - **`DynamicLibrary.open()` loading**: `native_lib.dart::ensureInitialized()` resolves `libzenoh_dart.so` via `Isolate.resolvePackageUriSync()` (preferring `native/linux/x86_64/` over `.dart_tool/lib/`) and loads it eagerly on the main thread with `DynamicLibrary.open()`. On Android, a bare `DynamicLibrary.open('libzenoh_dart.so')` call is used — the APK linker resolves from `lib/<abi>/` automatically. This avoids `@Native`'s `NoActiveIsolateScope` lazy-load path, which caused tokio waker vtable crashes in multi-process TCP scenarios. The OS linker resolves `libzenohc.so` transitively via the `DT_NEEDED` entry.
-- **Build hook**: `packages/zenoh/hook/build.dart` registers two `CodeAsset` entries (libzenoh_dart.so and libzenohc.so) for distribution. The hook is target-aware: it dispatches on `targetOS`/`targetArchitecture` to select `native/linux/x86_64/` or `native/android/<abi>/`. Flutter invokes the hook once per target architecture; on Android, the returned assets are automatically placed in `jniLibs/lib/<abi>/` in the APK.
+- **Build hook**: `package/hook/build.dart` registers two `CodeAsset` entries (libzenoh_dart.so and libzenohc.so) for distribution. The hook is target-aware: it dispatches on `targetOS`/`targetArchitecture` to select `native/linux/x86_64/` or `native/android/<abi>/`. Flutter invokes the hook once per target architecture; on Android, the returned assets are automatically placed in `jniLibs/lib/<abi>/` in the APK.
 
 ### Dynamic Library Names by Platform
 
@@ -197,7 +200,7 @@ Native C code in `src/` is compiled into a shared library and loaded at runtime 
 
 ## Linting
 
-Uses `lints` package (configured in `packages/zenoh/analysis_options.yaml`).
+Uses `lints` package (configured in `package/analysis_options.yaml`).
 
 ## TDD Workflow Plugin
 
@@ -259,8 +262,8 @@ package that wraps zenoh-c via a C shim layer.
 This project has a three-layer architecture. Tests must respect it:
 
 1. **C shim** (`src/zenoh_dart.{h,c}`) — thin wrappers flattening zenoh-c macros
-2. **Generated FFI bindings** (`packages/zenoh/lib/src/bindings.dart`) — auto-generated, never tested directly
-3. **Idiomatic Dart API** (`packages/zenoh/lib/src/*.dart`) — the public surface users consume
+2. **Generated FFI bindings** (`package/lib/src/bindings.dart`) — auto-generated, never tested directly
+3. **Idiomatic Dart API** (`package/lib/src/*.dart`) — the public surface users consume
 
 Test the Dart API layer. The C shim is validated indirectly through the Dart
 tests calling through FFI into the real native code — these are integration
@@ -360,7 +363,7 @@ semantics that the phase doc may not spell out explicitly.
 Each phase spec in `docs/phases/phase-NN-*.md` defines:
 - Exact C shim functions to add (signatures and which zenoh-c APIs they wrap)
 - Exact Dart API surface (classes, methods, constructor signatures)
-- CLI examples to create (`packages/zenoh/example/z_*.dart`)
+- CLI examples to create (`package/example/z_*.dart`)
 - Verification criteria
 
 Use the phase doc as your specification. Do not invent API surface beyond
@@ -392,14 +395,14 @@ don't create new files.
 ### Testing Constraints
 
 - Tests require `libzenohc.so` and `libzenoh_dart.so` to be built and
-  placed in `packages/zenoh/native/linux/x86_64/`. Build hooks bundle
+  placed in `package/native/linux/x86_64/`. Build hooks bundle
   these for distribution; `ensureInitialized()` loads them at runtime via
   `DynamicLibrary.open()` with path resolution from the package root.
 - Session-based tests need a zenoh router or peer — use `Session.open()` with
   default config (peer mode) for unit tests. Tests that need two endpoints
   (pub/sub, get/queryable) open two sessions in the same process.
 - Keep tests fast: open session once per group, not per test.
-- Test file placement: `packages/zenoh/test/` mirroring `packages/zenoh/lib/src/` (e.g., `test/session_test.dart`).
+- Test file placement: `package/test/` mirroring `package/lib/src/` (e.g., `test/session_test.dart`).
 
 ### Commit Scope Naming
 
@@ -415,20 +418,20 @@ When `/tdd-finalize-docs` runs after a release, update these specific sections:
 ### CLAUDE.md updates
 1. **"Current Status" section** — Add a status line for the completed phase: `**Phase N Name: COMPLETE** — X C shim functions, Y integration tests. <brief description>.`
 2. **"Available Dart API classes" list** — Add new classes with one-line descriptions. Keep alphabetical by category (static utils, config, session, data types, exceptions).
-3. **"CLI examples" code block** — Add new CLI examples (no `LD_LIBRARY_PATH` needed — build hooks resolve automatically). Include a comment describing what the command does. Verify ALL existing CLI examples are present (check `packages/zenoh/example/z_*.dart` against the code block).
+3. **"CLI examples" code block** — Add new CLI examples (no `LD_LIBRARY_PATH` needed — build hooks resolve automatically). Include a comment describing what the command does. Verify ALL existing CLI examples are present (check `package/example/z_*.dart` against the code block).
 4. **"Phases N–18" line** — Update the starting phase number.
 
 ### README.md updates
 1. **Architecture diagram** — Update the top-line class list in the ASCII diagram.
 2. **Phase status blocks** — Add a new status block for the completed phase with: C shim function count, new API surface, CLI example, test count.
 3. **"Phases N–18" line** — Update the starting phase number.
-4. **"CLI Examples" section** — Add new CLI commands (no `LD_LIBRARY_PATH` needed). Verify ALL existing CLI examples are present (check `packages/zenoh/example/z_*.dart`).
+4. **"CLI Examples" section** — Add new CLI commands (no `LD_LIBRARY_PATH` needed). Verify ALL existing CLI examples are present (check `package/example/z_*.dart`).
 5. **"Phase Roadmap" table** — Mark the completed phase row with `— **COMPLETE**`.
 
 ### Verification checklist
-- Cross-check `packages/zenoh/example/z_*.dart` against CLI example sections in both CLAUDE.md and README.md — every CLI binary must be documented.
-- Cross-check `packages/zenoh/lib/zenoh.dart` exports against "Available Dart API classes" — every exported class/enum must be listed.
-- Run `fvm dart analyze packages/zenoh` to confirm no issues.
+- Cross-check `package/example/z_*.dart` against CLI example sections in both CLAUDE.md and README.md — every CLI binary must be documented.
+- Cross-check `package/lib/zenoh.dart` exports against "Available Dart API classes" — every exported class/enum must be listed.
+- Run `fvm dart analyze package` to confirm no issues.
 
 ## Session Directives
 

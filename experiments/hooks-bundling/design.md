@@ -8,7 +8,7 @@
 ## Decision
 
 Use Dart build hooks (`hook/build.dart`) to compile the C shim and bundle
-prebuilt `libzenohc.so` directly from the `packages/zenoh/` package. No
+prebuilt `libzenohc.so` directly from the `package/` package. No
 separate `zenoh_flutter` plugin package is needed.
 
 This is Approach C from `prior-analysis.md`, which was originally
@@ -58,7 +58,7 @@ bundled libraries depend on each other. GitHub issue dart-lang/native#190
 ### Package Structure (No zenoh_flutter)
 
 ```
-packages/zenoh/
+package/
   pubspec.yaml                    # adds hooks, code_assets, native_toolchain_c
   hook/
     build.dart                    # NEW — compiles C shim + bundles libzenohc
@@ -326,7 +326,7 @@ declared as a separate `CodeAsset`? This should work (it's standard `-lzenohc
 `extern/zenoh-c/` won't exist (it's a git submodule, not published to pub.dev).
 
 Options:
-- **Vendor the headers** in `packages/zenoh/include/` (only ~200KB of headers)
+- **Vendor the headers** in `package/include/` (only ~200KB of headers)
 - **Precompile the C shim too** and bundle both libraries as prebuilt
   (eliminates CBuilder entirely — both are `DynamicLoadingBundled`)
 - **Download headers** at build time (fragile)
@@ -532,7 +532,7 @@ Each experiment package contains:
 Experiments should be implemented in order A1 → A2 → B1 → B2 (simplest
 first). Each experiment's `lessons-learned.md` informs the next. After all
 four are complete, a comparative analysis determines the winner. The winning
-approach is then applied to `packages/zenoh/`.
+approach is then applied to `package/`.
 
 ## References
 

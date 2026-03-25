@@ -81,7 +81,7 @@ Scout blocks for `timeout_ms` and produces unbounded results. The C shim posts e
 Uses `zd_id_to_string` (wrapping `z_id_to_string`) for consistent LSB-first hex formatting that matches zenoh-c/zenoh-cpp output. Pure Dart hex encoding would risk byte-order mismatches.
 
 ### 4. CLI examples in `example/`
-Design doc referenced `packages/zenoh/bin/` but project convention (established Phase 1, commit 2cfdc1f) places CLI examples in `packages/zenoh/example/`.
+Design doc referenced `package/bin/` but project convention (established Phase 1, commit 2cfdc1f) places CLI examples in `package/example/`.
 
 ### 5. Config consumption in scout
 `z_scout` consumes the config via `z_config_move`. Dart wrapper calls `config.markConsumed()` after the FFI call, matching `Session.open` pattern.

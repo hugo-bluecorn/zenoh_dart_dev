@@ -62,7 +62,7 @@ Enum values from zenoh-c:
 
 ## Dart API Surface
 
-### New file: `packages/zenoh/lib/src/enums.dart` (extend if exists)
+### New file: `package/lib/src/enums.dart` (extend if exists)
 
 ```dart
 /// Congestion control strategy for publishers.
@@ -83,7 +83,7 @@ enum Priority {
 }
 ```
 
-### Modify `packages/zenoh/lib/src/session.dart`
+### Modify `package/lib/src/session.dart`
 
 Extend publisher declaration with new options:
 
@@ -100,12 +100,12 @@ Publisher declarePublisher(
 
 ## CLI Examples to Create
 
-### `packages/zenoh/bin/z_pub_thr.dart`
+### `package/bin/z_pub_thr.dart`
 
 Mirrors `extern/zenoh-c/examples/z_pub_thr.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_pub_thr.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_pub_thr.dart [OPTIONS]
 
 Options:
     -p, --payload-size <SIZE>   (default: 8)
@@ -120,12 +120,12 @@ Behavior:
 4. Tight loop: publish payload clone as fast as possible
 5. Run until SIGINT
 
-### `packages/zenoh/bin/z_sub_thr.dart`
+### `package/bin/z_sub_thr.dart`
 
 Mirrors `extern/zenoh-c/examples/z_sub_thr.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_sub_thr.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_sub_thr.dart [OPTIONS]
 
 Options:
     -n, --samples <NUM>    (default: 100000, messages per measurement round)
@@ -141,8 +141,8 @@ Behavior:
 
 ## Verification
 
-1. `fvm dart analyze packages/zenoh` — no errors
-2. **Integration test**: Run `packages/zenoh/bin/z_sub_thr.dart` + `packages/zenoh/bin/z_pub_thr.dart` — subscriber reports throughput
+1. `fvm dart analyze package` — no errors
+2. **Integration test**: Run `package/bin/z_sub_thr.dart` + `package/bin/z_pub_thr.dart` — subscriber reports throughput
 3. **Integration test**: Run C `z_sub_thr` + Dart `z_pub_thr.dart` — cross-language throughput
 4. **Unit test**: Publisher with CongestionControl.block works
 5. **Unit test**: Publisher with different Priority values works

@@ -15,7 +15,7 @@ It runs anywhere Dart runs: CLI tools, Serverpod backends, Flutter apps on Linux
 ```
 ┌─────────────────────────────────┐
 │  Idiomatic Dart API              │  Session, Publisher, Subscriber, ShmProvider, ...
-│  packages/zenoh/lib/src/         │
+│  package/lib/src/         │
 ├─────────────────────────────────┤
 │  Generated FFI Bindings          │  bindings.dart — class-based ZenohDartBindings(DynamicLibrary)
 │  (auto-generated, never edited)  │
@@ -145,19 +145,19 @@ Output: `build/libzenoh_dart.so` (~49KB). It links against `libzenohc.so` via `D
 
 ### 4. Place prebuilt libraries
 
-`native_lib.dart` resolves libraries by looking in `packages/zenoh/native/linux/x86_64/` first, falling back to `.dart_tool/lib/`. Both `.so` files must be co-located — `libzenoh_dart.so` declares `DT_NEEDED: libzenohc.so`, and `RUNPATH=$ORIGIN` tells the OS linker to look in the same directory.
+`native_lib.dart` resolves libraries by looking in `package/native/linux/x86_64/` first, falling back to `.dart_tool/lib/`. Both `.so` files must be co-located — `libzenoh_dart.so` declares `DT_NEEDED: libzenohc.so`, and `RUNPATH=$ORIGIN` tells the OS linker to look in the same directory.
 
 ```bash
-mkdir -p packages/zenoh/native/linux/x86_64/
-cp build/libzenoh_dart.so packages/zenoh/native/linux/x86_64/
-cp extern/zenoh-c/target/release/libzenohc.so packages/zenoh/native/linux/x86_64/
-patchelf --set-rpath '$ORIGIN' packages/zenoh/native/linux/x86_64/libzenoh_dart.so
+mkdir -p package/native/linux/x86_64/
+cp build/libzenoh_dart.so package/native/linux/x86_64/
+cp extern/zenoh-c/target/release/libzenohc.so package/native/linux/x86_64/
+patchelf --set-rpath '$ORIGIN' package/native/linux/x86_64/libzenoh_dart.so
 ```
 
 ### 5. Run tests
 
 ```bash
-cd packages/zenoh && fvm dart test
+cd package && fvm dart test
 ```
 
 No `LD_LIBRARY_PATH` needed. `native_lib.dart` discovers the absolute path via `Isolate.resolvePackageUriSync()` and loads with `DynamicLibrary.open()`.
@@ -165,7 +165,7 @@ No `LD_LIBRARY_PATH` needed. `native_lib.dart` discovers the absolute path via `
 ### 5. Try the CLI examples
 
 ```bash
-cd packages/zenoh
+cd package
 
 # Put data on a key expression
 fvm dart run example/z_put.dart -k demo/example/test -p 'Hello from Dart!'
@@ -258,10 +258,10 @@ Each Claude Code instance runs in its own terminal with a dedicated role. The se
 fvm dart run melos bootstrap
 
 # Run analysis
-fvm dart analyze packages/zenoh
+fvm dart analyze package
 
 # Regenerate FFI bindings (after modifying src/zenoh_dart.h)
-cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml
+cd package && fvm dart run ffigen --config ffigen.yaml
 ```
 
 ## Phase Roadmap

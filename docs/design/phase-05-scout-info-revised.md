@@ -193,7 +193,7 @@ nest a sub-array. The implementer should choose the simpler option.
 
 ## Dart API Surface
 
-### New file: `packages/zenoh/lib/src/id.dart`
+### New file: `package/lib/src/id.dart`
 
 ```dart
 /// A unique 128-bit zenoh node identifier.
@@ -222,7 +222,7 @@ class ZenohId {
 }
 ```
 
-### New file: `packages/zenoh/lib/src/whatami.dart`
+### New file: `package/lib/src/whatami.dart`
 
 ```dart
 /// Type of zenoh entity discovered during scouting.
@@ -245,7 +245,7 @@ static WhatAmI fromInt(int value) => switch (value) {
 };
 ```
 
-### New file: `packages/zenoh/lib/src/hello.dart`
+### New file: `package/lib/src/hello.dart`
 
 ```dart
 /// Information about a discovered zenoh node.
@@ -274,7 +274,7 @@ class Hello {
 }
 ```
 
-### Modify `packages/zenoh/lib/src/session.dart`
+### Modify `package/lib/src/session.dart`
 
 Add info properties/methods:
 
@@ -301,7 +301,7 @@ class Session {
 }
 ```
 
-### Modify `packages/zenoh/lib/src/zenoh.dart`
+### Modify `package/lib/src/zenoh.dart`
 
 Add scout static method:
 
@@ -340,18 +340,18 @@ call happens synchronously in the FFI call, the ReceivePort messages are
 already queued by the time the FFI call returns, so the future resolves
 immediately after the blocking call.
 
-### Modify `packages/zenoh/lib/zenoh.dart`
+### Modify `package/lib/zenoh.dart`
 
 Add exports for `ZenohId`, `WhatAmI`, `Hello`.
 
 ## CLI Examples to Create
 
-### `packages/zenoh/bin/z_scout.dart`
+### `package/bin/z_scout.dart`
 
 Mirrors `extern/zenoh-c/examples/z_scout.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_scout.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_scout.dart [OPTIONS]
 
 Options:
     -e, --connect <ENDPOINT>      (optional, repeatable)
@@ -367,12 +367,12 @@ Behavior:
 6. Print count or "Did not find any zenoh process."
 7. Exit
 
-### `packages/zenoh/bin/z_info.dart`
+### `package/bin/z_info.dart`
 
 Mirrors `extern/zenoh-c/examples/z_info.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_info.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_info.dart [OPTIONS]
 
 Options:
     -e, --connect <ENDPOINT>      (optional, repeatable)
@@ -399,8 +399,8 @@ Behavior:
 ## Verification
 
 1. `cmake --build build` -- C shim compiles with 6 new functions
-2. `cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml` -- regenerate bindings
-3. `fvm dart analyze packages/zenoh` -- no errors
+2. `cd package && fvm dart run ffigen --config ffigen.yaml` -- regenerate bindings
+3. `fvm dart analyze package` -- no errors
 4. **Unit tests:**
    - ZenohId.toHexString produces valid hex string
    - ZenohId equality and hashCode work correctly

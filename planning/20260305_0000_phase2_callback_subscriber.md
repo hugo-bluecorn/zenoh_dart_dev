@@ -43,14 +43,14 @@ Implement a callback-based subscriber for zenoh, enabling Dart consumers to rece
 ## Files Modified/Created
 
 - `src/zenoh_dart.{h,c}` -- C shim additions
-- `packages/zenoh/lib/src/sample.dart` -- new
-- `packages/zenoh/lib/src/subscriber.dart` -- new
-- `packages/zenoh/lib/src/session.dart` -- modified (declareSubscriber)
-- `packages/zenoh/lib/zenoh.dart` -- modified (exports)
-- `packages/zenoh/ffigen.yaml` -- modified (opaque types)
-- `packages/zenoh/bin/z_sub.dart` -- new CLI example
-- `packages/zenoh/test/subscriber_test.dart` -- new (16 tests)
-- `packages/zenoh/test/z_sub_cli_test.dart` -- new (4 tests)
+- `package/lib/src/sample.dart` -- new
+- `package/lib/src/subscriber.dart` -- new
+- `package/lib/src/session.dart` -- modified (declareSubscriber)
+- `package/lib/zenoh.dart` -- modified (exports)
+- `package/ffigen.yaml` -- modified (opaque types)
+- `package/bin/z_sub.dart` -- new CLI example
+- `package/test/subscriber_test.dart` -- new (16 tests)
+- `package/test/z_sub_cli_test.dart` -- new (4 tests)
 
 ## Reference Material
 

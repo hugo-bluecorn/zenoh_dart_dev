@@ -34,8 +34,8 @@
 
 ### Existing Patterns Referenced
 
-- `Config.markConsumed()` in `packages/zenoh/lib/src/config.dart` — pattern for ZBytes consumption
-- `Session._closed` flag in `packages/zenoh/lib/src/session.dart` — needs `_ensureOpen()` guard
+- `Config.markConsumed()` in `package/lib/src/config.dart` — pattern for ZBytes consumption
+- `Session._closed` flag in `package/lib/src/session.dart` — needs `_ensureOpen()` guard
 - `KeyExpr` disposal via try/finally — pattern for temporary keyexpr cleanup
 
 ---

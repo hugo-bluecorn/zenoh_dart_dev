@@ -27,7 +27,7 @@ zenoh-c v1.7.2 headers and a validated working prototype.
 ### Codebase State at Planning Time
 
 - **Commit:** 0d7f532 (feat: scaffold zenoh-dart monorepo with pure Dart zenoh package)
-- **Existing test files:** 1 (`packages/zenoh/test/zenoh_test.dart` -- scaffold placeholder)
+- **Existing test files:** 1 (`package/test/zenoh_test.dart` -- scaffold placeholder)
 - **Test framework:** `test: ^1.25.0` (Dart)
 - **FFI binding generator:** `ffigen: ^20.1.1`
 - **Dart SDK:** ^3.11.0
@@ -39,12 +39,12 @@ zenoh-c v1.7.2 headers and a validated working prototype.
 - `src/zenoh_dart.h` -- empty C shim header (FFI_PLUGIN_EXPORT macro only)
 - `src/zenoh_dart.c` -- empty C shim implementation
 - `src/CMakeLists.txt` -- minimal build, no zenoh-c linking
-- `packages/zenoh/pubspec.yaml` -- pure Dart FFI package
-- `packages/zenoh/ffigen.yaml` -- points at shim header, filters on `zd_.*`
-- `packages/zenoh/lib/zenoh.dart` -- empty barrel export
-- `packages/zenoh/lib/src/native_lib.dart` -- DynamicLibrary loader
-- `packages/zenoh/lib/src/bindings.dart` -- auto-generated (empty)
-- `packages/zenoh/analysis_options.yaml` -- excludes bindings.dart from analysis
+- `package/pubspec.yaml` -- pure Dart FFI package
+- `package/ffigen.yaml` -- points at shim header, filters on `zd_.*`
+- `package/lib/zenoh.dart` -- empty barrel export
+- `package/lib/src/native_lib.dart` -- DynamicLibrary loader
+- `package/lib/src/bindings.dart` -- auto-generated (empty)
+- `package/analysis_options.yaml` -- excludes bindings.dart from analysis
 
 ### zenoh-c Reference Tests Consulted
 
@@ -158,23 +158,23 @@ Two issues were identified by the CA (read-only advisor) and incorporated:
 - `src/dart/dart_native_api.h` (new)
 - `src/dart/dart_version.h` (new)
 - `src/dart/internal/dart_api_dl_impl.h` (new)
-- `packages/zenoh/ffigen.yaml` (update)
-- `packages/zenoh/lib/zenoh.dart` (update)
-- `packages/zenoh/lib/src/bindings.dart` (regenerated)
-- `packages/zenoh/lib/src/native_lib.dart` (update)
-- `packages/zenoh/lib/src/exceptions.dart` (new)
-- `packages/zenoh/lib/src/config.dart` (new)
-- `packages/zenoh/lib/src/session.dart` (new)
-- `packages/zenoh/lib/src/keyexpr.dart` (new)
-- `packages/zenoh/lib/src/bytes.dart` (new)
+- `package/ffigen.yaml` (update)
+- `package/lib/zenoh.dart` (update)
+- `package/lib/src/bindings.dart` (regenerated)
+- `package/lib/src/native_lib.dart` (update)
+- `package/lib/src/exceptions.dart` (new)
+- `package/lib/src/config.dart` (new)
+- `package/lib/src/session.dart` (new)
+- `package/lib/src/keyexpr.dart` (new)
+- `package/lib/src/bytes.dart` (new)
 
 ### Test Files (6)
-- `packages/zenoh/test/native_lib_test.dart` (new)
-- `packages/zenoh/test/config_test.dart` (new)
-- `packages/zenoh/test/session_test.dart` (new)
-- `packages/zenoh/test/keyexpr_test.dart` (new)
-- `packages/zenoh/test/bytes_test.dart` (new)
-- `packages/zenoh/test/zenoh_test.dart` (delete)
+- `package/test/native_lib_test.dart` (new)
+- `package/test/config_test.dart` (new)
+- `package/test/session_test.dart` (new)
+- `package/test/keyexpr_test.dart` (new)
+- `package/test/bytes_test.dart` (new)
+- `package/test/zenoh_test.dart` (delete)
 
 ### Commit Convention
 - Slice 1: `test(native-lib): ...` / `feat(native-lib): ...`

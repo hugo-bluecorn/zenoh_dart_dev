@@ -201,7 +201,7 @@ is our thin C shim. For a CBuilder future, only `libzenohc.so` stays
 prebuilt — the shim compiles from source. This hybrid (CBuilder for shim
 + prebuilt for zenoh-c) is exactly what cbl-dart does in production.
 
-## Migration Path for packages/zenoh/
+## Migration Path for package/
 
 ### Required changes
 
@@ -233,7 +233,7 @@ prebuilt — the shim compiles from source. This hybrid (CBuilder for shim
 ### What does NOT change
 
 - The C shim source (`src/zenoh_dart.{h,c}`)
-- The public Dart API (`packages/zenoh/lib/zenoh.dart` exports)
+- The public Dart API (`package/lib/zenoh.dart` exports)
 - Test files (they call the Dart API, not FFI directly)
 - CLI examples (they import the public API)
 - CMake build system (still needed for developer builds)

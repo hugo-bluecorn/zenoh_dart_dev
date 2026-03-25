@@ -1,6 +1,6 @@
 # C Shim Layer Audit
 
-**Scope:** `src/zenoh_dart.{h,c}` (62 exported symbols) and the Dart FFI consumers in `packages/zenoh/lib/src/`.
+**Scope:** `src/zenoh_dart.{h,c}` (62 exported symbols) and the Dart FFI consumers in `package/lib/src/`.
 **Audience:** Expert C and Dart code reviewers.
 **Date:** 2026-03-09
 **zenoh-c version:** v1.7.2

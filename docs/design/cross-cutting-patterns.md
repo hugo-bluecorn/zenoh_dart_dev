@@ -555,7 +555,7 @@ Pub/sub tests need delays for routing propagation:
 ### 9.4 Test File Placement
 
 ```
-packages/zenoh/test/
+package/test/
   publisher_test.dart       # Phase 3
   encoding_test.dart        # Phase 3 (if encoding has testable logic)
   shm_provider_test.dart    # Phase 4

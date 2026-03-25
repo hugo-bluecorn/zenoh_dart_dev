@@ -1,6 +1,6 @@
 # C Shim Layer Audit: Existence Proof and Functional Analysis
 
-**Scope:** `src/zenoh_dart.{h,c}` (62 exported symbols), the Dart FFI consumers in `packages/zenoh/lib/src/`, and the zenoh-c v1.7.2 headers that necessitate the shim.
+**Scope:** `src/zenoh_dart.{h,c}` (62 exported symbols), the Dart FFI consumers in `package/lib/src/`, and the zenoh-c v1.7.2 headers that necessitate the shim.
 **Audience:** Expert C and Dart code reviewers.
 **Date:** 2026-03-09
 **zenoh-c version:** v1.7.2
@@ -253,7 +253,7 @@ These sizes (2008, 8, 40 bytes) are compile-time constants in the zenoh-c Rust b
 In the `ffigen.yaml`, all zenoh-c types are mapped to `Opaque`:
 
 ```yaml
-# packages/zenoh/ffigen.yaml
+# package/ffigen.yaml
 type-map:
   typedefs:
     z_owned_config_t:
@@ -299,15 +299,15 @@ There are 9 `sizeof` functions total: `zd_config_sizeof`, `zd_session_sizeof`, `
 Dart uses these at runtime to allocate correctly-sized memory:
 
 ```dart
-// packages/zenoh/lib/src/config.dart:26
+// package/lib/src/config.dart:26
 Config() : _ptr = calloc.allocate(bindings.zd_config_sizeof()) {
 
-// packages/zenoh/lib/src/session.dart:37-38
+// package/lib/src/session.dart:37-38
 static Session open({Config? config}) {
   final size = bindings.zd_session_sizeof();
   final Pointer<Void> ptr = calloc.allocate(size);
 
-// packages/zenoh/lib/src/bytes.dart:31
+// package/lib/src/bytes.dart:31
 factory ZBytes.fromString(String value) {
   final Pointer<Void> ptr = calloc.allocate(bindings.zd_bytes_sizeof());
 ```
@@ -423,7 +423,7 @@ FFI_PLUGIN_EXPORT int zd_declare_publisher(
 Dart passes flat scalar parameters. The shim maps them into the options struct:
 
 ```dart
-// packages/zenoh/lib/src/publisher.dart:46-53
+// package/lib/src/publisher.dart:46-53
 final rc = bindings.zd_declare_publisher(
   loanedSession.cast(),
   ptr.cast(),
@@ -575,7 +575,7 @@ FFI_PLUGIN_EXPORT int zd_declare_subscriber(
 }
 ```
 
-**Dart side implementation** (`packages/zenoh/lib/src/subscriber.dart:29-76`):
+**Dart side implementation** (`package/lib/src/subscriber.dart:29-76`):
 
 ```dart
 static Subscriber declare(Pointer<Void> loanedSession, Pointer<Void> loanedKe) {

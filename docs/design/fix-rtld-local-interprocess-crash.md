@@ -59,7 +59,7 @@ resolution and build hook integration.
 
 ### Dart Changes
 
-**`packages/zenoh/lib/src/native_lib.dart`:**
+**`package/lib/src/native_lib.dart`:**
 
 ```dart
 import 'dart:ffi';
@@ -152,12 +152,12 @@ The Dart side uses this path for `DynamicLibrary.open(path)`.
 
 **Inter-process tests** (cherry-pick from `feature/fix-rtld-local-interprocess-crash`
 branch, commits `2df31a0` and `ab77d5f`):
-- Helper script: `packages/zenoh/test/helpers/interprocess_connect.dart`
-- Test file: `packages/zenoh/test/interprocess_test.dart`
+- Helper script: `package/test/helpers/interprocess_connect.dart`
+- Test file: `package/test/interprocess_test.dart`
 - Currently skipped — remove skip annotations after fix lands
 
 **Additional inter-process test for pub/sub data exchange:**
-- Helper script: `packages/zenoh/test/helpers/interprocess_subscriber.dart`
+- Helper script: `package/test/helpers/interprocess_subscriber.dart`
 - Verify payload round-trips correctly between two Dart VMs
 
 ### Verification Criteria
@@ -165,7 +165,7 @@ branch, commits `2df31a0` and `ab77d5f`):
 1. `fvm dart test` — all existing 185 tests pass
 2. Inter-process connection test passes (two Dart VMs, TCP connect, no crash)
 3. Inter-process pub/sub test passes (data exchange between two Dart VMs)
-4. `fvm dart analyze packages/zenoh` — no issues
+4. `fvm dart analyze package` — no issues
 5. Manual smoke test: `z_sub.dart -l tcp/...` + `z_pub.dart -e tcp/...` works
 6. No LD_LIBRARY_PATH or LD_PRELOAD required
 

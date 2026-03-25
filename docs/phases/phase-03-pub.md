@@ -18,7 +18,7 @@ C shim layer. See `docs/phases/phase-00-bootstrap.md` for full architecture.
 ### Phase 2 (z_sub) — completed
 - C shim: `zd_declare_subscriber`, `zd_subscriber_drop`, NativePort callback bridge
 - Dart: `Sample`, `SampleKind`, `Subscriber` with `Stream<Sample>`
-- CLI: `packages/zenoh/bin/z_sub.dart`
+- CLI: `package/bin/z_sub.dart`
 
 ## This Phase's Goal
 
@@ -118,7 +118,7 @@ FFI_PLUGIN_EXPORT void zd_encoding_drop(z_owned_encoding_t* encoding);
 
 ## Dart API Surface
 
-### New file: `packages/zenoh/lib/src/publisher.dart`
+### New file: `package/lib/src/publisher.dart`
 
 ```dart
 /// A declared zenoh publisher for efficient repeated publishing.
@@ -138,7 +138,7 @@ class Publisher {
 }
 ```
 
-### New file: `packages/zenoh/lib/src/encoding.dart`
+### New file: `package/lib/src/encoding.dart`
 
 ```dart
 /// Content encoding for zenoh payloads.
@@ -149,7 +149,7 @@ class Encoding {
 }
 ```
 
-### Modify `packages/zenoh/lib/src/session.dart`
+### Modify `package/lib/src/session.dart`
 
 Add method:
 
@@ -162,18 +162,18 @@ Publisher declarePublisher(
 });
 ```
 
-### Modify `packages/zenoh/lib/zenoh.dart`
+### Modify `package/lib/zenoh.dart`
 
 Add exports for `Publisher`, `Encoding`.
 
 ## CLI Example to Create
 
-### `packages/zenoh/bin/z_pub.dart`
+### `package/bin/z_pub.dart`
 
 Mirrors `extern/zenoh-c/examples/z_pub.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_pub.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_pub.dart [OPTIONS]
 
 Options:
     -k, --key <KEYEXPR>           (default: 'demo/example/zenoh-dart-pub')
@@ -193,9 +193,9 @@ Behavior:
 
 ## Verification
 
-1. `cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml` — regenerate bindings
-2. `fvm dart analyze packages/zenoh` — no errors
-3. **Integration test**: Run `packages/zenoh/bin/z_sub.dart` in terminal 1, `packages/zenoh/bin/z_pub.dart` in terminal 2 — subscriber prints periodic messages with index
-4. **Integration test**: Run `packages/zenoh/bin/z_pub.dart --add-matching-listener`, then start/stop `packages/zenoh/bin/z_sub.dart` — publisher prints matching status changes
+1. `cd package && fvm dart run ffigen --config ffigen.yaml` — regenerate bindings
+2. `fvm dart analyze package` — no errors
+3. **Integration test**: Run `package/bin/z_sub.dart` in terminal 1, `package/bin/z_pub.dart` in terminal 2 — subscriber prints periodic messages with index
+4. **Integration test**: Run `package/bin/z_pub.dart --add-matching-listener`, then start/stop `package/bin/z_sub.dart` — publisher prints matching status changes
 5. **Unit test**: Declare publisher, put once, close — no crash
 6. **Unit test**: Publisher with encoding option works

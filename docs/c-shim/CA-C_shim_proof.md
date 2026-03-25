@@ -606,7 +606,7 @@ the compiled shim.
 The Dart code that calls `zd_declare_publisher` passes flat parameters:
 
 ```dart
-// packages/zenoh/lib/src/publisher.dart, lines 46-53
+// package/lib/src/publisher.dart, lines 46-53
 final rc = bindings.zd_declare_publisher(
     loanedSession.cast(),
     ptr.cast(),
@@ -694,26 +694,26 @@ FFI_PLUGIN_EXPORT size_t zd_view_string_sizeof(void) {
 Every Dart wrapper class queries the size at construction time:
 
 ```dart
-// packages/zenoh/lib/src/session.dart, lines 37-38
+// package/lib/src/session.dart, lines 37-38
 static Session open({Config? config}) {
     final size = bindings.zd_session_sizeof();    // query at runtime
     final Pointer<Void> ptr = calloc.allocate(size);  // allocate exactly
 
-// packages/zenoh/lib/src/config.dart, line 26
+// package/lib/src/config.dart, line 26
 Config() : _ptr = calloc.allocate(bindings.zd_config_sizeof()) {
 
-// packages/zenoh/lib/src/bytes.dart, line 31
+// package/lib/src/bytes.dart, line 31
 final Pointer<Void> ptr = calloc.allocate(bindings.zd_bytes_sizeof());
 
-// packages/zenoh/lib/src/subscriber.dart, lines 33-34
+// package/lib/src/subscriber.dart, lines 33-34
 final size = bindings.zd_subscriber_sizeof();
 final Pointer<Void> ptr = calloc.allocate(size);
 
-// packages/zenoh/lib/src/publisher.dart, lines 38-39
+// package/lib/src/publisher.dart, lines 38-39
 final size = bindings.zd_publisher_sizeof();
 final Pointer<Void> ptr = calloc.allocate(size);
 
-// packages/zenoh/lib/src/shm_provider.dart, lines 22-23
+// package/lib/src/shm_provider.dart, lines 22-23
 final size = bindings.zd_shm_provider_sizeof();
 final Pointer<Void> ptr = calloc.allocate(size);
 ```
@@ -803,7 +803,7 @@ FFI_PLUGIN_EXPORT int zd_put(
 ### 6.4 What Dart Calls
 
 ```dart
-// packages/zenoh/lib/src/session.dart, lines 157-168
+// package/lib/src/session.dart, lines 157-168
 void put(String keyExpr, String value) {
     _withKeyExpr(keyExpr, (loanedSession, loanedKe) {
         final payload = ZBytes.fromString(value);

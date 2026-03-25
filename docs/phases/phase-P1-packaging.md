@@ -3,7 +3,7 @@
 ## Project Context
 
 `zenoh` is a pure Dart FFI package providing bindings for zenoh-c v1.7.2 via a
-C shim layer. This is a Melos monorepo with the Dart package at `packages/zenoh/`
+C shim layer. This is a Melos monorepo with the Dart package at `package/`
 and C shim source at the monorepo root under `src/`.
 
 See `docs/phases/phase-00-bootstrap.md` for full architecture.
@@ -11,9 +11,9 @@ See `docs/phases/phase-00-bootstrap.md` for full architecture.
 ### Architecture (abbreviated)
 
 ```
-Dart CLI example (packages/zenoh/bin/z_*.dart)
-  → Idiomatic Dart API (packages/zenoh/lib/src/*.dart)
-  → Generated FFI bindings (packages/zenoh/lib/src/bindings.dart)
+Dart CLI example (package/bin/z_*.dart)
+  → Idiomatic Dart API (package/lib/src/*.dart)
+  → Generated FFI bindings (package/lib/src/bindings.dart)
   → C shim (src/zenoh_dart.h/.c)
   → libzenohc.so (zenoh-c v1.7.2)
 ```
@@ -53,7 +53,7 @@ and Dart test infrastructure.
   logging, 20+ functions)
 - Dart: `Config`, `Session`, `KeyExpr`, `ZBytes`, `ZenohException`
 - Build: CMakeLists links libzenohc, ffigen generates bindings to `lib/src/bindings.dart`
-- Files: `packages/zenoh/lib/src/{bindings,native_lib,exceptions,config,session,keyexpr,bytes}.dart`
+- Files: `package/lib/src/{bindings,native_lib,exceptions,config,session,keyexpr,bytes}.dart`
 
 ## This Phase's Goal
 
@@ -119,7 +119,7 @@ checked in order:
 Tests use `LD_LIBRARY_PATH` to find native libraries:
 
 ```bash
-cd packages/zenoh && LD_LIBRARY_PATH=../../native/linux/x86_64:../../extern/zenoh-c/target/release fvm dart test
+cd package && LD_LIBRARY_PATH=../../native/linux/x86_64:../../extern/zenoh-c/target/release fvm dart test
 ```
 
 ## File Changes
@@ -165,7 +165,7 @@ if(NOT ANDROID)
 endif()
 ```
 
-#### `packages/zenoh/lib/src/native_lib.dart` — Single-load simplification
+#### `package/lib/src/native_lib.dart` — Single-load simplification
 
 Remove any explicit zenohc loading. Only load `libzenoh_dart.so`.
 
@@ -181,8 +181,8 @@ Builds `libzenohc.so` for Android ABIs using cargo-ndk.
 
 ### Files NOT changed
 
-- `packages/zenoh/ffigen.yaml` — No changes
-- `packages/zenoh/pubspec.yaml` — No changes
+- `package/ffigen.yaml` — No changes
+- `package/pubspec.yaml` — No changes
 - All Dart API files except `native_lib.dart` — No API surface changes
 - `src/zenoh_dart.h`, `src/zenoh_dart.c` — No C shim changes
 
@@ -203,7 +203,7 @@ No new zenoh-c APIs wrapped in this phase. This is a build infrastructure phase.
    `android/src/main/jniLibs/{arm64-v8a,x86_64}/libzenohc.so`
 4. **ffigen**: `fvm dart run ffigen --config ffigen.yaml` generates
    `lib/src/bindings.dart` without errors
-5. **dart analyze**: `fvm dart analyze packages/zenoh` — no errors
+5. **dart analyze**: `fvm dart analyze package` — no errors
 
 ### Runtime verification
 
@@ -225,11 +225,11 @@ RUSTUP_TOOLCHAIN=stable cmake --build extern/zenoh-c/build --config Release
 ./scripts/build_zenoh_android.sh
 
 # Run tests
-cd packages/zenoh && LD_LIBRARY_PATH=../../native/linux/x86_64 fvm dart test
+cd package && LD_LIBRARY_PATH=../../native/linux/x86_64 fvm dart test
 
 # Analyze
-fvm dart analyze packages/zenoh
+fvm dart analyze package
 
 # Regenerate bindings
-cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml
+cd package && fvm dart run ffigen --config ffigen.yaml
 ```

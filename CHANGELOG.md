@@ -168,7 +168,7 @@
 - `KeyExpr` class: construct from string expression, `value` getter (data+len extraction, no null-termination assumption), `dispose()` freeing dual native allocations (struct + C string)
 - `ZBytes` class: `fromString()`, `fromUint8List()`, `toStr()` round-trip with proper owned-string lifecycle, `dispose()`
 - `ZenohException` class with message and return code for zenoh-c error propagation
-- Barrel export (`packages/zenoh/lib/zenoh.dart`) for Config, Session, KeyExpr, ZBytes, ZenohException
+- Barrel export (`package/lib/zenoh.dart`) for Config, Session, KeyExpr, ZBytes, ZenohException
 - Logging initialization via `zd_init_log()` wrapping `zc_init_log_from_env_or()`
 - Double-drop/double-close safety on all owned types (gravestone-state no-op pattern)
 - Idempotent `dispose()`/`close()` guarded by `_disposed`/`_closed` flags

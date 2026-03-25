@@ -69,7 +69,7 @@ in our C shim or subscriber callback.
 **Library identity verified:**
 ```
 md5sum extern/zenoh-c/target/release/libzenohc.so = 71384a9fca9ceb098c491c5176b4c447
-md5sum packages/zenoh/native/linux/x86_64/libzenohc.so = 71384a9fca9ceb098c491c5176b4c447
+md5sum package/native/linux/x86_64/libzenohc.so = 71384a9fca9ceb098c491c5176b4c447
 ```
 Same binary in both locations.
 

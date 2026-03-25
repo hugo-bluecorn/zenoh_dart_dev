@@ -38,7 +38,7 @@ CBuilder has a key advantage: it automatically adds `-Wl,-rpath,$ORIGIN` on Linu
 
 ### Non-Functional Requirements
 - Code style passes `fvm dart analyze`
-- No modifications to `packages/zenoh/` (control package)
+- No modifications to `package/` (control package)
 - No `LD_LIBRARY_PATH` in any command
 
 ### Integration Points
@@ -162,7 +162,7 @@ packages/exp_hooks_cbuilder_dlopen/
 ### Related Code
 - `packages/exp_hooks_prebuilt_dlopen/` — A1 experiment (DynamicLibrary.open reference)
 - `packages/exp_hooks_prebuilt_native/` — A2 experiment (@Native reference)
-- `packages/zenoh/lib/src/native_lib.dart` — control package
+- `package/lib/src/native_lib.dart` — control package
 - `src/zenoh_dart.{h,c}` — full C shim (reference for minimal version)
 
 ### Documentation

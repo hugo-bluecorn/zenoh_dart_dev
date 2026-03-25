@@ -118,7 +118,7 @@ All `ze_serialize_*`, `ze_deserialize_*`, `ze_serializer_*`, `ze_deserializer_*`
 
 ## Dart API Surface
 
-### New file: `packages/zenoh/lib/src/serializer.dart`
+### New file: `package/lib/src/serializer.dart`
 
 ```dart
 /// Serializes data into zenoh bytes format.
@@ -138,7 +138,7 @@ class ZSerializer {
 }
 ```
 
-### New file: `packages/zenoh/lib/src/deserializer.dart`
+### New file: `package/lib/src/deserializer.dart`
 
 ```dart
 /// Deserializes data from zenoh bytes format.
@@ -155,7 +155,7 @@ class ZDeserializer {
 }
 ```
 
-### Modify `packages/zenoh/lib/src/bytes.dart`
+### Modify `package/lib/src/bytes.dart`
 
 Add static serialization convenience methods:
 
@@ -178,12 +178,12 @@ class ZBytes {
 
 ## CLI Example to Create
 
-### `packages/zenoh/bin/z_bytes.dart`
+### `package/bin/z_bytes.dart`
 
 Mirrors `extern/zenoh-c/examples/z_bytes.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_bytes.dart
+Usage: fvm dart run -C package bin/z_bytes.dart
 ```
 
 Behavior (no network, pure serialization test):
@@ -196,7 +196,7 @@ Behavior (no network, pure serialization test):
 
 ## Verification
 
-1. `fvm dart analyze packages/zenoh` — no errors
+1. `fvm dart analyze package` — no errors
 2. **Unit test**: Roundtrip string serialization/deserialization
 3. **Unit test**: Roundtrip int/float/bool serialization
 4. **Unit test**: Composite serializer with sequence of key-value pairs

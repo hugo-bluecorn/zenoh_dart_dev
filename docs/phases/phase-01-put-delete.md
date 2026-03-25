@@ -8,8 +8,8 @@ C shim layer. See `docs/phases/phase-00-bootstrap.md` for full architecture.
 ### Architecture (abbreviated)
 
 ```
-Dart CLI example (packages/zenoh/bin/z_*.dart)  →  Idiomatic Dart API (packages/zenoh/lib/src/*.dart)
-  →  Generated FFI bindings (packages/zenoh/lib/src/bindings.dart)  →  C shim (src/zenoh_dart.h/.c)
+Dart CLI example (package/bin/z_*.dart)  →  Idiomatic Dart API (package/lib/src/*.dart)
+  →  Generated FFI bindings (package/lib/src/bindings.dart)  →  C shim (src/zenoh_dart.h/.c)
   →  libzenohc.so
 ```
 
@@ -21,7 +21,7 @@ Available infrastructure:
 - **C shim**: `zd_init_dart_api_dl`, `zd_init_log`, `zd_config_default`, `zd_config_insert_json5`, `zd_open_session`, `zd_close_session`, `zd_session_loan`, `zd_view_keyexpr_from_str`, `zd_view_keyexpr_loan`, `zd_keyexpr_as_view_string`, `zd_bytes_copy_from_str`, `zd_string_loan`, `zd_bytes_copy_from_buf`, `zd_bytes_to_string`, `zd_bytes_loan`, `zd_bytes_drop`, `zd_string_data`, `zd_string_len`, `zd_string_drop`
 - **Dart classes**: `Config`, `Session` (open/close), `KeyExpr`, `ZBytes`, `ZenohException`
 - **Build**: CMakeLists links libzenohc, ffigen generates bindings
-- **Files**: `packages/zenoh/lib/src/bindings.dart`, `packages/zenoh/lib/src/native_lib.dart`, `packages/zenoh/lib/src/exceptions.dart`, `packages/zenoh/lib/src/config.dart`, `packages/zenoh/lib/src/session.dart`, `packages/zenoh/lib/src/keyexpr.dart`, `packages/zenoh/lib/src/bytes.dart`, `packages/zenoh/lib/zenoh.dart`
+- **Files**: `package/lib/src/bindings.dart`, `package/lib/src/native_lib.dart`, `package/lib/src/exceptions.dart`, `package/lib/src/config.dart`, `package/lib/src/session.dart`, `package/lib/src/keyexpr.dart`, `package/lib/src/bytes.dart`, `package/lib/zenoh.dart`
 
 ## This Phase's Goal
 
@@ -79,7 +79,7 @@ The `NULL` options parameter means default options (no encoding, no attachment, 
 
 ## Dart API Surface
 
-### Modify `packages/zenoh/lib/src/session.dart`
+### Modify `package/lib/src/session.dart`
 
 Add methods to `Session`:
 
@@ -100,12 +100,12 @@ All new API is added to the existing `Session` class.
 
 ## CLI Examples to Create
 
-### `packages/zenoh/bin/z_put.dart`
+### `package/bin/z_put.dart`
 
 Mirrors `extern/zenoh-c/examples/z_put.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_put.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_put.dart [OPTIONS]
 
 Options:
     -k, --key <KEYEXPR>    (default: 'demo/example/zenoh-dart-put')
@@ -119,12 +119,12 @@ Behavior:
 4. Print confirmation
 5. Close session
 
-### `packages/zenoh/bin/z_delete.dart`
+### `package/bin/z_delete.dart`
 
 Mirrors `extern/zenoh-c/examples/z_delete.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_delete.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_delete.dart [OPTIONS]
 
 Options:
     -k, --key <KEYEXPR>    (default: 'demo/example/zenoh-dart-put')
@@ -139,9 +139,9 @@ Behavior:
 
 ## Verification
 
-1. `cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml` — regenerate bindings
-2. `fvm dart analyze packages/zenoh` — no errors
-3. **Integration test**: Run `packages/zenoh/bin/z_put.dart` while a zenoh-c `z_sub` subscriber is running — subscriber should print the PUT
-4. **Integration test**: Run `packages/zenoh/bin/z_delete.dart` while a zenoh-c `z_sub` subscriber is running — subscriber should print DELETE
+1. `cd package && fvm dart run ffigen --config ffigen.yaml` — regenerate bindings
+2. `fvm dart analyze package` — no errors
+3. **Integration test**: Run `package/bin/z_put.dart` while a zenoh-c `z_sub` subscriber is running — subscriber should print the PUT
+4. **Integration test**: Run `package/bin/z_delete.dart` while a zenoh-c `z_sub` subscriber is running — subscriber should print DELETE
 5. **Unit test**: `Session.put()` with invalid keyexpr throws `ZenohException`
 6. **Unit test**: `Session.delete()` with valid keyexpr succeeds (return 0)

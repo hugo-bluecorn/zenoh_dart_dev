@@ -262,7 +262,7 @@ ID directly to the bundled library path without relying on the OS dynamic
 linker search path.
 
 If A1 fails but A2 succeeds, it confirms that `@Native` annotations are
-required for hooks bundling and the existing `packages/zenoh/` code will
+required for hooks bundling and the existing `package/` code will
 need to migrate away from `DynamicLibrary.open()`.
 
 ## Commands

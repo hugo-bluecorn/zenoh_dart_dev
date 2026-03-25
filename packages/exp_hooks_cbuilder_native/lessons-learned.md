@@ -147,7 +147,7 @@ After tests complete successfully, the Dart VM occasionally crashes with
 zenoh native library cleanup ordering, not related to the build hook mechanism.
 All tests pass before the crash.
 
-## Recommendation for packages/zenoh/ Migration
+## Recommendation for package/ Migration
 
 Based on all 4 experiments:
 
@@ -176,7 +176,7 @@ Based on all 4 experiments:
 ### Migration path
 
 ```
-Phase 1: Add @Native annotations to packages/zenoh/ (ffigen already supports this)
+Phase 1: Add @Native annotations to package/ (ffigen already supports this)
 Phase 2: Add hook/build.dart with prebuilt strategy (A2-style)
 Phase 3: Remove LD_LIBRARY_PATH from CLAUDE.md, README.md, CI
 Phase 4: (Optional) Switch to CBuilder for from-source builds

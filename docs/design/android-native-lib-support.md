@@ -36,7 +36,7 @@ co-located).
 
 Current:
 ```
-packages/zenoh/native/
+package/native/
   linux/
     x86_64/
       libzenoh_dart.so
@@ -45,7 +45,7 @@ packages/zenoh/native/
 
 After:
 ```
-packages/zenoh/native/
+package/native/
   linux/
     x86_64/
       libzenoh_dart.so
@@ -211,7 +211,7 @@ that the build hook reads from:
 
 ```bash
 for abi in "${ABIS[@]}"; do
-  DEST="${PROJECT_ROOT}/packages/zenoh/native/android/${abi}"
+  DEST="${PROJECT_ROOT}/package/native/android/${abi}"
   mkdir -p "${DEST}"
   cp "${JNILIBS_DIR}/${abi}/libzenohc.so" "${DEST}/"
   cp "${JNILIBS_DIR}/${abi}/libzenoh_dart.so" "${DEST}/"
@@ -227,7 +227,7 @@ intermediate build output and copy to `native/android/` as a final step.
 Android prebuilts are large (~7MB per ABI) and developer-generated. Add:
 
 ```
-packages/zenoh/native/android/
+package/native/android/
 ```
 
 Same treatment as `native/linux/x86_64/*.so` if those are also gitignored.
@@ -236,14 +236,14 @@ Same treatment as `native/linux/x86_64/*.so` if those are also gitignored.
 
 - `src/CMakeLists.txt` — already has full Android support (tier-1 discovery,
   16k page size, no RPATH on Android)
-- `packages/zenoh/pubspec.yaml` — no `ffiPlugin: true` needed; hooks handle it
+- `package/pubspec.yaml` — no `ffiPlugin: true` needed; hooks handle it
 - `bindings.dart` — no regeneration needed; same C shim API
 - Existing 193 Linux tests — unaffected
-- `packages/zenoh/lib/src/*.dart` (all API classes) — no changes
+- `package/lib/src/*.dart` (all API classes) — no changes
 
 ## Verification
 
-1. **Linux regression**: `cd packages/zenoh && fvm dart test` — all 193 pass
+1. **Linux regression**: `cd package && fvm dart test` — all 193 pass
 2. **Android smoke test**: Build zenoh-counter-flutter APK, install on Pixel 9a,
    tap Connect, verify no crash. Subscribe to counter topic, verify data arrives.
 3. **Emulator**: Same test on x86_64 Android emulator (if x86_64 prebuilts built)
@@ -260,7 +260,7 @@ if zenoh-c was built without them (the C shim functions are `#ifdef`-guarded).
 
 | File | Change |
 |------|--------|
-| `packages/zenoh/lib/src/native_lib.dart` | Add `Platform.isAndroid` short-circuit |
-| `packages/zenoh/hook/build.dart` | Target-aware prebuilt directory selection |
+| `package/lib/src/native_lib.dart` | Add `Platform.isAndroid` short-circuit |
+| `package/hook/build.dart` | Target-aware prebuilt directory selection |
 | `scripts/build_zenoh_android.sh` | Add C shim cross-compilation step |
-| `.gitignore` | Add `packages/zenoh/native/android/` |
+| `.gitignore` | Add `package/native/android/` |

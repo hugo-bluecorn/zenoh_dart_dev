@@ -75,20 +75,20 @@ Phase 0-2 established the foundation: Session open/close, KeyExpr validation, ZB
 ```
 src/zenoh_dart.h                    # 8 new function declarations
 src/zenoh_dart.c                    # 8 new functions + callback update
-packages/zenoh/lib/src/encoding.dart        # NEW: Encoding class
-packages/zenoh/lib/src/congestion_control.dart  # NEW: CongestionControl enum
-packages/zenoh/lib/src/priority.dart        # NEW: Priority enum
-packages/zenoh/lib/src/publisher.dart       # NEW: Publisher class
-packages/zenoh/lib/src/sample.dart          # MODIFIED: add encoding field
-packages/zenoh/lib/src/subscriber.dart      # MODIFIED: handle 5th element
-packages/zenoh/lib/src/session.dart         # MODIFIED: add declarePublisher
-packages/zenoh/lib/zenoh.dart               # MODIFIED: 4 new exports
-packages/zenoh/ffigen.yaml                  # MODIFIED: publisher opaque types
-packages/zenoh/example/z_pub.dart           # NEW: CLI example
-packages/zenoh/test/encoding_test.dart      # NEW
-packages/zenoh/test/publisher_test.dart     # NEW
-packages/zenoh/test/subscriber_test.dart    # MODIFIED
-packages/zenoh/test/z_pub_cli_test.dart     # NEW
+package/lib/src/encoding.dart        # NEW: Encoding class
+package/lib/src/congestion_control.dart  # NEW: CongestionControl enum
+package/lib/src/priority.dart        # NEW: Priority enum
+package/lib/src/publisher.dart       # NEW: Publisher class
+package/lib/src/sample.dart          # MODIFIED: add encoding field
+package/lib/src/subscriber.dart      # MODIFIED: handle 5th element
+package/lib/src/session.dart         # MODIFIED: add declarePublisher
+package/lib/zenoh.dart               # MODIFIED: 4 new exports
+package/ffigen.yaml                  # MODIFIED: publisher opaque types
+package/example/z_pub.dart           # NEW: CLI example
+package/test/encoding_test.dart      # NEW
+package/test/publisher_test.dart     # NEW
+package/test/subscriber_test.dart    # MODIFIED
+package/test/z_pub_cli_test.dart     # NEW
 ```
 
 ### Naming Conventions
@@ -107,7 +107,7 @@ the RED -> GREEN -> REFACTOR cycle. See `.tdd-progress.md` for the full
 slice list with live status tracking.
 
 **Test Framework:** `package:test`
-**Test Command:** `cd packages/zenoh && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build fvm dart test`
+**Test Command:** `cd package && LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build fvm dart test`
 
 ### Slice Overview
 | # | Slice | Tests | Dependencies |
@@ -172,9 +172,9 @@ slice list with live status tracking.
 
 ### Related Code
 - `src/zenoh_dart.c` -- existing C shim (34 functions)
-- `packages/zenoh/lib/src/session.dart` -- Session with put/deleteResource/declareSubscriber
-- `packages/zenoh/lib/src/subscriber.dart` -- NativePort callback bridge pattern
-- `packages/zenoh/test/subscriber_test.dart` -- two-session integration test patterns
+- `package/lib/src/session.dart` -- Session with put/deleteResource/declareSubscriber
+- `package/lib/src/subscriber.dart` -- NativePort callback bridge pattern
+- `package/test/subscriber_test.dart` -- two-session integration test patterns
 
 ### Documentation
 - `docs/design/phase-03-pub-revised.md` -- feature specification

@@ -53,12 +53,12 @@
 
 ## Key Files Changed
 
-- `packages/zenoh/lib/src/native_lib.dart` — DynamicLibrary.open() with path discovery via `Isolate.resolvePackageUriSync()`
-- `packages/zenoh/lib/src/bindings.dart` — Regenerated as class-based `ZenohDartBindings(DynamicLibrary)`, no @Native
-- `packages/zenoh/ffigen.yaml` — Removed `ffi-native` config block
-- `packages/zenoh/lib/src/*.dart` (10 files) — Changed `ffi_bindings.zd_*()` to `bindings.zd_*()`
+- `package/lib/src/native_lib.dart` — DynamicLibrary.open() with path discovery via `Isolate.resolvePackageUriSync()`
+- `package/lib/src/bindings.dart` — Regenerated as class-based `ZenohDartBindings(DynamicLibrary)`, no @Native
+- `package/ffigen.yaml` — Removed `ffi-native` config block
+- `package/lib/src/*.dart` (10 files) — Changed `ffi_bindings.zd_*()` to `bindings.zd_*()`
 - `src/zenoh_dart.{h,c}` — Removed `zd_promote_zenohc_global()`
-- `packages/zenoh/test/interprocess_test.dart` — 7 new inter-process tests
-- `packages/zenoh/test/helpers/interprocess_connect.dart` — Connection helper
-- `packages/zenoh/test/helpers/interprocess_pubsub.dart` — Pub/sub helper
-- `packages/zenoh/test/native_lib_test.dart` — 6 tests replacing promote_test.dart
+- `package/test/interprocess_test.dart` — 7 new inter-process tests
+- `package/test/helpers/interprocess_connect.dart` — Connection helper
+- `package/test/helpers/interprocess_pubsub.dart` — Pub/sub helper
+- `package/test/native_lib_test.dart` — 6 tests replacing promote_test.dart

@@ -84,7 +84,7 @@ in `planning/`. Tell CA both file paths so they can review.
 ## Quality Checklist (self-review before reporting to CA)
 
 - [ ] Every slice has concrete Given/When/Then test specs
-- [ ] Test file paths follow project conventions (`packages/zenoh/test/`, snake_case, mirror source structure)
+- [ ] Test file paths follow project conventions (`package/test/`, snake_case, mirror source structure)
 - [ ] Slice dependencies form a valid DAG (no cycles)
 - [ ] No refactoring is pre-planned (refactoring is an implementation-time decision)
 - [ ] Edge cases are covered (empty inputs, error paths, boundary conditions)

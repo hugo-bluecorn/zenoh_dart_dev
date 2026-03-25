@@ -49,7 +49,7 @@ add_subdirectory(src)
 # CMAKE_INSTALL_PREFIX + relative path, but we need libraries placed into
 # the Dart package's native/ directory (which the build hook reads), not
 # a system prefix like /usr/local/lib.
-set(NATIVE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/packages/zenoh/native")
+set(NATIVE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/package/native")
 
 if(ANDROID)
     set(PREBUILT_DIR "${NATIVE_DIR}/android/${ANDROID_ABI}")

@@ -623,7 +623,7 @@ FFI_PLUGIN_EXPORT int zd_declare_publisher(
 the move semantics are all hidden inside the compiled shim:
 
 ```dart
-// packages/zenoh/lib/src/publisher.dart, lines 46-53
+// package/lib/src/publisher.dart, lines 46-53
 final rc = bindings.zd_declare_publisher(
     loanedSession.cast(),
     ptr.cast(),
@@ -684,7 +684,7 @@ without notice.
 In the `ffigen.yaml`, all zenoh-c types are mapped to `Opaque`:
 
 ```yaml
-# packages/zenoh/ffigen.yaml
+# package/ffigen.yaml
 type-map:
   typedefs:
     z_owned_config_t:
@@ -728,14 +728,14 @@ FFI_PLUGIN_EXPORT size_t zd_bytes_sizeof(void) {
 Every Dart wrapper class queries the size at construction time:
 
 ```dart
-// packages/zenoh/lib/src/session.dart, lines 37-38
+// package/lib/src/session.dart, lines 37-38
 final size = bindings.zd_session_sizeof();    // query at runtime
 final Pointer<Void> ptr = calloc.allocate(size);  // allocate exactly
 
-// packages/zenoh/lib/src/config.dart, line 26
+// package/lib/src/config.dart, line 26
 Config() : _ptr = calloc.allocate(bindings.zd_config_sizeof()) {
 
-// packages/zenoh/lib/src/bytes.dart, line 31
+// package/lib/src/bytes.dart, line 31
 final Pointer<Void> ptr = calloc.allocate(bindings.zd_bytes_sizeof());
 ```
 
@@ -897,7 +897,7 @@ FFI_PLUGIN_EXPORT int zd_declare_subscriber(
 }
 ```
 
-**Dart side implementation** (`packages/zenoh/lib/src/subscriber.dart:29-76`):
+**Dart side implementation** (`package/lib/src/subscriber.dart:29-76`):
 
 ```dart
 static Subscriber declare(Pointer<Void> loanedSession, Pointer<Void> loanedKe) {

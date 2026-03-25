@@ -5,7 +5,7 @@ Comparison of all 7 zenoh-dart CLI examples against their zenoh-c and zenoh-cpp 
 **Reviewed files:**
 - C: `extern/zenoh-c/examples/z_*.c`
 - C++: `extern/zenoh-cpp/examples/universal/z_*.cxx` (SHM: `zenohc/z_pub_shm.cxx`)
-- Dart: `packages/zenoh/example/z_*.dart`
+- Dart: `package/example/z_*.dart`
 
 ---
 

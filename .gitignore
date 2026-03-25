@@ -41,10 +41,12 @@ migrate_working_dir/
 .claude/agent-memory/
 
 # Coverage artifacts
-packages/*/coverage/
+package/coverage/
 
 # Android prebuilt native libraries (developer-generated, ~7MB per ABI)
-packages/zenoh/native/android/
+package/native/android/
+
+# Note: package/native/linux/ is NOT excluded — prebuilt .so files are tracked in git
 
 # zenoh-c build artifacts
 extern/zenoh-c/build/

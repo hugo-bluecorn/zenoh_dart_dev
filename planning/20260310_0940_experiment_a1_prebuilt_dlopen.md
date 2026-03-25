@@ -20,7 +20,7 @@ Experiment A1 tests whether two prebuilt native libraries (`libzenoh_dart.so` an
 - Determine if `DynamicLibrary.open()` can find hook-bundled assets (hypothesis: it cannot)
 
 ### Context
-This is part of a 2x2 experiment matrix (build strategy x loading mechanism). A1 is the "both-prebuilt + DynamicLibrary.open()" cell. The control package `packages/zenoh/` remains untouched throughout all experiments. The experiment package is isolated at `packages/exp_hooks_prebuilt_dlopen/`.
+This is part of a 2x2 experiment matrix (build strategy x loading mechanism). A1 is the "both-prebuilt + DynamicLibrary.open()" cell. The control package `package/` remains untouched throughout all experiments. The experiment package is isolated at `packages/exp_hooks_prebuilt_dlopen/`.
 
 Prior research (in `experiments/hooks-bundling/design.md`) identified that `DynamicLibrary.open()` does NOT auto-find hook-bundled assets -- the Dart runtime uses asset ID resolution via `@Native` annotations, not the OS dynamic linker. A negative result here is expected and valuable, proving that experiment A2 (`@Native` annotations) is required.
 
@@ -38,7 +38,7 @@ Prior research (in `experiments/hooks-bundling/design.md`) identified that `Dyna
 
 ### Non-Functional Requirements
 - Code style passes `fvm dart analyze`
-- No modifications to `packages/zenoh/` (control package)
+- No modifications to `package/` (control package)
 - No `LD_LIBRARY_PATH` in any test or run command
 
 ### Integration Points
@@ -149,7 +149,7 @@ The feature is broken into 3 slices: 2 TDD slices (red-green-refactor) and 1 doc
 ## References
 
 ### Related Code
-- `packages/zenoh/lib/src/native_lib.dart` — control package's current loading mechanism
+- `package/lib/src/native_lib.dart` — control package's current loading mechanism
 - `experiments/hooks-bundling/spec-a1-prebuilt-dlopen.md` — experiment specification
 - `experiments/hooks-bundling/design.md` — overall experiment design
 

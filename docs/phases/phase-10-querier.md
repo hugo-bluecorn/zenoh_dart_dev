@@ -66,7 +66,7 @@ FFI_PLUGIN_EXPORT void zd_querier_drop(z_owned_querier_t* querier);
 
 ## Dart API Surface
 
-### New file: `packages/zenoh/lib/src/querier.dart`
+### New file: `package/lib/src/querier.dart`
 
 ```dart
 /// A declared querier for repeated queries to the same key expression.
@@ -85,7 +85,7 @@ class Querier {
 }
 ```
 
-### Modify `packages/zenoh/lib/src/session.dart`
+### Modify `package/lib/src/session.dart`
 
 ```dart
 class Session {
@@ -101,12 +101,12 @@ class Session {
 
 ## CLI Example to Create
 
-### `packages/zenoh/bin/z_querier.dart`
+### `package/bin/z_querier.dart`
 
 Mirrors `extern/zenoh-c/examples/z_querier.c`:
 
 ```
-Usage: fvm dart run -C packages/zenoh bin/z_querier.dart [OPTIONS]
+Usage: fvm dart run -C package bin/z_querier.dart [OPTIONS]
 
 Options:
     -s, --selector <SELECTOR>  (default: 'demo/example/**')
@@ -124,7 +124,7 @@ Behavior:
 
 ## Verification
 
-1. `fvm dart analyze packages/zenoh` — no errors
-2. **Integration test**: Run `packages/zenoh/bin/z_queryable.dart` + `packages/zenoh/bin/z_querier.dart` — querier prints periodic replies
+1. `fvm dart analyze package` — no errors
+2. **Integration test**: Run `package/bin/z_queryable.dart` + `package/bin/z_querier.dart` — querier prints periodic replies
 3. **Unit test**: Querier.get() stream completes after timeout with no queryable
 4. **Unit test**: Matching listener fires when queryable appears/disappears

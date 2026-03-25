@@ -16,7 +16,7 @@ Experiment B2 is the final entry in the 2x2 hooks-bundling experiment matrix. It
 
 ### Use Cases
 - Validate the "best of both worlds" approach for zenoh-dart native bundling
-- Confirm CBuilder + @Native as the recommended migration path for `packages/zenoh/`
+- Confirm CBuilder + @Native as the recommended migration path for `package/`
 - Complete the 2x2 experiment matrix for cross-experiment analysis
 
 ### Context
@@ -42,7 +42,7 @@ B2 eliminates A2's patchelf requirement (CBuilder auto-sets `$ORIGIN` RUNPATH) w
 
 ### Non-Functional Requirements
 - Code style passes `fvm dart analyze`
-- No modifications to `packages/zenoh/`
+- No modifications to `package/`
 - `lessons-learned.md` includes cross-experiment comparison table
 
 ### Integration Points
@@ -50,7 +50,7 @@ B2 eliminates A2's patchelf requirement (CBuilder auto-sets `$ORIGIN` RUNPATH) w
 - CBuilder links against vendored `libzenohc.so`
 - @Native resolves the CBuilder output via asset ID mapping
 - OS linker resolves `libzenohc.so` via DT_NEEDED + `$ORIGIN` RUNPATH
-- Results complete the 2x2 matrix and inform `packages/zenoh/` migration
+- Results complete the 2x2 matrix and inform `package/` migration
 
 ---
 
@@ -155,7 +155,7 @@ packages/exp_hooks_cbuilder_native/
 - **CodeAsset name alignment**: Must verify CBuilder auto-prefix behavior against @DefaultAsset URI
 
 ### Future Improvements
-- If B2 succeeds, migrate `packages/zenoh/` to CBuilder + @Native pattern
+- If B2 succeeds, migrate `package/` to CBuilder + @Native pattern
 - Consider CBuilder for full 62-function C shim (not just minimal 2-function)
 
 ### Potential Refactoring
@@ -170,7 +170,7 @@ packages/exp_hooks_cbuilder_native/
 - `packages/exp_hooks_cbuilder_dlopen/` — B1 (CBuilder reference)
 - `packages/exp_hooks_prebuilt_native/` — A2 (@Native reference)
 - `packages/exp_hooks_prebuilt_dlopen/` — A1 (baseline reference)
-- `packages/zenoh/lib/src/native_lib.dart` — control package
+- `package/lib/src/native_lib.dart` — control package
 
 ### Documentation
 - `experiments/hooks-bundling/spec-b2-cbuilder-native.md` — experiment specification

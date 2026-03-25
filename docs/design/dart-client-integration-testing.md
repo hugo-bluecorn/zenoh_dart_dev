@@ -100,7 +100,7 @@ trap "kill $ZENOHD_PID 2>/dev/null; wait $ZENOHD_PID 2>/dev/null" EXIT
 sleep 2
 
 # Run router-dependent tests
-cd packages/zenoh
+cd package
 LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
   ZENOH_TEST_ROUTER="tcp/127.0.0.1:$PORT" \
   fvm dart test --tags router
@@ -214,7 +214,7 @@ sleep 2
 trap "kill $CPP_PID $ZENOHD_PID 2>/dev/null; wait" EXIT
 
 # Run E2E Dart tests
-cd packages/zenoh
+cd package
 LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
   ZENOH_TEST_ROUTER="tcp/127.0.0.1:$PORT" \
   fvm dart test --tags e2e
@@ -319,7 +319,7 @@ State machine: stopped -> playing -> paused -> stopped.
 Untagged tests (Tier 1) run in CI without any external processes.
 Tagged tests require scripts that manage process lifecycle.
 
-**Dart test tag configuration** (`packages/zenoh/dart_test.yaml`):
+**Dart test tag configuration** (`package/dart_test.yaml`):
 
 ```yaml
 tags:

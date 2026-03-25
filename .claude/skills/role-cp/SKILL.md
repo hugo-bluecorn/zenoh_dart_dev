@@ -108,14 +108,14 @@ Before running the planner agent:
 2. Read the corresponding zenoh-c options structs in `extern/zenoh-c/include/zenoh_commons.h`
 3. Read the corresponding zenoh-cpp wrapper in `extern/zenoh-cpp/include/zenoh/api/`
 4. Read the corresponding zenoh-c test files in `extern/zenoh-c/tests/` for edge cases
-5. Read existing Dart API files in `packages/zenoh/lib/src/` to understand current patterns
+5. Read existing Dart API files in `package/lib/src/` to understand current patterns
 6. Execute `/tdd-plan` with the prompt CA provided
 
 ### After Planner Agent Completes
 After the planner agent produces output:
 1. Review slices against the phase doc -- every C shim function and Dart API method must be covered
 2. Verify Given/When/Then specs are concrete and testable (no vague assertions)
-3. Verify test file paths follow convention (`packages/zenoh/test/`, snake_case, mirror source)
+3. Verify test file paths follow convention (`package/test/`, snake_case, mirror source)
 4. Verify edge cases from zenoh-c tests are reflected in the plan
 5. If the plan passes self-review, approve the planner's internal gate
 6. Report to CA with the plan file paths (`.tdd-progress.md` and `planning/` archive)
@@ -124,10 +124,10 @@ After the planner agent produces output:
 
 **Project:** zenoh-dart
 **Tech stack:** Dart 3.11.x (via FVM), dart:ffi, zenoh-c v1.7.2, C shim (CMake + Clang), Melos monorepo
-**Architecture:** Three-layer FFI -- C shim (`src/zenoh_dart.{h,c}`) wraps zenoh-c macros/inlines, generated FFI bindings (`packages/zenoh/lib/src/bindings.dart`), idiomatic Dart API (`packages/zenoh/lib/src/*.dart`)
+**Architecture:** Three-layer FFI -- C shim (`src/zenoh_dart.{h,c}`) wraps zenoh-c macros/inlines, generated FFI bindings (`package/lib/src/bindings.dart`), idiomatic Dart API (`package/lib/src/*.dart`)
 **Build:** `cmake --build build` (C shim), `fvm dart run ffigen --config ffigen.yaml` (bindings)
-**Test:** `cd packages/zenoh && fvm dart test`
-**Analyze:** `fvm dart analyze packages/zenoh`
+**Test:** `cd package && fvm dart test`
+**Analyze:** `fvm dart analyze package`
 
 **Key reference paths for planning:**
 
@@ -140,8 +140,8 @@ After the planner agent produces output:
 | C++ Session API | `extern/zenoh-cpp/include/zenoh/api/session.hxx` |
 | C++ Publisher API | `extern/zenoh-cpp/include/zenoh/api/publisher.hxx` |
 | C++ tests | `extern/zenoh-cpp/tests/universal/network/*.cxx` |
-| Existing Dart API | `packages/zenoh/lib/src/*.dart` |
-| Existing tests | `packages/zenoh/test/*.dart` |
+| Existing Dart API | `package/lib/src/*.dart` |
+| Existing tests | `package/test/*.dart` |
 | C shim source | `src/zenoh_dart.{h,c}` |
 
 **Established patterns (from Phases 0-5):**

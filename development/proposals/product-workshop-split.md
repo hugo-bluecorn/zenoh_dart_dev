@@ -21,7 +21,7 @@ Someone cloning `zenoh_dart` today gets 166MB of CMake source reference, hooks e
 
 Additionally:
 - **Melos is vestigial** — declared as a dev_dependency but no `melos.yaml` exists. With one package and no `zenoh_flutter` planned, Melos adds nothing. Dart Workspaces (`resolution: workspace`) handles dependency resolution natively.
-- **The monorepo `packages/zenoh/` indirection is unnecessary** — there's only one package. Every path reference adds `packages/zenoh/` for no structural benefit.
+- **The monorepo `package/` indirection is unnecessary** — there's only one package. Every path reference adds `package/` for no structural benefit.
 
 ---
 
@@ -50,7 +50,7 @@ The `package/` layout is an **allow-list** — only what's inside `package/` get
 | Flat root + `.pubignore` | Deny-list — must exclude every new build file | Must update `.pubignore` whenever adding build infrastructure |
 | `package/` directory | Allow-list — only `package/` contents published | Zero maintenance — new build files at root are automatically excluded |
 
-Compared to current `packages/zenoh/`:
+Compared to current `package/`:
 - `package/` (singular) is honest about there being one package
 - One level of indirection instead of two (`../src/` vs `../../src/`)
 - No workspace, no Melos
@@ -159,7 +159,7 @@ zenoh_dart/                     # Fresh repo — clean git history
 
 ```
 zenoh_dart_dev/               # Current repo, renamed — frozen archive
-  packages/zenoh/             # Original monorepo structure (historical reference)
+  package/             # Original monorepo structure (historical reference)
   src/                        # C shim source (canonical copy)
   extern/                     # All 7 submodules
     zenoh-c/                  #   v1.7.2 — primary dependency
@@ -189,7 +189,7 @@ zenoh_dart_dev/               # Current repo, renamed — frozen archive
 
 ## Path Rewrites Required
 
-The `package/` layout changes path references from `packages/zenoh/` (two levels) to `package/` (one level). Paths from `package/` to repo-root resources use `../` instead of `../../`.
+The `package/` layout changes path references from `package/` (two levels) to `package/` (one level). Paths from `package/` to repo-root resources use `../` instead of `../../`.
 
 ### `ffigen.yaml` (inside `package/`)
 
@@ -215,15 +215,15 @@ Note: prebuilt discovery paths now include `package/` because `native/` lives in
 
 | Logic | Current | New |
 |-------|---------|-----|
-| Package URI resolution | `package:zenoh/` → `packages/zenoh/lib/` → walks up to `packages/zenoh/` → finds `native/` | `package:zenoh/` → `package/lib/` → walks up to `package/` → finds `native/` |
-| Relative probing | Checks `packages/zenoh/native/linux/x86_64/` | Checks `package/native/linux/x86_64/` (but from inside `package/`, just `native/linux/x86_64/` relative) |
+| Package URI resolution | `package:zenoh/` → `package/lib/` → walks up to `package/` → finds `native/` | `package:zenoh/` → `package/lib/` → walks up to `package/` → finds `native/` |
+| Relative probing | Checks `package/native/linux/x86_64/` | Checks `package/native/linux/x86_64/` (but from inside `package/`, just `native/linux/x86_64/` relative) |
 
-The path resolution is actually simpler. `Isolate.resolvePackageUriSync('package:zenoh/')` returns the physical path to `package/lib/`. Walking up one directory reaches `package/` where `native/` lives. Currently the code walks up from `packages/zenoh/lib/` to `packages/zenoh/` — same depth, cleaner name.
+The path resolution is actually simpler. `Isolate.resolvePackageUriSync('package:zenoh/')` returns the physical path to `package/lib/`. Walking up one directory reaches `package/` where `native/` lives. Currently the code walks up from `package/lib/` to `package/` — same depth, cleaner name.
 
 **Dead code cleanup:** The CWD fallback candidates list (current `native_lib.dart` lines ~57-62) includes monorepo-specific paths:
 ```dart
-'packages/zenoh/native/linux/x86_64/$libraryName',     // ← remove
-'packages/zenoh/.dart_tool/lib/$libraryName',           // ← remove
+'package/native/linux/x86_64/$libraryName',     // ← remove
+'package/.dart_tool/lib/$libraryName',           // ← remove
 ```
 These are harmless (won't match in the product repo) but contradict the purpose of the split. Remove them during the path rewrite step.
 
@@ -231,7 +231,7 @@ These are harmless (won't match in the product repo) but contradict the purpose 
 
 | Logic | Current | New |
 |-------|---------|-----|
-| `_nativeDir()` | Relative to `packages/zenoh/` package root | Relative to `package/` (package root = `package/` in new layout) |
+| `_nativeDir()` | Relative to `package/` package root | Relative to `package/` (package root = `package/` in new layout) |
 
 The hook runs from the package root. In the new layout, package root = `package/`. Paths to `native/` remain the same relative to package root.
 
@@ -239,14 +239,14 @@ The hook runs from the package root. In the new layout, package root = `package/
 
 | Variable | Current | New |
 |----------|---------|-----|
-| `NATIVE_ANDROID_DIR` | `${PROJECT_ROOT}/packages/zenoh/native/android` | `${PROJECT_ROOT}/package/native/android` |
+| `NATIVE_ANDROID_DIR` | `${PROJECT_ROOT}/package/native/android` | `${PROJECT_ROOT}/package/native/android` |
 | `JNILIBS_DIR` | `${PROJECT_ROOT}/android/src/main/jniLibs` | Removed — cargo-ndk outputs directly to `native/android/<abi>/` |
 
 ### Root `CMakeLists.txt` (superbuild)
 
 | Reference | Current (from superbuild proposal) | New |
 |-----------|-----|-----|
-| `NATIVE_DIR` | `${CMAKE_CURRENT_SOURCE_DIR}/packages/zenoh/native` | `${CMAKE_CURRENT_SOURCE_DIR}/package/native` |
+| `NATIVE_DIR` | `${CMAKE_CURRENT_SOURCE_DIR}/package/native` | `${CMAKE_CURRENT_SOURCE_DIR}/package/native` |
 
 ### `pubspec.yaml` (inside `package/`)
 
@@ -323,7 +323,7 @@ The workshop scaffolding that made `zenoh_dart_dev` heavy was mostly historical 
 | 5 | **GitHub repo rename breaks existing clones** | GitHub auto-redirects the old URL. Document the rename in both repos' READMEs. Existing clones need `git remote set-url origin`. |
 | 6 | **pub.dev package name conflict** | The Dart package name stays `zenoh` (in pubspec.yaml). The GitHub repo name (`zenoh_dart`) is separate from the package name. No conflict. |
 | 7 | **Loss of git blame for moved files** | Fresh repo = no history. Acceptable — `zenoh_dart_dev` retains full history. For any file's provenance, check the dev repo. |
-| 8 | **`cd package` required for Dart commands** | All `fvm dart test`, `fvm dart run`, `fvm dart analyze` must run from `package/`. Minor ergonomic cost. Can alias in shell or document clearly. Same pattern as current `cd packages/zenoh`. |
+| 8 | **`cd package` required for Dart commands** | All `fvm dart test`, `fvm dart run`, `fvm dart analyze` must run from `package/`. Minor ergonomic cost. Can alias in shell or document clearly. Same pattern as current `cd package`. |
 | 9 | **CMake install target must know about `package/`** | The superbuild's install target uses `NATIVE_DIR = .../package/native`. If someone uses `cmake --target install` without the superbuild, the path won't match. Mitigated by always using presets. |
 
 ---
@@ -336,7 +336,7 @@ The workshop scaffolding that made `zenoh_dart_dev` heavy was mostly historical 
 2. **Verify** 193 tests pass with new build system
 3. **Rename** current GitHub repo from `zenoh_dart` to `zenoh_dart_dev`
 4. **Create** fresh `zenoh_dart` repo on GitHub
-5. **Create `package/` directory** — copy Dart package files from `zenoh_dart_dev/packages/zenoh/`
+5. **Create `package/` directory** — copy Dart package files from `zenoh_dart_dev/package/`
 6. **Copy build infrastructure** — `src/`, `scripts/`, `CMakeLists.txt`, `CMakePresets.json` to repo root
 7. **Add `extern/zenoh-c`** as single submodule
 8. **Rewrite paths** — ffigen.yaml (`../` instead of `../../`), native_lib.dart, src/CMakeLists.txt (prebuilt discovery adds `package/`), hook/build.dart, build_zenoh_android.sh

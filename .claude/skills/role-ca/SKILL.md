@@ -116,8 +116,8 @@ When CI creates a PR via `/tdd-release`:
 **Project:** zenoh-dart
 **Architecture:** Three-layer FFI binding (C shim -> generated bindings -> idiomatic Dart API)
 **Build:** `cmake --build build` (C shim), `fvm dart run ffigen` (bindings), `fvm dart test` (tests)
-**Test:** `cd packages/zenoh && fvm dart test`
-**Analyze:** `fvm dart analyze packages/zenoh`
+**Test:** `cd package && fvm dart test`
+**Analyze:** `fvm dart analyze package`
 
 Key reference locations for review work:
 
@@ -125,9 +125,9 @@ Key reference locations for review work:
 |---|---|
 | Phase specifications | `docs/phases/phase-NN-*.md` |
 | C shim source | `src/zenoh_dart.{h,c}` |
-| Dart API source | `packages/zenoh/lib/src/*.dart` |
-| Test files | `packages/zenoh/test/*.dart` |
-| CLI examples | `packages/zenoh/example/z_*.dart` |
+| Dart API source | `package/lib/src/*.dart` |
+| Test files | `package/test/*.dart` |
+| CLI examples | `package/example/z_*.dart` |
 | C options structs | `extern/zenoh-c/include/zenoh_commons.h` |
 | C tests | `extern/zenoh-c/tests/z_api_*.c`, `extern/zenoh-c/tests/z_int_*.c` |
 | C++ session API | `extern/zenoh-cpp/include/zenoh/api/session.hxx` |

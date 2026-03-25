@@ -34,7 +34,7 @@ cmake --build --preset linux-x64 --target install
 This:
 1. Builds zenoh-c from source via `add_subdirectory(extern/zenoh-c)` (cargo, automated)
 2. Builds the C shim (`src/zenoh_dart.c`) against the `zenohc::lib` target
-3. Installs both `.so` files to `packages/zenoh/native/linux/x86_64/` with `RPATH=$ORIGIN`
+3. Installs both `.so` files to `package/native/linux/x86_64/` with `RPATH=$ORIGIN`
 
 First build takes ~3 minutes (cargo). Subsequent builds are incremental (~2s for C shim-only changes).
 
@@ -109,7 +109,7 @@ Expected: 12/14 pass. Two tests (`unit_z_api_alignment_test`, `unit_z_api_liveli
 |----------|------|
 | Shared library (zenoh-c) | `build/linux-x64/extern/zenoh-c/release/target/release/libzenohc.so` |
 | Shared library (C shim) | `build/linux-x64/src/libzenoh_dart.so` |
-| Installed prebuilts | `packages/zenoh/native/linux/x86_64/libzenohc.so`, `libzenoh_dart.so` |
+| Installed prebuilts | `package/native/linux/x86_64/libzenohc.so`, `libzenoh_dart.so` |
 
 ### Manual (standalone)
 

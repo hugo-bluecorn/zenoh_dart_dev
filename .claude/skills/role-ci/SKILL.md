@@ -32,9 +32,9 @@ handle architectural decisions.
 
 ### Implementation
 - Execute `/tdd-implement` to work through pending slices in `.tdd-progress.md` following RED, GREEN, REFACTOR per slice
-- Write C shim functions in `src/zenoh_dart.h` and `src/zenoh_dart.c`, then regenerate FFI bindings with `cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml`
-- Write idiomatic Dart API classes in `packages/zenoh/lib/src/` and tests in `packages/zenoh/test/`
-- Write CLI examples in `packages/zenoh/example/` matching zenoh-c flag conventions exactly
+- Write C shim functions in `src/zenoh_dart.h` and `src/zenoh_dart.c`, then regenerate FFI bindings with `cd package && fvm dart run ffigen --config ffigen.yaml`
+- Write idiomatic Dart API classes in `package/lib/src/` and tests in `package/test/`
+- Write CLI examples in `package/example/` matching zenoh-c flag conventions exactly
 - Resume interrupted sessions by re-running `/tdd-implement`
 
 ### Release
@@ -87,22 +87,22 @@ On fresh start or recovery after interruption:
 
 ### After Modifying C Headers
 1. Rebuild the C shim: `cmake --build build --config Release` from repo root
-2. Regenerate bindings: `cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml`
-3. Copy libraries to prebuilt location: `cp build/libzenoh_dart.so packages/zenoh/native/linux/x86_64/`
+2. Regenerate bindings: `cd package && fvm dart run ffigen --config ffigen.yaml`
+3. Copy libraries to prebuilt location: `cp build/libzenoh_dart.so package/native/linux/x86_64/`
 
 ### Running Tests
-1. Full suite: `cd packages/zenoh && fvm dart test`
-2. Static analysis: `fvm dart analyze packages/zenoh`
+1. Full suite: `cd package && fvm dart test`
+2. Static analysis: `fvm dart analyze package`
 3. See CLAUDE.md for single-file and name-filtered test commands
 
 ## Context
 
 **Project:** zenoh-dart — pure Dart FFI package wrapping zenoh-c v1.7.2
 **Tech stack:** Dart 3.11.x (via FVM), C11 (Clang), CMake 3.10+, Melos monorepo
-**Architecture:** Three-layer FFI — C shim (`src/zenoh_dart.c`) wraps zenoh-c macros into callable symbols; ffigen generates `packages/zenoh/lib/src/bindings.dart`; idiomatic Dart API in `packages/zenoh/lib/src/` is the public surface
+**Architecture:** Three-layer FFI — C shim (`src/zenoh_dart.c`) wraps zenoh-c macros into callable symbols; ffigen generates `package/lib/src/bindings.dart`; idiomatic Dart API in `package/lib/src/` is the public surface
 **Build:** `cmake --build build --config Release` (C shim), `fvm dart run melos bootstrap` (Dart)
-**Test:** `cd packages/zenoh && fvm dart test`
-**Analyze:** `fvm dart analyze packages/zenoh`
+**Test:** `cd package && fvm dart test`
+**Analyze:** `fvm dart analyze package`
 
 **Key implementation patterns:**
 - NativePort callback bridge for async streaming (Subscriber, Publisher matching listener)
@@ -112,7 +112,7 @@ On fresh start or recovery after interruption:
 - zenoh-c return codes checked with `!= 0`, throwing `ZenohException` on failure
 - `try/finally` cleanup for every native resource, mirroring C++ RAII patterns
 - `DynamicLibrary.open()` loading via `native_lib.dart` with automatic path resolution
-- Build hooks in `packages/zenoh/hook/build.dart` register CodeAssets for distribution
+- Build hooks in `package/hook/build.dart` register CodeAssets for distribution
 - String-passthrough encoding: Dart `Encoding` class passes const char to C shim
 - Non-broadcast `StreamController` for subscriber and matching listener streams
 - Commit scope naming: `feat(session)`, `test(keyexpr)`, `test(z-put)` for CLI examples

@@ -28,7 +28,7 @@ automatically — eliminating `LD_LIBRARY_PATH` for consumers and enabling
 
 - **Repository**: `hugo-bluecorn/zenoh-dart` (GitHub)
 - **Location**: `/home/hugo-bluecorn/bluecorn/CSR/git/zenoh_dart/`
-- **Structure**: Melos monorepo. Main package at `packages/zenoh/`.
+- **Structure**: Melos monorepo. Main package at `package/`.
   C shim source at `src/zenoh_dart.{h,c}`. zenoh-c v1.7.2 submodule at
   `extern/zenoh-c/`.
 - **SDK**: Dart 3.11.0 / Flutter 3.41.4 via FVM. Bare `dart`/`flutter`
@@ -40,16 +40,16 @@ automatically — eliminating `LD_LIBRARY_PATH` for consumers and enabling
 ### Three-Layer Architecture
 
 ```
-Dart API (packages/zenoh/lib/src/*.dart)
+Dart API (package/lib/src/*.dart)
   ↓ dart:ffi
-Generated FFI bindings (packages/zenoh/lib/src/bindings.dart)
+Generated FFI bindings (package/lib/src/bindings.dart)
   ↓ DynamicLibrary.open('libzenoh_dart.so')
 C shim (src/zenoh_dart.c) → libzenoh_dart.so
   ↓ DT_NEEDED
 zenoh-c runtime → libzenohc.so
 ```
 
-The current loading mechanism in `packages/zenoh/lib/src/native_lib.dart`
+The current loading mechanism in `package/lib/src/native_lib.dart`
 uses `DynamicLibrary.open('libzenoh_dart.so')`. The OS dynamic linker
 then resolves `libzenohc.so` via the DT_NEEDED entry.
 
@@ -63,7 +63,7 @@ RUSTUP_TOOLCHAIN=stable cmake --build extern/zenoh-c/build --config Release
 cmake --build build
 
 # Run tests (must set LD_LIBRARY_PATH manually)
-cd packages/zenoh && \
+cd package && \
   LD_LIBRARY_PATH=../../extern/zenoh-c/target/release:../../build \
   fvm dart test
 ```
@@ -256,7 +256,7 @@ After all four experiments complete, compare on:
 - **pub.dev viability**: Can the package be published?
 - **Maintainability**: Upgrade friction when zenoh-c changes version?
 
-The winning approach is then applied to `packages/zenoh/`.
+The winning approach is then applied to `package/`.
 
 ## Key API Reference (for implementers)
 

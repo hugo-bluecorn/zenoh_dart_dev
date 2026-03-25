@@ -271,5 +271,5 @@ cd packages/exp_hooks_prebuilt_dlopen && fvm dart run example/smoke.dart
 
 - `experiments/hooks-bundling/context.md` — full project context
 - `experiments/hooks-bundling/design.md` — experiment design + research
-- `packages/zenoh/lib/src/native_lib.dart` — current DynamicLibrary.open() pattern
+- `package/lib/src/native_lib.dart` — current DynamicLibrary.open() pattern
 - [sqlite_prebuilt example](https://github.com/dart-lang/native/tree/main/pkgs/code_assets/example/sqlite_prebuilt)

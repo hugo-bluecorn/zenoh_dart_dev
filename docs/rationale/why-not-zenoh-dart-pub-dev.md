@@ -6,7 +6,7 @@
 
 ## The Question
 
-There is an existing [`zenoh_dart`](https://pub.dev/packages/zenoh_dart)
+There is an existing [`zenoh_dart`](https://pub.dev/package_dart)
 package on pub.dev (v0.2.0, published by M-PIA/salimpia). Why not use it
 instead of building our own?
 

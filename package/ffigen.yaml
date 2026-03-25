@@ -3,9 +3,9 @@ description: "Auto-generated FFI bindings for zenoh_dart C shim."
 output: lib/src/bindings.dart
 headers:
   entry-points:
-    - ../../src/zenoh_dart.h
+    - ../src/zenoh_dart.h
 compiler-opts:
-  - '-I../../extern/zenoh-c/include'
+  - '-I../extern/zenoh-c/include'
 functions:
   include:
     - zd_.*

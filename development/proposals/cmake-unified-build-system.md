@@ -17,7 +17,7 @@ The build today is a **5-step manual pipeline** with no unified entry point:
 | 2. Build C shim | `cmake -S src -B build && cmake --build build` | CLAUDE.md |
 | 3. Copy prebuilts | `mkdir -p ... && cp ... && cp ...` | CLAUDE.md |
 | 4. Patch RPATH | `patchelf --set-rpath '$ORIGIN' ...` | CLAUDE.md |
-| 5. Run tests | `cd packages/zenoh && fvm dart test` | CLAUDE.md |
+| 5. Run tests | `cd package && fvm dart test` | CLAUDE.md |
 
 For Android, steps 1-4 are collapsed into `build_zenoh_android.sh`, but that script is disconnected from the Linux flow — different discovery paths, different output locations, separate CMake invocations.
 
@@ -73,7 +73,7 @@ This project produces **two native shared libraries** that the Dart runtime load
 | `libzenohc.so` | `extern/zenoh-c/` (Rust crate) | Rust | `cargo` (Linux) / `cargo-ndk` (Android) |
 | `libzenoh_dart.so` | `src/zenoh_dart.{h,c}` (C shim) | C | CMake + clang (Linux) / CMake + NDK clang (Android) |
 
-After building, both `.so` files must land in `packages/zenoh/native/<platform>/<arch>/` where the Dart build hook and `native_lib.dart` expect them.
+After building, both `.so` files must land in `package/native/<platform>/<arch>/` where the Dart build hook and `native_lib.dart` expect them.
 
 There is also a **Dart code generation step** (not part of CMake):
 
@@ -98,7 +98,7 @@ zenoh-dart/
     cmake/                 # KEEP — local CMake RTFM reference (not used in build)
   scripts/
     build_zenoh_android.sh # SIMPLIFIED — uses cmake presets for Stage 2
-  packages/zenoh/
+  package/
     native/                # EXISTING — prebuilt output (unchanged)
     hook/build.dart        # UNCHANGED — Dart build hooks
     lib/src/
@@ -159,7 +159,7 @@ add_subdirectory(src)
 # CMAKE_INSTALL_PREFIX + relative path, but we need libraries placed into
 # the Dart package's native/ directory (which the build hook reads), not
 # a system prefix like /usr/local/lib.
-set(NATIVE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/packages/zenoh/native")
+set(NATIVE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/package/native")
 
 if(ANDROID)
     set(PREBUILT_DIR "${NATIVE_DIR}/android/${ANDROID_ABI}")
@@ -390,14 +390,14 @@ cmake -S src -B build -G Ninja
 # 4. Build C shim
 cmake --build build
 # 5-7. Copy + patch
-mkdir -p packages/zenoh/native/linux/x86_64/
-cp build/libzenoh_dart.so packages/zenoh/native/linux/x86_64/
-cp extern/zenoh-c/target/release/libzenohc.so packages/zenoh/native/linux/x86_64/
-patchelf --set-rpath '$ORIGIN' packages/zenoh/native/linux/x86_64/libzenoh_dart.so
+mkdir -p package/native/linux/x86_64/
+cp build/libzenoh_dart.so package/native/linux/x86_64/
+cp extern/zenoh-c/target/release/libzenohc.so package/native/linux/x86_64/
+patchelf --set-rpath '$ORIGIN' package/native/linux/x86_64/libzenoh_dart.so
 # 8. (optional) Regenerate FFI bindings if C header changed
-cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml
+cd package && fvm dart run ffigen --config ffigen.yaml
 # 9. Test
-cd packages/zenoh && fvm dart test
+cd package && fvm dart test
 ```
 
 **After** (2 native build commands + unchanged Dart commands):
@@ -406,9 +406,9 @@ cd packages/zenoh && fvm dart test
 cmake --preset linux-x64
 cmake --build --preset linux-x64 --target install
 # 2. (optional) Regenerate FFI bindings if C header changed
-cd packages/zenoh && fvm dart run ffigen --config ffigen.yaml
+cd package && fvm dart run ffigen --config ffigen.yaml
 # 3. Test
-cd packages/zenoh && fvm dart test
+cd package && fvm dart test
 ```
 
 ### Android — End-to-End Build Pipeline
@@ -450,7 +450,7 @@ Android requires a **hybrid flow** because `libzenohc.so` is a Rust crate that n
 │ Stage 3: Install to prebuilt directory                             │
 │                                                                     │
 │  cmake --build --preset android-arm64 --target install             │
-│  Copies BOTH .so files to packages/zenoh/native/android/arm64-v8a/│
+│  Copies BOTH .so files to package/native/android/arm64-v8a/│
 │                                                                     │
 │  This is where the Dart build hook reads them from.                │
 │  On Flutter APK build, hook registers CodeAssets, Flutter places   │
@@ -482,7 +482,7 @@ The bash script remains necessary because it iterates over ABIs, auto-detects ND
 
 ### Runtime: How Dart Loads the `.so` Files
 
-After building, the native libraries sit in `packages/zenoh/native/<platform>/<arch>/`. The Dart runtime loads them via a completely separate mechanism:
+After building, the native libraries sit in `package/native/<platform>/<arch>/`. The Dart runtime loads them via a completely separate mechanism:
 
 ```
                     ┌─────────────────────────────┐
@@ -527,10 +527,10 @@ This Dart-side loading is completely untouched by the proposal. It doesn't care 
 | `src/CMakeLists.txt` | **MODIFIED** | Dual-mode: `zenohc::lib` target (superbuild) or 3-tier discovery (standalone) |
 | `extern/cmake` | **KEEP** | Local CMake RTFM reference for agents |
 | `scripts/build_zenoh_android.sh` | **SIMPLIFIED** | Uses presets for Stage 2+3 instead of manual flags+cp |
-| `packages/zenoh/hook/build.dart` | Unchanged | Dart build hooks — reads from `native/`, registers CodeAssets |
-| `packages/zenoh/lib/src/native_lib.dart` | Unchanged | Runtime `DynamicLibrary.open()` loading |
-| `packages/zenoh/lib/src/bindings.dart` | Unchanged | Auto-generated FFI bindings |
-| `packages/zenoh/ffigen.yaml` | Unchanged | Code generation config — run when C header changes |
+| `package/hook/build.dart` | Unchanged | Dart build hooks — reads from `native/`, registers CodeAssets |
+| `package/lib/src/native_lib.dart` | Unchanged | Runtime `DynamicLibrary.open()` loading |
+| `package/lib/src/bindings.dart` | Unchanged | Auto-generated FFI bindings |
+| `package/ffigen.yaml` | Unchanged | Code generation config — run when C header changes |
 | Prebuilt layout (`native/`) | Unchanged | Same directory structure, same files |
 
 ---
@@ -570,8 +570,8 @@ This is a Phase-P2 (Packaging/Build) effort. Suggested execution:
 3. **Add `CMakePresets.json`** — Platform presets
 4. **Modify `src/CMakeLists.txt`** — Add `if(TARGET zenohc::lib)` dual-mode branch
 5. **Update `build_zenoh_android.sh`** — Use presets for Stage 2+3
-6. **Verify Linux** — `cmake --preset linux-x64 && cmake --build --preset linux-x64 --target install && cd packages/zenoh && fvm dart test` (193 tests pass)
-7. **Verify Android** — `./scripts/build_zenoh_android.sh && cd packages/zenoh && fvm dart test` (if device available)
+6. **Verify Linux** — `cmake --preset linux-x64 && cmake --build --preset linux-x64 --target install && cd package && fvm dart test` (193 tests pass)
+7. **Verify Android** — `./scripts/build_zenoh_android.sh && cd package && fvm dart test` (if device available)
 8. **Update CLAUDE.md** — Replace manual build commands with preset commands
 9. **Update `docs/build/01-build-zenoh-c.md`** — Reflect new unified flow
 

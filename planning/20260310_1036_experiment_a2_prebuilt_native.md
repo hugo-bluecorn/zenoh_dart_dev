@@ -39,7 +39,7 @@ A1 also revealed that prebuilt `libzenoh_dart.so` has an absolute RUNPATH from t
 
 ### Non-Functional Requirements
 - Code style passes `fvm dart analyze`
-- No modifications to `packages/zenoh/` (control package)
+- No modifications to `package/` (control package)
 - No `LD_LIBRARY_PATH` in any command
 
 ### Integration Points
@@ -143,7 +143,7 @@ packages/exp_hooks_prebuilt_native/
 
 ### Future Improvements
 - Experiments B1/B2 will test CBuilder (compile from source) which sets RUNPATH correctly at build time
-- If A2 succeeds, `packages/zenoh/` migration can use the @Native + prebuilt pattern
+- If A2 succeeds, `package/` migration can use the @Native + prebuilt pattern
 
 ### Potential Refactoring
 - If both A2 and B experiments succeed, the shared hook/loading patterns could be extracted into a utility
@@ -155,7 +155,7 @@ packages/exp_hooks_prebuilt_native/
 ### Related Code
 - `packages/exp_hooks_prebuilt_dlopen/` — A1 experiment (structural reference)
 - `packages/exp_hooks_prebuilt_dlopen/lessons-learned.md` — A1 results
-- `packages/zenoh/lib/src/native_lib.dart` — control package loading mechanism
+- `package/lib/src/native_lib.dart` — control package loading mechanism
 - `experiments/hooks-bundling/spec-a2-prebuilt-native.md` — experiment specification
 
 ### Documentation
