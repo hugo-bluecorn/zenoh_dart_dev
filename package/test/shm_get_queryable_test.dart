@@ -268,4 +268,47 @@ void main() {
       );
     });
   });
+
+  group('ZBytes.isShmBacked', () {
+    late ShmProvider provider;
+
+    setUp(() {
+      provider = ShmProvider(size: 65536);
+    });
+
+    tearDown(() {
+      provider.close();
+    });
+
+    test('returns true for SHM-backed ZBytes', () {
+      final zbytes = _shmStringToZBytes(provider, 'shm data');
+      addTearDown(zbytes.dispose);
+      expect(zbytes.isShmBacked, isTrue);
+    });
+
+    test('returns false for ZBytes.fromUint8List', () {
+      final zbytes =
+          ZBytes.fromUint8List(Uint8List.fromList([1, 2, 3]));
+      addTearDown(zbytes.dispose);
+      expect(zbytes.isShmBacked, isFalse);
+    });
+
+    test('returns false for ZBytes.fromString', () {
+      final zbytes = ZBytes.fromString('hello');
+      addTearDown(zbytes.dispose);
+      expect(zbytes.isShmBacked, isFalse);
+    });
+
+    test('throws StateError on consumed ZBytes', () {
+      final zbytes = ZBytes.fromString('consumed');
+      zbytes.markConsumed();
+      expect(() => zbytes.isShmBacked, throwsStateError);
+    });
+
+    test('throws StateError on disposed ZBytes', () {
+      final zbytes = ZBytes.fromString('disposed');
+      zbytes.dispose();
+      expect(() => zbytes.isShmBacked, throwsStateError);
+    });
+  });
 }
