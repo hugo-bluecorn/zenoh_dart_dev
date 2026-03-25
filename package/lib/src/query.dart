@@ -1,6 +1,11 @@
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:ffi/ffi.dart';
+
+import 'encoding.dart';
+import 'exceptions.dart';
 import 'native_lib.dart';
 
 /// A received query on a queryable key expression.
@@ -33,24 +38,69 @@ class Query {
 
   /// The native pointer handle for this query (used by reply methods).
   int get handle {
+    _ensureNotDisposed();
+    return _handle;
+  }
+
+  void _ensureNotDisposed() {
     if (_disposed) {
       throw StateError('Query has been disposed');
     }
-    return _handle;
   }
 
   /// Sends a reply to this query with a string value.
   ///
-  /// Not yet implemented -- will be added in a later slice.
-  void reply(String keyExpr, String value) {
-    throw UnimplementedError('Query.reply not yet implemented');
+  /// The [keyExpr] should match the queryable's key expression.
+  /// Optionally specify an [encoding] for the payload.
+  ///
+  /// Throws [StateError] if the query has been disposed.
+  /// Throws [ZenohException] if the reply fails.
+  void reply(String keyExpr, String value, {Encoding? encoding}) {
+    _ensureNotDisposed();
+    final bytes = utf8.encode(value);
+    replyBytes(keyExpr, Uint8List.fromList(bytes), encoding: encoding);
   }
 
   /// Sends a reply to this query with raw bytes.
   ///
-  /// Not yet implemented -- will be added in a later slice.
-  void replyBytes(String keyExpr, Uint8List payload) {
-    throw UnimplementedError('Query.replyBytes not yet implemented');
+  /// The [keyExpr] should match the queryable's key expression.
+  /// Optionally specify an [encoding] for the payload.
+  ///
+  /// Throws [StateError] if the query has been disposed.
+  /// Throws [ZenohException] if the reply fails.
+  void replyBytes(String keyExpr, Uint8List payload, {Encoding? encoding}) {
+    _ensureNotDisposed();
+
+    final keyExprNative = keyExpr.toNativeUtf8();
+    final payloadPtr = calloc<Uint8>(payload.length);
+    for (var i = 0; i < payload.length; i++) {
+      payloadPtr[i] = payload[i];
+    }
+
+    Pointer<Utf8> encodingNative = nullptr;
+    if (encoding != null) {
+      encodingNative = encoding.mimeType.toNativeUtf8();
+    }
+
+    try {
+      final rc = bindings.zd_query_reply(
+        Pointer.fromAddress(_handle).cast(),
+        keyExprNative.cast(),
+        payloadPtr,
+        payload.length,
+        encoding != null ? encodingNative.cast() : nullptr,
+      );
+
+      if (rc != 0) {
+        throw ZenohException('Failed to reply to query', rc);
+      }
+    } finally {
+      calloc.free(keyExprNative);
+      calloc.free(payloadPtr);
+      if (encoding != null) {
+        calloc.free(encodingNative);
+      }
+    }
   }
 
   /// Releases the native query resources.
