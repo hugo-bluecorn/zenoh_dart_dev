@@ -636,6 +636,15 @@ FFI_PLUGIN_EXPORT int zd_bytes_from_shm_mut(z_owned_bytes_t* bytes,
 /// Drops (frees) a mutable SHM buffer.
 FFI_PLUGIN_EXPORT void zd_shm_mut_drop(z_owned_shm_mut_t* buf);
 
+/// Checks whether owned bytes are backed by shared memory.
+///
+/// Uses z_bytes_as_loaned_shm() to probe the bytes. If the call succeeds
+/// (returns 0), the bytes are SHM-backed.
+///
+/// @param bytes  Pointer to a z_owned_bytes_t (cast to uint8_t*).
+/// @return 1 if SHM-backed, 0 otherwise.
+FFI_PLUGIN_EXPORT int8_t zd_bytes_is_shm(const uint8_t* bytes);
+
 #endif // Z_FEATURE_SHARED_MEMORY && Z_FEATURE_UNSTABLE_API
 
 #endif // ZENOH_DART_H

@@ -102,6 +102,15 @@ class ZBytes {
     return result;
   }
 
+  /// Returns whether this payload is backed by shared memory.
+  ///
+  /// Throws [StateError] if this [ZBytes] has been consumed or disposed.
+  bool get isShmBacked {
+    _ensureNotDisposed();
+    _ensureNotConsumed();
+    return bindings.zd_bytes_is_shm(_ptr.cast()) == 1;
+  }
+
   /// Releases native resources held by this payload.
   ///
   /// Safe to call multiple times -- subsequent calls are no-ops.

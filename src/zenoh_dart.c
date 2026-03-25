@@ -1168,4 +1168,12 @@ FFI_PLUGIN_EXPORT void zd_shm_mut_drop(z_owned_shm_mut_t* buf) {
   z_shm_mut_drop(z_shm_mut_move(buf));
 }
 
+FFI_PLUGIN_EXPORT int8_t zd_bytes_is_shm(const uint8_t* bytes) {
+  const z_owned_bytes_t* owned = (const z_owned_bytes_t*)bytes;
+  const z_loaned_bytes_t* loaned = z_bytes_loan(owned);
+  const z_loaned_shm_t* shm = NULL;
+  z_result_t rc = z_bytes_as_loaned_shm(loaned, &shm);
+  return (rc == 0) ? 1 : 0;
+}
+
 #endif // Z_FEATURE_SHARED_MEMORY && Z_FEATURE_UNSTABLE_API

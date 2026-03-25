@@ -1523,6 +1523,24 @@ class ZenohDartBindings {
       );
   late final _zd_shm_mut_drop = _zd_shm_mut_dropPtr
       .asFunction<void Function(ffi.Pointer<ffi.Opaque>)>();
+
+  /// Checks whether owned bytes are backed by shared memory.
+  ///
+  /// Uses z_bytes_as_loaned_shm() to probe the bytes. If the call succeeds
+  /// (returns 0), the bytes are SHM-backed.
+  ///
+  /// @param bytes  Pointer to a z_owned_bytes_t (cast to uint8_t*).
+  /// @return 1 if SHM-backed, 0 otherwise.
+  int zd_bytes_is_shm(ffi.Pointer<ffi.Uint8> bytes) {
+    return _zd_bytes_is_shm(bytes);
+  }
+
+  late final _zd_bytes_is_shmPtr =
+      _lookup<ffi.NativeFunction<ffi.Int8 Function(ffi.Pointer<ffi.Uint8>)>>(
+        'zd_bytes_is_shm',
+      );
+  late final _zd_bytes_is_shm = _zd_bytes_is_shmPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Uint8>)>();
 }
 
 final class UnnamedStruct extends ffi.Struct {
