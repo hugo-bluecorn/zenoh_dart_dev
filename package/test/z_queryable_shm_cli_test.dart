@@ -1,3 +1,4 @@
+// Tests for z_queryable_shm CLI example.
 import 'dart:async';
 import 'dart:io';
 
