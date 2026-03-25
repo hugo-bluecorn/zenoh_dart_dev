@@ -1,4 +1,24 @@
 # Changelog
+## 0.7.0
+
+### Added
+- `Session.get()` returns `Stream<Reply>` with selector, parameters, payload,
+  encoding, target, consolidation, and timeout options
+- `Session.declareQueryable()` returns `Queryable` with `stream`, `keyExpr`,
+  `close()`, and `complete` flag
+- `Query` class with `reply()`, `replyBytes()`, `dispose()`, `keyExpr`,
+  `parameters`, `payloadBytes` — supports multiple replies per query via
+  clone-and-post pattern
+- `Reply` tagged union with `isOk`, `ok` (Sample), `error` (ReplyError) accessors
+- `ReplyError` class with `payloadBytes`, `payload`, `encoding` fields
+- `QueryTarget` enum: bestMatching, all, allComplete
+- `ConsolidationMode` enum: auto, none, monotonic, latest
+- 10 new C shim functions (62 → 72 total): zd_get, zd_declare_queryable,
+  zd_queryable_drop, zd_queryable_sizeof, zd_query_sizeof, zd_query_reply,
+  zd_query_drop, zd_query_keyexpr, zd_query_parameters, zd_query_payload
+- CLI examples: `z_get.dart`, `z_queryable.dart`
+- 44 new integration tests (193 → 237 total)
+
 ## 0.6.2 (Unreleased)
 
 ### Fixed

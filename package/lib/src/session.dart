@@ -1,4 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:ffi';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
@@ -6,6 +9,7 @@ import 'package:ffi/ffi.dart';
 import 'bytes.dart';
 import 'config.dart';
 import 'congestion_control.dart';
+import 'consolidation_mode.dart';
 import 'encoding.dart';
 import 'exceptions.dart';
 import 'id.dart';
@@ -13,6 +17,10 @@ import 'keyexpr.dart';
 import 'native_lib.dart';
 import 'priority.dart';
 import 'publisher.dart';
+import 'query_target.dart';
+import 'queryable.dart';
+import 'reply.dart';
+import 'sample.dart';
 import 'subscriber.dart';
 
 /// A Zenoh session.
@@ -258,5 +266,141 @@ class Session {
     } finally {
       ke.dispose();
     }
+  }
+
+  /// Declares a queryable on the given [keyExpr].
+  ///
+  /// Returns a [Queryable] whose [Queryable.stream] delivers [Query]s.
+  /// Call [Queryable.close] when done to undeclare and release resources.
+  ///
+  /// The [complete] parameter indicates whether this queryable is a
+  /// complete source of data for its key expression (default: false).
+  ///
+  /// Throws [ZenohException] if the key expression is invalid.
+  /// Throws [StateError] if the session has been closed.
+  Queryable declareQueryable(String keyExpr, {bool complete = false}) {
+    _ensureOpen();
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+    return Queryable.declare(loanedSession, keyExpr, complete: complete);
+  }
+
+  /// Sends a query on the given [selector] and returns a stream of replies.
+  ///
+  /// The returned stream completes when all replies have been received
+  /// or the timeout expires. The [timeout] defaults to 10 seconds.
+  ///
+  /// Optional [parameters] are appended to the query selector.
+  /// Optional [payload] and [encoding] attach data to the query.
+  /// [target] controls which queryables are targeted (default: bestMatching).
+  /// [consolidation] controls reply consolidation (default: auto).
+  ///
+  /// Throws [StateError] if the session has been closed.
+  Stream<Reply> get(
+    String selector, {
+    String? parameters,
+    Uint8List? payload,
+    Encoding? encoding,
+    QueryTarget target = QueryTarget.bestMatching,
+    ConsolidationMode consolidation = ConsolidationMode.auto,
+    Duration? timeout,
+  }) {
+    _ensureOpen();
+
+    final controller = StreamController<Reply>();
+    final receivePort = ReceivePort();
+    final timeoutMs = (timeout ?? const Duration(seconds: 10)).inMilliseconds;
+
+    receivePort.listen((dynamic message) {
+      if (message == null) {
+        // Null sentinel: query complete
+        receivePort.close();
+        controller.close();
+      } else if (message is List) {
+        final tag = message[0] as int;
+        if (tag == 1) {
+          // Ok reply: [1, keyexpr, payload_bytes, kind, attachment, encoding]
+          final keyExpr = message[1] as String;
+          final payloadBytes = message[2] as Uint8List;
+          final kind = message[3] as int;
+          final attachmentBytes = message[4] as Uint8List?;
+          final encodingStr = message.length > 5 ? message[5] as String? : null;
+
+          final sample = Sample(
+            keyExpr: keyExpr,
+            payload: utf8.decode(payloadBytes),
+            payloadBytes: payloadBytes,
+            kind: kind == 0 ? SampleKind.put : SampleKind.delete,
+            attachment: attachmentBytes != null
+                ? utf8.decode(attachmentBytes)
+                : null,
+            encoding: encodingStr,
+          );
+          controller.add(Reply.ok(sample));
+        } else if (tag == 0) {
+          // Error reply: [0, error_payload_bytes, error_encoding]
+          final errorPayloadBytes = message[1] as Uint8List;
+          final errorEncoding = message.length > 2
+              ? message[2] as String?
+              : null;
+
+          final replyError = ReplyError(
+            payloadBytes: errorPayloadBytes,
+            payload: utf8.decode(errorPayloadBytes),
+            encoding: errorEncoding,
+          );
+          controller.add(Reply.error(replyError));
+        }
+      }
+    });
+
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+
+    final selectorNative = selector.toNativeUtf8();
+    Pointer<Utf8> parametersNative = nullptr;
+    Pointer<Uint8> payloadPtr = nullptr;
+    Pointer<Utf8> encodingNative = nullptr;
+
+    if (parameters != null) {
+      parametersNative = parameters.toNativeUtf8();
+    }
+    if (payload != null && payload.isNotEmpty) {
+      payloadPtr = calloc<Uint8>(payload.length);
+      for (var i = 0; i < payload.length; i++) {
+        payloadPtr[i] = payload[i];
+      }
+    }
+    if (encoding != null) {
+      encodingNative = encoding.mimeType.toNativeUtf8();
+    }
+
+    try {
+      final rc = bindings.zd_get(
+        loanedSession.cast(),
+        selectorNative.cast(),
+        receivePort.sendPort.nativePort,
+        target.index,
+        consolidation.value,
+        payload != null && payload.isNotEmpty ? payloadPtr : nullptr,
+        payload != null ? payload.length : 0,
+        encoding != null ? encodingNative.cast() : nullptr,
+        timeoutMs,
+        parameters != null ? parametersNative.cast() : nullptr,
+      );
+
+      if (rc != 0) {
+        receivePort.close();
+        controller.close();
+        throw ZenohException('Get query failed', rc);
+      }
+    } finally {
+      calloc.free(selectorNative);
+      if (parameters != null) calloc.free(parametersNative);
+      if (payload != null && payload.isNotEmpty) calloc.free(payloadPtr);
+      if (encoding != null) calloc.free(encodingNative);
+    }
+
+    return controller.stream;
   }
 }
