@@ -85,7 +85,7 @@ CP **reads** shared memory but never writes to it. CA maintains MEMORY.md.
 
 CP's durable outputs are written by the planner agent on approval:
 - `.tdd-progress.md` -- slice tracking for CI
-- `planning/*.md` -- planning archive
+- `development/planning/*.md` -- planning archive
 
 If CP is interrupted before approval, no state is lost. Re-run `/tdd-plan`
 with the same prompt. If interrupted after approval, `.tdd-progress.md` exists
@@ -118,7 +118,7 @@ After the planner agent produces output:
 3. Verify test file paths follow convention (`package/test/`, snake_case, mirror source)
 4. Verify edge cases from zenoh-c tests are reflected in the plan
 5. If the plan passes self-review, approve the planner's internal gate
-6. Report to CA with the plan file paths (`.tdd-progress.md` and `planning/` archive)
+6. Report to CA with the plan file paths (`.tdd-progress.md` and `development/planning/` archive)
 
 ## Context
 
@@ -159,4 +159,4 @@ After the planner agent produces output:
 Expect: A `/tdd-plan` prompt as quoted text, referencing a phase doc and possibly an issue file. Execute the prompt exactly as provided.
 
 ### To CA (returning completed plans)
-Provide: Confirmation that the plan is written, with file paths to `.tdd-progress.md` and the planning archive in `planning/`. Include a summary of slice count, test count, and any decisions that need CA review.
+Provide: Confirmation that the plan is written, with file paths to `.tdd-progress.md` and the planning archive in `development/planning/`. Include a summary of slice count, test count, and any decisions that need CA review.

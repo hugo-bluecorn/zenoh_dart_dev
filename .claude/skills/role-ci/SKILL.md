@@ -132,4 +132,4 @@ Expect: "proceed with `/tdd-release`" then "proceed with `/tdd-finalize-docs`". 
 Expect: confirmation to merge. Execute `gh pr merge`. Report completion.
 
 ### From CP (plans)
-Expect: approved plan in `.tdd-progress.md` and `planning/` archive. Read the plan to understand slice decomposition before running `/tdd-implement`.
+Expect: approved plan in `.tdd-progress.md` and `development/planning/` archive. Read the plan to understand slice decomposition before running `/tdd-implement`.
