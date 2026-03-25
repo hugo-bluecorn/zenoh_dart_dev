@@ -620,6 +620,159 @@ FFI_PLUGIN_EXPORT int zd_whatami_to_view_string(int whatami,
 }
 
 // ---------------------------------------------------------------------------
+// Queryable
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT int32_t zd_queryable_sizeof(void) {
+  return (int32_t)sizeof(z_owned_queryable_t);
+}
+
+FFI_PLUGIN_EXPORT int32_t zd_query_sizeof(void) {
+  return (int32_t)sizeof(z_owned_query_t);
+}
+
+/// Context struct for queryable callback.
+typedef struct {
+  Dart_Port_DL dart_port;
+} zd_queryable_context_t;
+
+/// Query callback: clones the query and posts fields to Dart via native port.
+static void _zd_query_callback(z_loaned_query_t* query, void* context) {
+  zd_queryable_context_t* ctx = (zd_queryable_context_t*)context;
+
+  // 1. Clone query to heap (query is only valid during this callback)
+  z_owned_query_t* cloned = (z_owned_query_t*)malloc(sizeof(z_owned_query_t));
+  if (!cloned) return;
+  z_query_clone(cloned, query);
+
+  // 2. Key expression as string
+  const z_loaned_keyexpr_t* ke = z_query_keyexpr(query);
+  z_view_string_t key_view;
+  z_keyexpr_as_view_string(ke, &key_view);
+  const z_loaned_string_t* key_loaned = z_view_string_loan(&key_view);
+  size_t key_len = z_string_len(key_loaned);
+  const char* key_data = z_string_data(key_loaned);
+
+  char* key_buf = (char*)malloc(key_len + 1);
+  memcpy(key_buf, key_data, key_len);
+  key_buf[key_len] = '\0';
+
+  // 3. Parameters as string
+  z_view_string_t params_view;
+  z_query_parameters(query, &params_view);
+  const z_loaned_string_t* params_loaned = z_view_string_loan(&params_view);
+  size_t params_len = z_string_len(params_loaned);
+  const char* params_data = z_string_data(params_loaned);
+
+  char* params_buf = (char*)malloc(params_len + 1);
+  memcpy(params_buf, params_data, params_len);
+  params_buf[params_len] = '\0';
+
+  // 4. Payload (nullable)
+  const z_loaned_bytes_t* payload = z_query_payload(query);
+
+  // Build Dart_CObject array: [query_ptr, keyexpr, params, payload_or_null]
+  Dart_CObject c_query_ptr;
+  c_query_ptr.type = Dart_CObject_kInt64;
+  c_query_ptr.value.as_int64 = (int64_t)(intptr_t)cloned;
+
+  Dart_CObject c_keyexpr;
+  c_keyexpr.type = Dart_CObject_kString;
+  c_keyexpr.value.as_string = key_buf;
+
+  Dart_CObject c_params;
+  c_params.type = Dart_CObject_kString;
+  c_params.value.as_string = params_buf;
+
+  Dart_CObject c_payload;
+  z_owned_string_t payload_str;
+  bool has_payload = (payload != NULL);
+  if (has_payload) {
+    // Check if bytes are empty
+    z_bytes_to_string(payload, &payload_str);
+    const z_loaned_string_t* pl_loaned = z_string_loan(&payload_str);
+    size_t pl_len = z_string_len(pl_loaned);
+    if (pl_len > 0) {
+      c_payload.type = Dart_CObject_kTypedData;
+      c_payload.value.as_typed_data.type = Dart_TypedData_kUint8;
+      c_payload.value.as_typed_data.length = (intptr_t)pl_len;
+      c_payload.value.as_typed_data.values = (uint8_t*)z_string_data(pl_loaned);
+    } else {
+      has_payload = false;
+      c_payload.type = Dart_CObject_kNull;
+    }
+  } else {
+    c_payload.type = Dart_CObject_kNull;
+  }
+
+  Dart_CObject* elements[4] = {&c_query_ptr, &c_keyexpr, &c_params, &c_payload};
+  Dart_CObject c_array;
+  c_array.type = Dart_CObject_kArray;
+  c_array.value.as_array.length = 4;
+  c_array.value.as_array.values = elements;
+
+  Dart_PostCObject_DL(ctx->dart_port, &c_array);
+
+  // Cleanup temporary buffers
+  free(key_buf);
+  free(params_buf);
+  if (has_payload) {
+    z_string_drop(z_string_move(&payload_str));
+  }
+}
+
+/// Drop callback for queryable context.
+static void _zd_queryable_drop(void* context) {
+  free(context);
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_declare_queryable(
+    uint8_t* queryable_out,
+    const uint8_t* session,
+    const char* key_expr,
+    int64_t port,
+    int8_t complete) {
+  // Create key expression view
+  z_view_keyexpr_t ke;
+  if (z_view_keyexpr_from_str(&ke, key_expr) != 0) {
+    return -1;
+  }
+
+  zd_queryable_context_t* ctx =
+      (zd_queryable_context_t*)malloc(sizeof(zd_queryable_context_t));
+  if (!ctx) return -1;
+  ctx->dart_port = (Dart_Port_DL)port;
+
+  z_owned_closure_query_t callback;
+  z_closure_query(&callback, _zd_query_callback, _zd_queryable_drop, ctx);
+
+  z_queryable_options_t opts;
+  z_queryable_options_default(&opts);
+  opts.complete = (bool)complete;
+
+  int rc = z_declare_queryable(
+      (const z_loaned_session_t*)session,
+      (z_owned_queryable_t*)queryable_out,
+      z_view_keyexpr_loan(&ke),
+      z_closure_query_move(&callback),
+      &opts);
+
+  if (rc != 0) {
+    z_closure_query_drop(z_closure_query_move(&callback));
+  }
+
+  return (int8_t)rc;
+}
+
+FFI_PLUGIN_EXPORT void zd_queryable_drop(uint8_t* queryable) {
+  z_queryable_drop(z_queryable_move((z_owned_queryable_t*)queryable));
+}
+
+FFI_PLUGIN_EXPORT void zd_query_drop(uint8_t* query) {
+  z_query_drop(z_query_move((z_owned_query_t*)query));
+}
+
+// ---------------------------------------------------------------------------
 // Shared Memory (SHM)
 // ---------------------------------------------------------------------------
 #if defined(Z_FEATURE_SHARED_MEMORY) && defined(Z_FEATURE_UNSTABLE_API)

@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:test/test.dart';
-import 'package:zenoh/src/config.dart';
 import 'package:zenoh/src/exceptions.dart';
 import 'package:zenoh/src/queryable.dart';
 import 'package:zenoh/src/session.dart';
@@ -76,3 +75,4 @@ void main() {
     });
   });
 }
+

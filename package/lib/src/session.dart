@@ -13,6 +13,7 @@ import 'keyexpr.dart';
 import 'native_lib.dart';
 import 'priority.dart';
 import 'publisher.dart';
+import 'queryable.dart';
 import 'subscriber.dart';
 
 /// A Zenoh session.
@@ -258,5 +259,26 @@ class Session {
     } finally {
       ke.dispose();
     }
+  }
+
+  /// Declares a queryable on the given [keyExpr].
+  ///
+  /// Returns a [Queryable] whose [Queryable.stream] delivers [Query]s.
+  /// Call [Queryable.close] when done to undeclare and release resources.
+  ///
+  /// The [complete] parameter indicates whether this queryable is a
+  /// complete source of data for its key expression (default: false).
+  ///
+  /// Throws [ZenohException] if the key expression is invalid.
+  /// Throws [StateError] if the session has been closed.
+  Queryable declareQueryable(String keyExpr, {bool complete = false}) {
+    _ensureOpen();
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+    return Queryable.declare(
+      loanedSession,
+      keyExpr,
+      complete: complete,
+    );
   }
 }
