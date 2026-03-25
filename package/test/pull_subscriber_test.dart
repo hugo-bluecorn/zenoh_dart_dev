@@ -53,6 +53,107 @@ void main() {
     });
   });
 
+  group('Ring buffer lossy behavior (TCP 17481)', () {
+    late Session session1;
+    late Session session2;
+
+    setUpAll(() async {
+      final config1 = Config();
+      config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17481"]');
+      session1 = Session.open(config: config1);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final config2 = Config();
+      config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17481"]');
+      session2 = Session.open(config: config2);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+    });
+
+    tearDownAll(() {
+      session1.close();
+      session2.close();
+    });
+
+    test('ring buffer drops oldest when full (capacity 3)', () async {
+      final pullSub = session2.declarePullSubscriber(
+        'zenoh/dart/test/pull/lossy',
+        capacity: 3,
+      );
+      addTearDown(pullSub.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      // Publish 10 messages rapidly
+      for (var i = 0; i < 10; i++) {
+        session1.put('zenoh/dart/test/pull/lossy', 'msg-$i');
+      }
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      // Drain the ring buffer
+      final samples = <Sample>[];
+      for (var i = 0; i < 20; i++) {
+        final s = pullSub.tryRecv();
+        if (s == null) break;
+        samples.add(s);
+      }
+
+      // Ring buffer capacity is 3, so at most 3 samples retained
+      expect(samples.length, lessThanOrEqualTo(3));
+      expect(samples, isNotEmpty);
+
+      // The retained samples should be among the most recent
+      for (final s in samples) {
+        final msgNum = int.parse(s.payload.replaceFirst('msg-', ''));
+        expect(msgNum, greaterThanOrEqualTo(7),
+            reason: 'Expected recent messages (7-9), got msg-$msgNum');
+      }
+    });
+
+    test('ring buffer capacity 1 keeps only latest', () async {
+      final pullSub = session2.declarePullSubscriber(
+        'zenoh/dart/test/pull/cap1',
+        capacity: 1,
+      );
+      addTearDown(pullSub.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      session1.put('zenoh/dart/test/pull/cap1', 'first');
+      session1.put('zenoh/dart/test/pull/cap1', 'second');
+      session1.put('zenoh/dart/test/pull/cap1', 'third');
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final sample = pullSub.tryRecv();
+      expect(sample, isNotNull);
+      // With capacity 1, only the latest should remain
+      expect(sample!.payload, equals('third'));
+
+      // Next tryRecv should return null
+      expect(pullSub.tryRecv(), isNull);
+    });
+
+    test('DELETE samples received through ring buffer', () async {
+      final pullSub = session2.declarePullSubscriber(
+        'zenoh/dart/test/pull/del',
+      );
+      addTearDown(pullSub.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      session1.deleteResource('zenoh/dart/test/pull/del');
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      final sample = pullSub.tryRecv();
+      expect(sample, isNotNull);
+      expect(sample!.kind, equals(SampleKind.delete));
+    });
+  });
+
   group('PullSubscriber integration (two sessions, TCP 17480)', () {
     late Session session1;
     late Session session2;
