@@ -154,6 +154,107 @@ void main() {
     });
   });
 
+  group('Lifecycle and error handling (TCP 17482)', () {
+    late Session session1;
+    late Session session2;
+
+    setUpAll(() async {
+      final config1 = Config();
+      config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17482"]');
+      session1 = Session.open(config: config1);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final config2 = Config();
+      config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17482"]');
+      session2 = Session.open(config: config2);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+    });
+
+    tearDownAll(() {
+      session1.close();
+      session2.close();
+    });
+
+    test('PullSubscriber.close is idempotent', () {
+      final pullSub =
+          session1.declarePullSubscriber('zenoh/dart/test/pull/idem2');
+      pullSub.close();
+      expect(() => pullSub.close(), returnsNormally);
+    });
+
+    test('tryRecv after close throws StateError', () {
+      final pullSub =
+          session1.declarePullSubscriber('zenoh/dart/test/pull/closed2');
+      pullSub.close();
+      expect(
+        () => pullSub.tryRecv(),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('closed'),
+          ),
+        ),
+      );
+    });
+
+    test('declarePullSubscriber on closed session throws StateError', () {
+      final tempConfig = Config();
+      final tempSession = Session.open(config: tempConfig);
+      tempSession.close();
+      expect(
+        () => tempSession.declarePullSubscriber('zenoh/dart/test/pull/x'),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('closed'),
+          ),
+        ),
+      );
+    });
+
+    test('invalid keyexpr throws ZenohException', () {
+      expect(
+        () => session1.declarePullSubscriber(''),
+        throwsA(isA<ZenohException>()),
+      );
+    });
+
+    test('wildcard key expression matches published sub-keys', () async {
+      final pullSub = session2.declarePullSubscriber(
+        'zenoh/dart/test/pull/wild/**',
+      );
+      addTearDown(pullSub.close);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      session1.put('zenoh/dart/test/pull/wild/a', 'alpha');
+      session1.put('zenoh/dart/test/pull/wild/b', 'beta');
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      final samples = <Sample>[];
+      for (var i = 0; i < 10; i++) {
+        final s = pullSub.tryRecv();
+        if (s == null) break;
+        samples.add(s);
+      }
+
+      expect(samples, hasLength(2));
+
+      final keyExprs = samples.map((s) => s.keyExpr).toSet();
+      expect(keyExprs, contains('zenoh/dart/test/pull/wild/a'));
+      expect(keyExprs, contains('zenoh/dart/test/pull/wild/b'));
+
+      final payloads = samples.map((s) => s.payload).toSet();
+      expect(payloads, contains('alpha'));
+      expect(payloads, contains('beta'));
+    });
+  });
+
   group('PullSubscriber integration (two sessions, TCP 17480)', () {
     late Session session1;
     late Session session2;
