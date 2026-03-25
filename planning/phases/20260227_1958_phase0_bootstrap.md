@@ -35,7 +35,7 @@ zenoh-c v1.7.2 headers and a validated working prototype.
 
 ### Files Examined
 
-- `docs/phases/phase-00-bootstrap.md` -- phase specification (source of truth)
+- `development/phases/phase-00-bootstrap.md` -- phase specification (source of truth)
 - `src/zenoh_dart.h` -- empty C shim header (FFI_PLUGIN_EXPORT macro only)
 - `src/zenoh_dart.c` -- empty C shim implementation
 - `src/CMakeLists.txt` -- minimal build, no zenoh-c linking

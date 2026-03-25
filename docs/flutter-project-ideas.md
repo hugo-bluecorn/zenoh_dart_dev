@@ -354,6 +354,6 @@ If building these incrementally as `zenoh_dart` phases land:
 | Document | Purpose |
 |----------|---------|
 | `docs/synthesis-phases-vs-patterns.md` | Maps phases to zenoh patterns — the analytical foundation for this document |
-| `docs/phases/phase-NN-*.md` | Per-phase specifications — defines the API surface each project idea draws from |
+| `development/phases/phase-NN-*.md` | Per-phase specifications — defines the API surface each project idea draws from |
 | `docs/prompts/cf-flutter-examples.md` | Per-phase demo apps (one screen, one pattern) — complementary to these composite projects |
 | `docs/prompts/cg-flutter-projects.md` | Continuation prompt for expanding these ideas (see below) |

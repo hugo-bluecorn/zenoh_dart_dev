@@ -1,13 +1,13 @@
 # Phase 3: z_pub (Declared Publisher) -- REVISED
 
-> **This spec supersedes `docs/phases/phase-03-pub.md`.** It incorporates
+> **This spec supersedes `development/phases/phase-03-pub.md`.** It incorporates
 > patterns established in Phases 0-2 and cross-cutting decisions from
 > `docs/design/cross-cutting-patterns.md`.
 
 ## Project Context
 
 `zenoh` is a pure Dart FFI package providing bindings for zenoh-c v1.7.2 via a
-C shim layer. See `docs/phases/phase-00-bootstrap.md` for full architecture.
+C shim layer. See `development/phases/phase-00-bootstrap.md` for full architecture.
 
 ## Prior Phases
 

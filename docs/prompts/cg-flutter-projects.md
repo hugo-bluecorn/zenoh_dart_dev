@@ -113,7 +113,7 @@ When the user asks you to continue this work, you may:
    package that sits between `zenoh_dart` and the app layer.
 
 4. **Write a project spec** — for any project the user wants to build,
-   produce a detailed spec following the style of `docs/phases/phase-NN-*.md`
+   produce a detailed spec following the style of `development/phases/phase-NN-*.md`
    but oriented toward a Flutter app rather than an FFI phase.
 
 5. **Evaluate pattern gaps** — cross-reference with patterns documented but
@@ -129,7 +129,7 @@ Read these before starting work:
 |----------|-----------------|
 | `docs/flutter-project-ideas.md` | The 7 project ideas with pattern mappings and coverage matrix |
 | `docs/synthesis-phases-vs-patterns.md` | Complete pattern-to-phase mapping, FFI analysis, coverage gaps |
-| `docs/phases/phase-NN-*.md` | Per-phase specs (API surface, C shim, Dart API, CLI examples) |
+| `development/phases/phase-NN-*.md` | Per-phase specs (API surface, C shim, Dart API, CLI examples) |
 | `docs/prompts/cf-flutter-examples.md` | CF session prompt for per-phase demo apps (complementary work) |
 | `CLAUDE.md` | Project architecture, build commands, conventions |
 

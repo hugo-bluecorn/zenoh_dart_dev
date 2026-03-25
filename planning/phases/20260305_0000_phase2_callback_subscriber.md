@@ -54,7 +54,7 @@ Implement a callback-based subscriber for zenoh, enabling Dart consumers to rece
 
 ## Reference Material
 
-- Phase spec: `docs/phases/phase-02-sub.md`
+- Phase spec: `development/phases/phase-02-sub.md`
 - zenoh-cpp pub/sub test: `extern/zenoh-cpp/tests/universal/network/pub_sub.cxx`
 - zenoh-c integration test: `extern/zenoh-c/tests/z_int_pub_sub_test.c`
 - zenoh-c example: `extern/zenoh-c/examples/z_sub.c`

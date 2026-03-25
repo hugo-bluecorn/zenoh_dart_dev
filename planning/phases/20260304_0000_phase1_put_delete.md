@@ -2,7 +2,7 @@
 
 **Feature:** One-shot put and delete operations on Session
 **Created:** 2026-03-04
-**Phase doc:** `docs/phases/phase-01-put-delete.md`
+**Phase doc:** `development/phases/phase-01-put-delete.md`
 
 ---
 

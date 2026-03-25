@@ -61,7 +61,7 @@ Available Dart API classes:
 - `Hello` — Scouting result with `zid` (`ZenohId`), `whatami` (`WhatAmI`), and `locators` (list of strings) fields
 - `ZenohException` — Error type for zenoh operations
 
-Phases 6–18 (query/liveliness/throughput/storage/advanced) are specified in `docs/phases/` but not yet implemented.
+Phases 6–18 (query/liveliness/throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
 
 ## FVM Requirement
 
@@ -360,7 +360,7 @@ semantics that the phase doc may not spell out explicitly.
 
 ### Phase Docs as Source of Truth
 
-Each phase spec in `docs/phases/phase-NN-*.md` defines:
+Each phase spec in `development/phases/phase-NN-*.md` defines:
 - Exact C shim functions to add (signatures and which zenoh-c APIs they wrap)
 - Exact Dart API surface (classes, methods, constructor signatures)
 - CLI examples to create (`package/example/z_*.dart`)

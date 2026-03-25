@@ -3,7 +3,7 @@
 ## Project Context
 
 `zenoh` is a pure Dart FFI package providing bindings for zenoh-c v1.7.2 via a
-C shim layer. See `docs/phases/phase-00-bootstrap.md` for full architecture.
+C shim layer. See `development/phases/phase-00-bootstrap.md` for full architecture.
 
 **SHM (Shared Memory) is a first-class feature** — it is the primary reason for
 building dart:ffi bindings rather than using a higher-level approach. SHM enables

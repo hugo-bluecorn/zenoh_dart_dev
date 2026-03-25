@@ -66,7 +66,7 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 | 4 — SHM Pub/Sub | `ShmProvider`, `ShmMutBuffer` — zero-copy shared memory; `z_pub_shm.dart` | 148 |
 | 5 — Scout/Info | `ZenohId`, `WhatAmI`, `Hello`, `Zenoh.scout()`, `Session.zid`; `z_info.dart`, `z_scout.dart` | 185 |
 
-Phases 6-18 (query, liveliness, throughput, storage, advanced) are [specified](docs/phases/) but not yet implemented.
+Phases 6-18 (query, liveliness, throughput, storage, advanced) are [specified](development/phases/) but not yet implemented.
 
 ### Patches
 
@@ -245,7 +245,7 @@ Each Claude Code instance runs in its own terminal with a dedicated role. The se
 | Role skills (session initialization) | [`.claude/skills/role-{ca,ci,cp}/`](.claude/skills/) |
 | Role prompts (full session docs) | [`docs/dev-roles/`](docs/dev-roles/) |
 | TDD conventions and project rules | [`CLAUDE.md`](CLAUDE.md) |
-| Phase specifications (source of truth) | [`docs/phases/`](docs/phases/) |
+| Phase specifications (source of truth) | [`development/phases/`](development/phases/) |
 | Active TDD session state | `.tdd-progress.md` (when present) |
 | Planning archive | [`planning/`](planning/) |
 | Hooks experiment (2x2 matrix) | [`experiments/hooks-bundling/`](experiments/hooks-bundling/) |
@@ -268,25 +268,25 @@ cd package && fvm dart run ffigen --config ffigen.yaml
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 0 | [Bootstrap](docs/phases/phase-00-bootstrap.md) | **COMPLETE** |
-| 1 | [Put / Delete](docs/phases/phase-01-put-delete.md) | **COMPLETE** |
-| 2 | [Subscribe](docs/phases/phase-02-sub.md) | **COMPLETE** |
-| 3 | [Publish](docs/phases/phase-03-pub.md) | **COMPLETE** |
-| 4 | [SHM Pub/Sub](docs/phases/phase-04-shm-pub-sub.md) | **COMPLETE** |
-| 5 | [Scout / Info](docs/phases/phase-05-scout-info.md) | **COMPLETE** |
-| 6 | [Get / Queryable](docs/phases/phase-06-get-queryable.md) | |
-| 7 | [SHM Get/Queryable](docs/phases/phase-07-shm-get-queryable.md) | |
-| 8 | [Channels](docs/phases/phase-08-channels.md) | |
-| 9 | [Pull](docs/phases/phase-09-pull.md) | |
-| 10 | [Querier](docs/phases/phase-10-querier.md) | |
-| 11 | [Liveliness](docs/phases/phase-11-liveliness.md) | |
-| 12 | [Ping/Pong](docs/phases/phase-12-ping-pong.md) | |
-| 13 | [SHM Ping](docs/phases/phase-13-shm-ping.md) | |
-| 14 | [Throughput](docs/phases/phase-14-throughput.md) | |
-| 15 | [SHM Throughput](docs/phases/phase-15-shm-throughput.md) | |
-| 16 | [Bytes](docs/phases/phase-16-bytes.md) | |
-| 17 | [Storage](docs/phases/phase-17-storage.md) | |
-| 18 | [Advanced](docs/phases/phase-18-advanced.md) | |
+| 0 | [Bootstrap](development/phases/phase-00-bootstrap.md) | **COMPLETE** |
+| 1 | [Put / Delete](development/phases/phase-01-put-delete.md) | **COMPLETE** |
+| 2 | [Subscribe](development/phases/phase-02-sub.md) | **COMPLETE** |
+| 3 | [Publish](development/phases/phase-03-pub.md) | **COMPLETE** |
+| 4 | [SHM Pub/Sub](development/phases/phase-04-shm-pub-sub.md) | **COMPLETE** |
+| 5 | [Scout / Info](development/phases/phase-05-scout-info.md) | **COMPLETE** |
+| 6 | [Get / Queryable](development/phases/phase-06-get-queryable.md) | |
+| 7 | [SHM Get/Queryable](development/phases/phase-07-shm-get-queryable.md) | |
+| 8 | [Channels](development/phases/phase-08-channels.md) | |
+| 9 | [Pull](development/phases/phase-09-pull.md) | |
+| 10 | [Querier](development/phases/phase-10-querier.md) | |
+| 11 | [Liveliness](development/phases/phase-11-liveliness.md) | |
+| 12 | [Ping/Pong](development/phases/phase-12-ping-pong.md) | |
+| 13 | [SHM Ping](development/phases/phase-13-shm-ping.md) | |
+| 14 | [Throughput](development/phases/phase-14-throughput.md) | |
+| 15 | [SHM Throughput](development/phases/phase-15-shm-throughput.md) | |
+| 16 | [Bytes](development/phases/phase-16-bytes.md) | |
+| 17 | [Storage](development/phases/phase-17-storage.md) | |
+| 18 | [Advanced](development/phases/phase-18-advanced.md) | |
 
 ## License
 

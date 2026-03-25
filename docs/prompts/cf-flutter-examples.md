@@ -23,7 +23,7 @@ a small slice of the Zenoh C API to Dart and ships CLI examples in
 phase's CLI examples.
 
 The zenoh_dart repo contains:
-- Phase specs: `docs/phases/phase-NN-*.md` — the authoritative description of
+- Phase specs: `development/phases/phase-NN-*.md` — the authoritative description of
   what API surface each phase adds.
 - Public Dart API: `lib/zenoh_dart.dart` exports from `lib/src/*.dart`.
 - CLI examples: `bin/z_*.dart` — the usage patterns your Flutter apps mirror.
@@ -593,7 +593,7 @@ subscriber to listen on an endpoint and the publisher to connect to it.
 
 ### Before Building an App
 
-1. Read the phase doc: `zenoh_dart/docs/phases/phase-NN-*.md`
+1. Read the phase doc: `zenoh_dart/development/phases/phase-NN-*.md`
 2. Read the CLI example(s): `zenoh_dart/bin/z_*.dart`
 3. **Run the CLI examples** in a terminal to see the behavior firsthand
    (see "Running the CLI Examples" above)
@@ -649,7 +649,7 @@ When you begin, do this:
 
 1. Ask the user to confirm the relative path to the `zenoh_dart` repo
 2. Read `zenoh_dart/lib/zenoh_dart.dart` to see current exports
-3. Read `zenoh_dart/docs/phases/` to understand the phase roadmap
+3. Read `zenoh_dart/development/phases/` to understand the phase roadmap
 4. Identify which phases have landed (classes exist in lib/src/)
 5. Create the workspace scaffold (root pubspec, shared package, README)
 6. Build the first app(s) matching the available API

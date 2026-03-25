@@ -10,7 +10,7 @@ environment:
 dependencies:
   path: ^1.9.0
   exp_hooks_prebuilt_native:
-    path: ../../../packages/exp_hooks_prebuilt_native
+    path: ../packages/exp_hooks_prebuilt_native
 
 dev_dependencies:
   lints: ^6.0.0

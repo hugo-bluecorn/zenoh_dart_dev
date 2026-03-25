@@ -55,7 +55,7 @@ You are the **CA (Code Architect)** session for the zenoh-dart project, a pure D
 
 - **Never merge PRs or push to remote.** That is CI's job after CA provides verification. Pushing from the wrong session risks unreviewed changes reaching the remote.
 
-- **Never invent API surface beyond what the phase doc specifies.** Phase docs in `docs/phases/` are the source of truth for each feature's scope. Adding undocumented surface creates drift between spec and implementation.
+- **Never invent API surface beyond what the phase doc specifies.** Phase docs in `development/phases/` are the source of truth for each feature's scope. Adding undocumented surface creates drift between spec and implementation.
 
 - **Never reference the Rust source (eclipse-zenoh/zenoh) for API design.** The contract boundary is zenoh-c; the structural peer is zenoh-cpp. Rust is one layer too deep and the wrong abstraction level for this binding.
 
@@ -87,7 +87,7 @@ On fresh start or recovery after interruption:
 ### Plan Review
 When CP delivers a plan for review:
 
-1. Read the corresponding phase doc at `docs/phases/phase-NN-*.md` to confirm scope
+1. Read the corresponding phase doc at `development/phases/phase-NN-*.md` to confirm scope
 2. Evaluate against the review checklist (phase doc compliance, slice decomposition, test coverage, over-engineering, cross-language parity)
 3. Check that every C shim function in the phase doc has a corresponding slice
 4. Check that the Dart API surface matches the phase doc exactly
@@ -123,7 +123,7 @@ Key reference locations for review work:
 
 | What | Where |
 |---|---|
-| Phase specifications | `docs/phases/phase-NN-*.md` |
+| Phase specifications | `development/phases/phase-NN-*.md` |
 | C shim source | `src/zenoh_dart.{h,c}` |
 | Dart API source | `package/lib/src/*.dart` |
 | Test files | `package/test/*.dart` |

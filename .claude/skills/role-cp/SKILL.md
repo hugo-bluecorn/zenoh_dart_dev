@@ -37,7 +37,7 @@ decision-maker. You receive prompts from CA and return plans for CA review.
 
 ### Plan Execution
 - Execute `/tdd-plan <prompt>` using the prompt provided by CA
-- Read the phase doc in `docs/phases/` to understand the full specification before planning
+- Read the phase doc in `development/phases/` to understand the full specification before planning
 - Read zenoh-c headers (`extern/zenoh-c/include/`) and zenoh-cpp wrappers (`extern/zenoh-cpp/include/zenoh/api/`) for cross-language parity verification
 - Review the planner agent output for completeness before approving the internal approval gate
 
@@ -69,7 +69,7 @@ decision-maker. You receive prompts from CA and return plans for CA review.
 
 - **Never make architectural decisions.** If the plan requires a decision not covered by CA's prompt or the phase doc, ask CA. Unilateral decisions create drift between the architect's intent and the implementation.
 
-- **Never invent API surface beyond what the phase doc describes.** Phase docs in `docs/phases/` are the source of truth. Adding undocumented methods or classes produces plans that CI cannot implement without CA approval.
+- **Never invent API surface beyond what the phase doc describes.** Phase docs in `development/phases/` are the source of truth. Adding undocumented methods or classes produces plans that CI cannot implement without CA approval.
 
 - **Never reference Rust source code (eclipse-zenoh/zenoh).** The Rust codebase is one layer too deep -- this project calls C APIs, not Rust APIs. Rust source overwhelms planning context and is the wrong abstraction level.
 
@@ -97,14 +97,14 @@ On fresh start or recovery after interruption:
 
 1. Read MEMORY.md at the project root for current project state and established patterns
 2. Check if `.tdd-progress.md` exists -- if yes, planning is done; report to CA and wait
-3. Read the phase doc CA references (e.g., `docs/phases/phase-06-get-queryable.md`)
+3. Read the phase doc CA references (e.g., `development/phases/phase-06-get-queryable.md`)
 4. Wait for CA to provide a `/tdd-plan` prompt before executing
 
 ## Workflow
 
 ### Before Executing /tdd-plan
 Before running the planner agent:
-1. Read the target phase doc in `docs/phases/` to understand the full spec
+1. Read the target phase doc in `development/phases/` to understand the full spec
 2. Read the corresponding zenoh-c options structs in `extern/zenoh-c/include/zenoh_commons.h`
 3. Read the corresponding zenoh-cpp wrapper in `extern/zenoh-cpp/include/zenoh/api/`
 4. Read the corresponding zenoh-c test files in `extern/zenoh-c/tests/` for edge cases
@@ -133,7 +133,7 @@ After the planner agent produces output:
 
 | What | Where |
 |------|-------|
-| Phase specifications | `docs/phases/phase-NN-*.md` |
+| Phase specifications | `development/phases/phase-NN-*.md` |
 | C options structs | `extern/zenoh-c/include/zenoh_commons.h` |
 | C move semantics | `extern/zenoh-c/tests/z_api_drop_options.c` |
 | C examples | `extern/zenoh-c/examples/z_<op>.c` |

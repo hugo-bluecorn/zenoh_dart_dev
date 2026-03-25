@@ -1,6 +1,6 @@
 # Synthesis: zenoh-dart Phases vs. Zenoh Communication Patterns
 
-This document correlates the **zenoh-dart implementation phases** (`docs/phases/`)
+This document correlates the **zenoh-dart implementation phases** (`development/phases/`)
 with the **Zenoh communication pattern research** (`dart_zenoh_xplr/docs/zenoh-patterns/`),
 identifying how each phase maps to documented patterns, where coverage gaps exist,
 and how the implementation sequence aligns with the recommended Dart FFI strategy.

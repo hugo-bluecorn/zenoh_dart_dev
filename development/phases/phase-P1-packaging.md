@@ -6,7 +6,7 @@
 C shim layer. This is a Melos monorepo with the Dart package at `package/`
 and C shim source at the monorepo root under `src/`.
 
-See `docs/phases/phase-00-bootstrap.md` for full architecture.
+See `development/phases/phase-00-bootstrap.md` for full architecture.
 
 ### Architecture (abbreviated)
 

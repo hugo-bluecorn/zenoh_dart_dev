@@ -12,7 +12,7 @@ phase specification for making `zenoh_dart` consumable via pubspec.yaml path
 dependencies. The full spec is at:
 
 ```
-docs/phases/phase-P1-packaging.md
+development/phases/phase-P1-packaging.md
 ```
 
 Read that file for the complete phase specification. Below is a condensed
@@ -132,7 +132,7 @@ Fresh Flutter project + `zenoh_dart: path: ../zenoh_dart` in pubspec:
 
 ## Important Notes for CZ
 
-- Read the full phase spec at `docs/phases/phase-P1-packaging.md` before
+- Read the full phase spec at `development/phases/phase-P1-packaging.md` before
   starting `/tdd-plan`
 - The existing `test/session_test.dart` is the primary regression test —
   it must pass at every step

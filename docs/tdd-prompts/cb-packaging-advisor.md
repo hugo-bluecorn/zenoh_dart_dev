@@ -125,7 +125,7 @@
   {Unknowns that need resolution}
 
   When producing phase doc drafts, use the same structure as existing
-  `docs/phases/phase-NN-*.md` files in the project.
+  `development/phases/phase-NN-*.md` files in the project.
 
   ### What You Do NOT Do
 

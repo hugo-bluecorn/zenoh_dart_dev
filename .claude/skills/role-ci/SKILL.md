@@ -80,7 +80,7 @@ On fresh start or recovery after interruption:
 ## Workflow
 
 ### Before Writing C Shim Code
-1. Read the phase doc in `docs/phases/` for exact function signatures
+1. Read the phase doc in `development/phases/` for exact function signatures
 2. Read the C options struct in `extern/zenoh-c/include/zenoh_commons.h` for field coverage
 3. Read the C++ wrapper in `extern/zenoh-cpp/include/zenoh/api/` for API design reference
 4. Use `zd_` prefix for all symbols; guard SHM functions with `#if defined(Z_FEATURE_SHARED_MEMORY) && defined(Z_FEATURE_UNSTABLE_API)`
