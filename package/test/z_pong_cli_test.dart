@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:test/test.dart';
-import 'package:zenoh/zenoh.dart';
+import 'package:zenoh/zenoh.dart'; // z_pong CLI tests
 
 /// The FVM-resolved Dart executable path.
 const _dartExe = '/home/hugo-bluecorn/fvm/versions/stable/bin/dart';
