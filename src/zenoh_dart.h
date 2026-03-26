@@ -718,4 +718,19 @@ FFI_PLUGIN_EXPORT int8_t zd_declare_querier(
 /// @param querier  Pointer to a z_owned_querier_t (as uint8_t*).
 FFI_PLUGIN_EXPORT void zd_querier_drop(uint8_t* querier);
 
+/// Sends a query via a declared querier.
+///
+/// Replies are delivered asynchronously to the Dart NativePort.
+/// Reuses the same reply callback as zd_get.
+///
+/// @param querier     Pointer to a z_owned_querier_t (as uint8_t*).
+/// @param parameters  Optional query parameters string (NULL for none).
+/// @param port        Dart NativePort for reply callbacks.
+/// @param payload     Optional z_owned_bytes_t* (consumed if non-NULL).
+/// @param encoding    Optional encoding string (NULL for none).
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_querier_get(
+    const uint8_t* querier, const char* parameters,
+    int64_t port, uint8_t* payload, const char* encoding);
+
 #endif // ZENOH_DART_H

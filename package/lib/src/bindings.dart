@@ -1755,6 +1755,50 @@ class ZenohDartBindings {
       );
   late final _zd_querier_drop = _zd_querier_dropPtr
       .asFunction<void Function(ffi.Pointer<ffi.Uint8>)>();
+
+  /// Sends a query via a declared querier.
+  ///
+  /// Replies are delivered asynchronously to the Dart NativePort.
+  /// Reuses the same reply callback as zd_get.
+  ///
+  /// @param querier     Pointer to a z_owned_querier_t (as uint8_t*).
+  /// @param parameters  Optional query parameters string (NULL for none).
+  /// @param port        Dart NativePort for reply callbacks.
+  /// @param payload     Optional z_owned_bytes_t* (consumed if non-NULL).
+  /// @param encoding    Optional encoding string (NULL for none).
+  /// @return 0 on success, negative on failure.
+  int zd_querier_get(
+    ffi.Pointer<ffi.Uint8> querier,
+    ffi.Pointer<ffi.Char> parameters,
+    int port,
+    ffi.Pointer<ffi.Uint8> payload,
+    ffi.Pointer<ffi.Char> encoding,
+  ) {
+    return _zd_querier_get(querier, parameters, port, payload, encoding);
+  }
+
+  late final _zd_querier_getPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Int64,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Char>,
+          )
+        >
+      >('zd_querier_get');
+  late final _zd_querier_get = _zd_querier_getPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<ffi.Char>,
+          int,
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<ffi.Char>,
+        )
+      >();
 }
 
 final class UnnamedStruct extends ffi.Struct {

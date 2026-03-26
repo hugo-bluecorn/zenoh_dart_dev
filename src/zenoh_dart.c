@@ -1359,3 +1359,45 @@ FFI_PLUGIN_EXPORT int8_t zd_declare_querier(
 FFI_PLUGIN_EXPORT void zd_querier_drop(uint8_t* querier) {
   z_querier_drop(z_querier_move((z_owned_querier_t*)querier));
 }
+
+FFI_PLUGIN_EXPORT int8_t zd_querier_get(
+    const uint8_t* querier, const char* parameters,
+    int64_t port, uint8_t* payload, const char* encoding) {
+  const z_loaned_querier_t* loaned =
+      z_querier_loan((const z_owned_querier_t*)querier);
+
+  zd_get_context_t* ctx =
+      (zd_get_context_t*)malloc(sizeof(zd_get_context_t));
+  if (!ctx) return -1;
+  ctx->dart_port = (Dart_Port_DL)port;
+
+  z_owned_closure_reply_t callback;
+  z_closure_reply(&callback, _zd_reply_callback, _zd_get_drop, ctx);
+
+  z_querier_get_options_t opts;
+  z_querier_get_options_default(&opts);
+
+  // Optional payload (z_owned_bytes_t*, consumed via move)
+  if (payload != NULL) {
+    opts.payload = z_bytes_move((z_owned_bytes_t*)payload);
+  }
+
+  // Optional encoding
+  z_owned_encoding_t owned_encoding;
+  if (encoding != NULL) {
+    z_encoding_from_str(&owned_encoding, encoding);
+    opts.encoding = z_encoding_move(&owned_encoding);
+  }
+
+  int rc = z_querier_get(
+      loaned,
+      parameters,
+      z_closure_reply_move(&callback),
+      &opts);
+
+  if (rc != 0) {
+    z_closure_reply_drop(z_closure_reply_move(&callback));
+  }
+
+  return (int8_t)rc;
+}

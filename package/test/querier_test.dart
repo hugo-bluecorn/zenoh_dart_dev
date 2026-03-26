@@ -1,4 +1,4 @@
-// Querier lifecycle and get tests
+// Querier lifecycle and get tests (slice 2)
 import 'dart:async';
 
 import 'package:test/test.dart';
