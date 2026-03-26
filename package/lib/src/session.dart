@@ -400,10 +400,7 @@ class Session {
         receivePort.close();
         controller.close();
         calloc.free(ptr);
-        throw ZenohException(
-          'Failed to declare liveliness subscriber',
-          rc,
-        );
+        throw ZenohException('Failed to declare liveliness subscriber', rc);
       }
     } finally {
       calloc.free(keyExprNative);
@@ -436,10 +433,7 @@ class Session {
   /// Throws [ZenohException] if the key expression is invalid or the query
   /// fails.
   /// Throws [StateError] if the session has been closed.
-  Stream<Reply> livelinessGet(
-    String keyExpr, {
-    Duration? timeout,
-  }) {
+  Stream<Reply> livelinessGet(String keyExpr, {Duration? timeout}) {
     _ensureOpen();
 
     final (receivePort, controller) = _createReplyChannel();
@@ -561,8 +555,7 @@ class Session {
           final payloadBytes = message[2] as Uint8List;
           final kind = message[3] as int;
           final attachmentBytes = message[4] as Uint8List?;
-          final encodingStr =
-              message.length > 5 ? message[5] as String? : null;
+          final encodingStr = message.length > 5 ? message[5] as String? : null;
 
           final sample = Sample(
             keyExpr: keyExpr,
@@ -577,8 +570,9 @@ class Session {
           controller.add(Reply.ok(sample));
         } else if (tag == 0) {
           final errorPayloadBytes = message[1] as Uint8List;
-          final errorEncoding =
-              message.length > 2 ? message[2] as String? : null;
+          final errorEncoding = message.length > 2
+              ? message[2] as String?
+              : null;
 
           final replyError = ReplyError(
             payloadBytes: errorPayloadBytes,

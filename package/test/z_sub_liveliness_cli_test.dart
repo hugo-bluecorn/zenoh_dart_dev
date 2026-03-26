@@ -37,10 +37,7 @@ void main() {
       await forceKill(process);
       await subscription.cancel();
 
-      expect(
-        stdout.toString(),
-        contains('Declaring Liveliness Subscriber'),
-      );
+      expect(stdout.toString(), contains('Declaring Liveliness Subscriber'));
       expect(stdout.toString(), contains('group1/**'));
     });
 

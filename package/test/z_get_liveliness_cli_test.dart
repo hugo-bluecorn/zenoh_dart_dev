@@ -21,10 +21,7 @@ void main() {
     test('runs with default arguments and prints liveliness query', () async {
       final result = await runZGetLiveliness(['--timeout', '2000']);
       expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
-      expect(
-        result.stdout as String,
-        contains('Sending Liveliness Query'),
-      );
+      expect(result.stdout as String, contains('Sending Liveliness Query'));
       expect(result.stdout as String, contains('group1/**'));
     });
 
@@ -40,12 +37,7 @@ void main() {
     });
 
     test('empty key expression exits with error', () async {
-      final result = await runZGetLiveliness([
-        '-k',
-        '',
-        '-o',
-        '2000',
-      ]);
+      final result = await runZGetLiveliness(['-k', '', '-o', '2000']);
       expect(result.exitCode, isNot(equals(0)));
     });
   });

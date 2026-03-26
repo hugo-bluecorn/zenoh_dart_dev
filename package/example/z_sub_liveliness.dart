@@ -55,9 +55,7 @@ Future<void> main(List<String> arguments) async {
           ">> [LivelinessSubscriber] New alive token ('${sample.keyExpr}')",
         );
       case SampleKind.delete:
-        print(
-          ">> [LivelinessSubscriber] Dropped token ('${sample.keyExpr}')",
-        );
+        print(">> [LivelinessSubscriber] Dropped token ('${sample.keyExpr}')");
     }
   });
 

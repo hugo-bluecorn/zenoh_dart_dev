@@ -17,28 +17,32 @@ void main() {
     });
 
     test('declareLivelinessToken returns a LivelinessToken', () {
-      final token =
-          session.declareLivelinessToken('demo/example/liveliness-test');
+      final token = session.declareLivelinessToken(
+        'demo/example/liveliness-test',
+      );
       expect(token, isA<LivelinessToken>());
       token.close();
     });
 
     test('LivelinessToken.keyExpr returns declared key expression', () {
-      final token =
-          session.declareLivelinessToken('demo/example/liveliness-test');
+      final token = session.declareLivelinessToken(
+        'demo/example/liveliness-test',
+      );
       expect(token.keyExpr, equals('demo/example/liveliness-test'));
       token.close();
     });
 
     test('LivelinessToken.close completes without error', () {
-      final token =
-          session.declareLivelinessToken('demo/example/liveliness-test');
+      final token = session.declareLivelinessToken(
+        'demo/example/liveliness-test',
+      );
       expect(() => token.close(), returnsNormally);
     });
 
     test('LivelinessToken.close is idempotent', () {
-      final token =
-          session.declareLivelinessToken('demo/example/liveliness-test');
+      final token = session.declareLivelinessToken(
+        'demo/example/liveliness-test',
+      );
       token.close();
       expect(() => token.close(), returnsNormally);
     });
@@ -47,8 +51,9 @@ void main() {
       final closedSession = Session.open();
       closedSession.close();
       expect(
-        () => closedSession
-            .declareLivelinessToken('demo/example/liveliness-test'),
+        () => closedSession.declareLivelinessToken(
+          'demo/example/liveliness-test',
+        ),
         throwsA(
           isA<StateError>().having(
             (e) => e.message,
@@ -59,16 +64,13 @@ void main() {
       );
     });
 
-    test(
-      'declareLivelinessToken with invalid key expression throws '
-      'ZenohException',
-      () {
-        expect(
-          () => session.declareLivelinessToken(''),
-          throwsA(isA<ZenohException>()),
-        );
-      },
-    );
+    test('declareLivelinessToken with invalid key expression throws '
+        'ZenohException', () {
+      expect(
+        () => session.declareLivelinessToken(''),
+        throwsA(isA<ZenohException>()),
+      );
+    });
   });
 
   group('Liveliness Subscriber (TCP 17500)', () {
@@ -108,14 +110,10 @@ void main() {
       addTearDown(sub.close);
       await Future.delayed(const Duration(milliseconds: 500));
 
-      final token = sessionA.declareLivelinessToken(
-        'zenoh/liveliness/test/1',
-      );
+      final token = sessionA.declareLivelinessToken('zenoh/liveliness/test/1');
       addTearDown(token.close);
 
-      final sample = await sub.stream.first.timeout(
-        const Duration(seconds: 5),
-      );
+      final sample = await sub.stream.first.timeout(const Duration(seconds: 5));
       expect(sample.kind, equals(SampleKind.put));
       expect(sample.keyExpr, contains('zenoh/liveliness/test/1'));
     });
@@ -127,9 +125,7 @@ void main() {
       addTearDown(sub.close);
       await Future.delayed(const Duration(milliseconds: 500));
 
-      final token = sessionA.declareLivelinessToken(
-        'zenoh/liveliness/test/1',
-      );
+      final token = sessionA.declareLivelinessToken('zenoh/liveliness/test/1');
 
       // Collect PUT + DELETE in a single subscription
       final samplesFuture = sub.stream
@@ -147,47 +143,49 @@ void main() {
       expect(samples[1].keyExpr, contains('zenoh/liveliness/test/1'));
     });
 
-    test('Multiple tokens produce multiple PUT and individual DELETE',
-        () async {
-      final sub = sessionB.declareLivelinessSubscriber(
-        'zenoh/liveliness/test/*',
-      );
-      addTearDown(sub.close);
-      await Future.delayed(const Duration(milliseconds: 500));
+    test(
+      'Multiple tokens produce multiple PUT and individual DELETE',
+      () async {
+        final sub = sessionB.declareLivelinessSubscriber(
+          'zenoh/liveliness/test/*',
+        );
+        addTearDown(sub.close);
+        await Future.delayed(const Duration(milliseconds: 500));
 
-      // Collect all 4 samples (2 PUTs + 2 DELETEs) in a single subscription
-      final samplesFuture = sub.stream
-          .take(4)
-          .toList()
-          .timeout(const Duration(seconds: 15));
+        // Collect all 4 samples (2 PUTs + 2 DELETEs) in a single subscription
+        final samplesFuture = sub.stream
+            .take(4)
+            .toList()
+            .timeout(const Duration(seconds: 15));
 
-      final token1 = sessionA.declareLivelinessToken(
-        'zenoh/liveliness/test/1',
-      );
-      final token2 = sessionA.declareLivelinessToken(
-        'zenoh/liveliness/test/2',
-      );
+        final token1 = sessionA.declareLivelinessToken(
+          'zenoh/liveliness/test/1',
+        );
+        final token2 = sessionA.declareLivelinessToken(
+          'zenoh/liveliness/test/2',
+        );
 
-      // Wait for PUTs to be delivered before closing
-      await Future.delayed(const Duration(seconds: 2));
+        // Wait for PUTs to be delivered before closing
+        await Future.delayed(const Duration(seconds: 2));
 
-      // Close tokens sequentially
-      token1.close();
-      await Future.delayed(const Duration(milliseconds: 500));
-      token2.close();
+        // Close tokens sequentially
+        token1.close();
+        await Future.delayed(const Duration(milliseconds: 500));
+        token2.close();
 
-      final samples = await samplesFuture;
-      expect(samples, hasLength(4));
+        final samples = await samplesFuture;
+        expect(samples, hasLength(4));
 
-      final puts = samples.where((s) => s.kind == SampleKind.put).toList();
-      final deletes =
-          samples.where((s) => s.kind == SampleKind.delete).toList();
-      expect(puts, hasLength(2));
-      expect(deletes, hasLength(2));
-    });
+        final puts = samples.where((s) => s.kind == SampleKind.put).toList();
+        final deletes = samples
+            .where((s) => s.kind == SampleKind.delete)
+            .toList();
+        expect(puts, hasLength(2));
+        expect(deletes, hasLength(2));
+      },
+    );
 
-    test('declareLivelinessSubscriber on closed session throws StateError',
-        () {
+    test('declareLivelinessSubscriber on closed session throws StateError', () {
       final closedSession = Session.open();
       closedSession.close();
       expect(
@@ -204,8 +202,7 @@ void main() {
       );
     });
 
-    test(
-        'declareLivelinessSubscriber with invalid key expression throws '
+    test('declareLivelinessSubscriber with invalid key expression throws '
         'ZenohException', () {
       expect(
         () => sessionA.declareLivelinessSubscriber(''),
@@ -328,12 +325,8 @@ void main() {
       );
     });
 
-    test('livelinessGet with invalid key expression throws ZenohException',
-        () {
-      expect(
-        () => sessionA.livelinessGet(''),
-        throwsA(isA<ZenohException>()),
-      );
+    test('livelinessGet with invalid key expression throws ZenohException', () {
+      expect(() => sessionA.livelinessGet(''), throwsA(isA<ZenohException>()));
     });
   });
 
@@ -376,9 +369,7 @@ void main() {
       );
       addTearDown(sub.close);
 
-      final sample = await sub.stream.first.timeout(
-        const Duration(seconds: 5),
-      );
+      final sample = await sub.stream.first.timeout(const Duration(seconds: 5));
       expect(sample.kind, equals(SampleKind.put));
       expect(sample.keyExpr, contains('zenoh/liveliness/test/hist1'));
     });
