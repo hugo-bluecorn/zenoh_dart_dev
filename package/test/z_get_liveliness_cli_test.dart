@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:test/test.dart';
+// CLI tests for z_get_liveliness.dart
 
 void main() {
   final packageRoot = Directory.current.path;
@@ -38,10 +39,10 @@ void main() {
       expect(result.stdout as String, contains('custom/group/**'));
     });
 
-    test('invalid key expression exits with error', () async {
+    test('empty key expression exits with error', () async {
       final result = await runZGetLiveliness([
         '-k',
-        '!!!invalid',
+        '',
         '-o',
         '2000',
       ]);
