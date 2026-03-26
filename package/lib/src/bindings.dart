@@ -1955,6 +1955,41 @@ class ZenohDartBindings {
               int,
             )
           >();
+
+  /// Queries liveliness tokens matching the given key expression.
+  ///
+  /// Replies are posted to the Dart NativePort as arrays (same format as
+  /// zd_get replies). A null sentinel signals completion.
+  ///
+  /// @param session   Loaned session pointer.
+  /// @param key_expr  Key expression to query liveliness for.
+  /// @param port      Dart NativePort for reply callbacks.
+  /// @param timeout_ms  Timeout in milliseconds (0 = default).
+  /// @return 0 on success.
+  int zd_liveliness_get(
+    ffi.Pointer<ffi.Uint8> session,
+    ffi.Pointer<ffi.Char> key_expr,
+    int port,
+    int timeout_ms,
+  ) {
+    return _zd_liveliness_get(session, key_expr, port, timeout_ms);
+  }
+
+  late final _zd_liveliness_getPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Int64,
+            ffi.Uint64,
+          )
+        >
+      >('zd_liveliness_get');
+  late final _zd_liveliness_get = _zd_liveliness_getPtr
+      .asFunction<
+        int Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Char>, int, int)
+      >();
 }
 
 final class UnnamedStruct extends ffi.Struct {

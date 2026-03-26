@@ -427,6 +427,92 @@ class Session {
     return LivelinessToken.declare(loanedSession, keyExpr);
   }
 
+  /// Queries liveliness tokens matching the given [keyExpr].
+  ///
+  /// Returns a [Stream] of [Reply] objects for each alive token. The stream
+  /// completes when all replies have been received or the [timeout] expires.
+  /// Defaults to 10 seconds if [timeout] is not specified.
+  ///
+  /// Throws [ZenohException] if the key expression is invalid or the query
+  /// fails.
+  /// Throws [StateError] if the session has been closed.
+  Stream<Reply> livelinessGet(
+    String keyExpr, {
+    Duration? timeout,
+  }) {
+    _ensureOpen();
+
+    final controller = StreamController<Reply>();
+    final receivePort = ReceivePort();
+    final timeoutMs = (timeout ?? const Duration(seconds: 10)).inMilliseconds;
+
+    receivePort.listen((dynamic message) {
+      if (message == null) {
+        // Null sentinel: query complete
+        receivePort.close();
+        controller.close();
+      } else if (message is List) {
+        final tag = message[0] as int;
+        if (tag == 1) {
+          // Ok reply: [1, keyexpr, payload_bytes, kind, attachment, encoding]
+          final keyExprStr = message[1] as String;
+          final payloadBytes = message[2] as Uint8List;
+          final kind = message[3] as int;
+          final attachmentBytes = message[4] as Uint8List?;
+          final encodingStr =
+              message.length > 5 ? message[5] as String? : null;
+
+          final sample = Sample(
+            keyExpr: keyExprStr,
+            payload: utf8.decode(payloadBytes),
+            payloadBytes: payloadBytes,
+            kind: kind == 0 ? SampleKind.put : SampleKind.delete,
+            attachment: attachmentBytes != null
+                ? utf8.decode(attachmentBytes)
+                : null,
+            encoding: encodingStr,
+          );
+          controller.add(Reply.ok(sample));
+        } else if (tag == 0) {
+          // Error reply: [0, error_payload_bytes, error_encoding]
+          final errorPayloadBytes = message[1] as Uint8List;
+          final errorEncoding =
+              message.length > 2 ? message[2] as String? : null;
+
+          final replyError = ReplyError(
+            payloadBytes: errorPayloadBytes,
+            payload: utf8.decode(errorPayloadBytes),
+            encoding: errorEncoding,
+          );
+          controller.add(Reply.error(replyError));
+        }
+      }
+    });
+
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+    final keyExprNative = keyExpr.toNativeUtf8();
+
+    try {
+      final rc = bindings.zd_liveliness_get(
+        loanedSession.cast(),
+        keyExprNative.cast(),
+        receivePort.sendPort.nativePort,
+        timeoutMs,
+      );
+
+      if (rc != 0) {
+        receivePort.close();
+        controller.close();
+        throw ZenohException('Liveliness get failed', rc);
+      }
+    } finally {
+      calloc.free(keyExprNative);
+    }
+
+    return controller.stream;
+  }
+
   /// Sends a query on the given [selector] and returns a stream of replies.
   ///
   /// The returned stream completes when all replies have been received

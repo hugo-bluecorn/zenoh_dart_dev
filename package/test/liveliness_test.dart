@@ -1,4 +1,4 @@
-// Liveliness token and subscriber tests (Phase 11, Slices 1 & 2)
+// Liveliness token, subscriber, and get tests (Phase 11, Slices 1-4)
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
 
@@ -257,7 +257,7 @@ void main() {
 
       expect(replies, hasLength(1));
       expect(replies[0].isOk, isTrue);
-      expect(replies[0].sample!.keyExpr, contains('zenoh/liveliness/test/get1'));
+      expect(replies[0].ok.keyExpr, contains('zenoh/liveliness/test/get1'));
     });
 
     test('livelinessGet returns empty stream when no tokens alive', () async {

@@ -1505,3 +1505,37 @@ FFI_PLUGIN_EXPORT int8_t zd_liveliness_declare_subscriber(
 
   return (int8_t)rc;
 }
+
+FFI_PLUGIN_EXPORT int8_t zd_liveliness_get(
+    const uint8_t* session, const char* key_expr,
+    int64_t port, uint64_t timeout_ms) {
+  // Validate key expression
+  z_view_keyexpr_t ke;
+  if (z_view_keyexpr_from_str(&ke, key_expr) != 0) {
+    return -1;
+  }
+
+  zd_get_context_t* ctx =
+      (zd_get_context_t*)malloc(sizeof(zd_get_context_t));
+  if (!ctx) return -1;
+  ctx->dart_port = (Dart_Port_DL)port;
+
+  z_owned_closure_reply_t callback;
+  z_closure_reply(&callback, _zd_reply_callback, _zd_get_drop, ctx);
+
+  z_liveliness_get_options_t opts;
+  z_liveliness_get_options_default(&opts);
+  opts.timeout_ms = timeout_ms;
+
+  int rc = z_liveliness_get(
+      (const z_loaned_session_t*)session,
+      z_view_keyexpr_loan(&ke),
+      z_closure_reply_move(&callback),
+      &opts);
+
+  if (rc != 0) {
+    z_closure_reply_drop(z_closure_reply_move(&callback));
+  }
+
+  return (int8_t)rc;
+}
