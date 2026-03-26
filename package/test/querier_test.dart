@@ -1,4 +1,4 @@
-// Querier lifecycle and get tests (slices 2-3)
+// Querier lifecycle, get, and matching status tests (slices 2-4)
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -374,6 +374,183 @@ void main() {
       final params =
           await receivedParams.future.timeout(Duration(seconds: 5));
       expect(params, equals(''));
+    });
+  });
+
+  group('Querier matching status one-shot (TCP 17492)', () {
+    late Session session1;
+    late Session session2;
+
+    setUpAll(() async {
+      final config1 = Config();
+      config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17492"]');
+      session1 = Session.open(config: config1);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final config2 = Config();
+      config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17492"]');
+      session2 = Session.open(config: config2);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+    });
+
+    tearDownAll(() {
+      session1.close();
+      session2.close();
+    });
+
+    test(
+      'hasMatchingQueryables returns false when no queryables exist',
+      () async {
+        final querier = session1.declareQuerier(
+          'zenoh/dart/test/qrmatch/none',
+          timeout: Duration(seconds: 5),
+        );
+        addTearDown(querier.close);
+
+        await Future<void>.delayed(const Duration(seconds: 1));
+
+        expect(querier.hasMatchingQueryables(), isFalse);
+      },
+    );
+
+    test(
+      'hasMatchingQueryables returns true when queryable exists',
+      () async {
+        final queryable = session2.declareQueryable(
+          'zenoh/dart/test/qrmatch/yes',
+        );
+        addTearDown(queryable.close);
+        final querier = session1.declareQuerier(
+          'zenoh/dart/test/qrmatch/yes',
+          timeout: Duration(seconds: 5),
+        );
+        addTearDown(querier.close);
+
+        await Future<void>.delayed(const Duration(seconds: 1));
+
+        expect(querier.hasMatchingQueryables(), isTrue);
+      },
+    );
+
+    test('hasMatchingQueryables after close throws StateError', () {
+      final querier = session1.declareQuerier(
+        'zenoh/dart/test/qrmatch/closed',
+        timeout: Duration(seconds: 5),
+      );
+      querier.close();
+      expect(
+        () => querier.hasMatchingQueryables(),
+        throwsA(isA<StateError>()),
+      );
+    });
+  });
+
+  group('Querier matching status stream (TCP 17493)', () {
+    late Session session1;
+    late Session session2;
+
+    setUpAll(() async {
+      final config1 = Config();
+      config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17493"]');
+      session1 = Session.open(config: config1);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final config2 = Config();
+      config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17493"]');
+      session2 = Session.open(config: config2);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+    });
+
+    tearDownAll(() {
+      session1.close();
+      session2.close();
+    });
+
+    test('matchingStatus is null when listener not enabled', () {
+      final querier = session1.declareQuerier(
+        'zenoh/dart/test/qrmatch/null',
+        timeout: Duration(seconds: 5),
+      );
+      addTearDown(querier.close);
+      expect(querier.matchingStatus, isNull);
+    });
+
+    test('matchingStatus stream emits true when queryable appears', () async {
+      final querier = session1.declareQuerier(
+        'zenoh/dart/test/qrmatch/stream',
+        timeout: Duration(seconds: 5),
+        enableMatchingListener: true,
+      );
+      addTearDown(querier.close);
+
+      expect(querier.matchingStatus, isNotNull);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      // Declare queryable to trigger matching
+      final queryable = session2.declareQueryable(
+        'zenoh/dart/test/qrmatch/stream',
+      );
+      addTearDown(queryable.close);
+
+      final status = await querier.matchingStatus!.first.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(status, isTrue);
+    });
+
+    test(
+      'matchingStatus stream emits false when queryable disappears',
+      () async {
+        final querier = session1.declareQuerier(
+          'zenoh/dart/test/qrmatch/stream2',
+          timeout: Duration(seconds: 5),
+          enableMatchingListener: true,
+        );
+        addTearDown(querier.close);
+
+        final statuses = <bool>[];
+        final gotFalse = Completer<void>();
+        querier.matchingStatus!.listen((status) {
+          statuses.add(status);
+          if (status == false && statuses.length > 1) {
+            if (!gotFalse.isCompleted) gotFalse.complete();
+          }
+        });
+
+        await Future<void>.delayed(const Duration(seconds: 1));
+
+        final queryable = session2.declareQueryable(
+          'zenoh/dart/test/qrmatch/stream2',
+        );
+
+        await Future<void>.delayed(const Duration(seconds: 1));
+        queryable.close();
+
+        await gotFalse.future.timeout(const Duration(seconds: 5));
+
+        expect(statuses, contains(true));
+        expect(statuses.last, isFalse);
+      },
+    );
+
+    test('matchingStatus stream closes when querier is closed', () async {
+      final querier = session1.declareQuerier(
+        'zenoh/dart/test/qrmatch/close',
+        timeout: Duration(seconds: 5),
+        enableMatchingListener: true,
+      );
+
+      final doneCompleter = Completer<void>();
+      querier.matchingStatus!.listen((_) {}, onDone: doneCompleter.complete);
+
+      querier.close();
+
+      await doneCompleter.future.timeout(const Duration(seconds: 5));
     });
   });
 }
