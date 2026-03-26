@@ -1315,3 +1315,47 @@ FFI_PLUGIN_EXPORT void zd_ring_handler_sample_drop(uint8_t* handler) {
   z_owned_ring_handler_sample_t* h = (z_owned_ring_handler_sample_t*)handler;
   z_ring_handler_sample_drop(z_ring_handler_sample_move(h));
 }
+
+// ---------------------------------------------------------------------------
+// Querier
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT size_t zd_querier_sizeof(void) {
+  return sizeof(z_owned_querier_t);
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_declare_querier(
+    uint8_t* querier_out, const uint8_t* session,
+    const char* key_expr, int8_t target,
+    int8_t consolidation, uint64_t timeout_ms) {
+  // Create key expression view
+  z_view_keyexpr_t ke;
+  if (z_view_keyexpr_from_str(&ke, key_expr) != 0) {
+    return -1;
+  }
+
+  z_querier_options_t opts;
+  z_querier_options_default(&opts);
+
+  opts.target = (z_query_target_t)target;
+
+  if (consolidation == -1) {
+    opts.consolidation = z_query_consolidation_default();
+  } else {
+    opts.consolidation.mode = (z_consolidation_mode_t)consolidation;
+  }
+
+  if (timeout_ms > 0) {
+    opts.timeout_ms = timeout_ms;
+  }
+
+  return (int8_t)z_declare_querier(
+      (const z_loaned_session_t*)session,
+      (z_owned_querier_t*)querier_out,
+      z_view_keyexpr_loan(&ke),
+      &opts);
+}
+
+FFI_PLUGIN_EXPORT void zd_querier_drop(uint8_t* querier) {
+  z_querier_drop(z_querier_move((z_owned_querier_t*)querier));
+}

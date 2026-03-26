@@ -692,4 +692,30 @@ FFI_PLUGIN_EXPORT int8_t zd_pull_subscriber_try_recv(
 /// @param handler  Pointer to a z_owned_ring_handler_sample_t (as uint8_t*).
 FFI_PLUGIN_EXPORT void zd_ring_handler_sample_drop(uint8_t* handler);
 
+// ---------------------------------------------------------------------------
+// Querier
+// ---------------------------------------------------------------------------
+
+/// Returns the size of z_owned_querier_t in bytes.
+FFI_PLUGIN_EXPORT size_t zd_querier_sizeof(void);
+
+/// Declares a querier on the given key expression.
+///
+/// @param querier_out    Pointer to uninitialized z_owned_querier_t (as uint8_t*).
+/// @param session        Pointer to a loaned session (as uint8_t*).
+/// @param key_expr       Null-terminated key expression string.
+/// @param target         Query target (z_query_target_t value).
+/// @param consolidation  Consolidation mode (-1=auto, 0=none, 1=monotonic, 2=latest).
+/// @param timeout_ms     Timeout in milliseconds (0 = default).
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_declare_querier(
+    uint8_t* querier_out, const uint8_t* session,
+    const char* key_expr, int8_t target,
+    int8_t consolidation, uint64_t timeout_ms);
+
+/// Drops (frees) the querier.
+///
+/// @param querier  Pointer to a z_owned_querier_t (as uint8_t*).
+FFI_PLUGIN_EXPORT void zd_querier_drop(uint8_t* querier);
+
 #endif // ZENOH_DART_H

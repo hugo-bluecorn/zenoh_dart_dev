@@ -1679,6 +1679,82 @@ class ZenohDartBindings {
       );
   late final _zd_ring_handler_sample_drop = _zd_ring_handler_sample_dropPtr
       .asFunction<void Function(ffi.Pointer<ffi.Uint8>)>();
+
+  /// Returns the size of z_owned_querier_t in bytes.
+  int zd_querier_sizeof() {
+    return _zd_querier_sizeof();
+  }
+
+  late final _zd_querier_sizeofPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function()>>('zd_querier_sizeof');
+  late final _zd_querier_sizeof = _zd_querier_sizeofPtr
+      .asFunction<int Function()>();
+
+  /// Declares a querier on the given key expression.
+  ///
+  /// @param querier_out    Pointer to uninitialized z_owned_querier_t (as uint8_t*).
+  /// @param session        Pointer to a loaned session (as uint8_t*).
+  /// @param key_expr       Null-terminated key expression string.
+  /// @param target         Query target (z_query_target_t value).
+  /// @param consolidation  Consolidation mode (-1=auto, 0=none, 1=monotonic, 2=latest).
+  /// @param timeout_ms     Timeout in milliseconds (0 = default).
+  /// @return 0 on success, negative on failure.
+  int zd_declare_querier(
+    ffi.Pointer<ffi.Uint8> querier_out,
+    ffi.Pointer<ffi.Uint8> session,
+    ffi.Pointer<ffi.Char> key_expr,
+    int target,
+    int consolidation,
+    int timeout_ms,
+  ) {
+    return _zd_declare_querier(
+      querier_out,
+      session,
+      key_expr,
+      target,
+      consolidation,
+      timeout_ms,
+    );
+  }
+
+  late final _zd_declare_querierPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Int8,
+            ffi.Int8,
+            ffi.Uint64,
+          )
+        >
+      >('zd_declare_querier');
+  late final _zd_declare_querier = _zd_declare_querierPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<ffi.Char>,
+          int,
+          int,
+          int,
+        )
+      >();
+
+  /// Drops (frees) the querier.
+  ///
+  /// @param querier  Pointer to a z_owned_querier_t (as uint8_t*).
+  void zd_querier_drop(ffi.Pointer<ffi.Uint8> querier) {
+    return _zd_querier_drop(querier);
+  }
+
+  late final _zd_querier_dropPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Uint8>)>>(
+        'zd_querier_drop',
+      );
+  late final _zd_querier_drop = _zd_querier_dropPtr
+      .asFunction<void Function(ffi.Pointer<ffi.Uint8>)>();
 }
 
 final class UnnamedStruct extends ffi.Struct {

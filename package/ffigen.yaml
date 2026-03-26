@@ -134,6 +134,18 @@ type-map:
       lib: ffi
       c-type: Opaque
       dart-type: Opaque
+    z_owned_querier_t:
+      lib: ffi
+      c-type: Opaque
+      dart-type: Opaque
+    z_loaned_querier_t:
+      lib: ffi
+      c-type: Opaque
+      dart-type: Opaque
+    z_moved_querier_t:
+      lib: ffi
+      c-type: Opaque
+      dart-type: Opaque
     z_owned_queryable_t:
       lib: ffi
       c-type: Opaque
