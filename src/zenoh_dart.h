@@ -751,4 +751,25 @@ FFI_PLUGIN_EXPORT int8_t zd_querier_declare_background_matching_listener(
 FFI_PLUGIN_EXPORT int8_t zd_querier_get_matching_status(
     const uint8_t* querier, int8_t* matching_out);
 
+// ---------------------------------------------------------------------------
+// Liveliness
+// ---------------------------------------------------------------------------
+
+/// Returns the size of z_owned_liveliness_token_t in bytes.
+FFI_PLUGIN_EXPORT size_t zd_liveliness_token_sizeof(void);
+
+/// Declares a liveliness token on the given key expression.
+///
+/// @param token_out  Pointer to an uninitialized z_owned_liveliness_token_t (as uint8_t*).
+/// @param session    Const pointer to a loaned session (as uint8_t*).
+/// @param key_expr   Null-terminated key expression string.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_liveliness_declare_token(
+    uint8_t* token_out, const uint8_t* session, const char* key_expr);
+
+/// Drops (undeclares and frees) a liveliness token.
+///
+/// @param token  Pointer to a z_owned_liveliness_token_t (as uint8_t*).
+FFI_PLUGIN_EXPORT void zd_liveliness_token_drop(uint8_t* token);
+
 #endif // ZENOH_DART_H

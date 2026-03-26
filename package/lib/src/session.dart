@@ -14,6 +14,7 @@ import 'encoding.dart';
 import 'exceptions.dart';
 import 'id.dart';
 import 'keyexpr.dart';
+import 'liveliness.dart';
 import 'native_lib.dart';
 import 'priority.dart';
 import 'pull_subscriber.dart';
@@ -358,6 +359,21 @@ class Session {
     final loanedSession =
         bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
     return Queryable.declare(loanedSession, keyExpr, complete: complete);
+  }
+
+  /// Declares a liveliness token on the given [keyExpr].
+  ///
+  /// The token advertises this session's presence on the key expression
+  /// for as long as it remains undeclared. Call [LivelinessToken.close]
+  /// when done.
+  ///
+  /// Throws [ZenohException] if the key expression is invalid.
+  /// Throws [StateError] if the session has been closed.
+  LivelinessToken declareLivelinessToken(String keyExpr) {
+    _ensureOpen();
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+    return LivelinessToken.declare(loanedSession, keyExpr);
   }
 
   /// Sends a query on the given [selector] and returns a stream of replies.

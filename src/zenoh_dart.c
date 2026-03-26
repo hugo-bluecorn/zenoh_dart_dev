@@ -1438,3 +1438,32 @@ FFI_PLUGIN_EXPORT int8_t zd_querier_get_matching_status(
   }
   return (int8_t)rc;
 }
+
+// ---------------------------------------------------------------------------
+// Liveliness
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT size_t zd_liveliness_token_sizeof(void) {
+  return sizeof(z_owned_liveliness_token_t);
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_liveliness_declare_token(
+    uint8_t* token_out, const uint8_t* session, const char* key_expr) {
+  const z_loaned_session_t* loaned_session =
+      (const z_loaned_session_t*)session;
+
+  // Validate key expression
+  z_view_keyexpr_t ke;
+  int rc = z_view_keyexpr_from_str(&ke, key_expr);
+  if (rc != 0) return (int8_t)rc;
+
+  z_owned_liveliness_token_t* token = (z_owned_liveliness_token_t*)token_out;
+  rc = z_liveliness_declare_token(
+      loaned_session, token, z_view_keyexpr_loan(&ke), NULL);
+  return (int8_t)rc;
+}
+
+FFI_PLUGIN_EXPORT void zd_liveliness_token_drop(uint8_t* token) {
+  z_owned_liveliness_token_t* t = (z_owned_liveliness_token_t*)token;
+  z_liveliness_token_drop(z_liveliness_token_move(t));
+}

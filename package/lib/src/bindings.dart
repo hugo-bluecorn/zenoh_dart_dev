@@ -1845,6 +1845,65 @@ class ZenohDartBindings {
           .asFunction<
             int Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Int8>)
           >();
+
+  /// Returns the size of z_owned_liveliness_token_t in bytes.
+  int zd_liveliness_token_sizeof() {
+    return _zd_liveliness_token_sizeof();
+  }
+
+  late final _zd_liveliness_token_sizeofPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function()>>(
+        'zd_liveliness_token_sizeof',
+      );
+  late final _zd_liveliness_token_sizeof = _zd_liveliness_token_sizeofPtr
+      .asFunction<int Function()>();
+
+  /// Declares a liveliness token on the given key expression.
+  ///
+  /// @param token_out  Pointer to an uninitialized z_owned_liveliness_token_t (as uint8_t*).
+  /// @param session    Const pointer to a loaned session (as uint8_t*).
+  /// @param key_expr   Null-terminated key expression string.
+  /// @return 0 on success, negative on failure.
+  int zd_liveliness_declare_token(
+    ffi.Pointer<ffi.Uint8> token_out,
+    ffi.Pointer<ffi.Uint8> session,
+    ffi.Pointer<ffi.Char> key_expr,
+  ) {
+    return _zd_liveliness_declare_token(token_out, session, key_expr);
+  }
+
+  late final _zd_liveliness_declare_tokenPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Char>,
+          )
+        >
+      >('zd_liveliness_declare_token');
+  late final _zd_liveliness_declare_token = _zd_liveliness_declare_tokenPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<ffi.Char>,
+        )
+      >();
+
+  /// Drops (undeclares and frees) a liveliness token.
+  ///
+  /// @param token  Pointer to a z_owned_liveliness_token_t (as uint8_t*).
+  void zd_liveliness_token_drop(ffi.Pointer<ffi.Uint8> token) {
+    return _zd_liveliness_token_drop(token);
+  }
+
+  late final _zd_liveliness_token_dropPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Uint8>)>>(
+        'zd_liveliness_token_drop',
+      );
+  late final _zd_liveliness_token_drop = _zd_liveliness_token_dropPtr
+      .asFunction<void Function(ffi.Pointer<ffi.Uint8>)>();
 }
 
 final class UnnamedStruct extends ffi.Struct {
