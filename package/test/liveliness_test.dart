@@ -219,4 +219,119 @@ void main() {
       expect(() => sub.close(), returnsNormally);
     });
   });
+
+  group('Liveliness Get (TCP 17502)', () {
+    late Session sessionA;
+    late Session sessionB;
+
+    setUp(() async {
+      sessionA = Session.open(
+        config: Config()
+          ..insertJson5('listen/endpoints', '["tcp/127.0.0.1:17502"]'),
+      );
+      await Future.delayed(const Duration(milliseconds: 500));
+      sessionB = Session.open(
+        config: Config()
+          ..insertJson5('connect/endpoints', '["tcp/127.0.0.1:17502"]'),
+      );
+      await Future.delayed(const Duration(milliseconds: 500));
+    });
+
+    tearDown(() {
+      sessionB.close();
+      sessionA.close();
+    });
+
+    test('livelinessGet returns alive token', () async {
+      final token = sessionA.declareLivelinessToken(
+        'zenoh/liveliness/test/get1',
+      );
+      addTearDown(token.close);
+
+      await Future.delayed(const Duration(seconds: 1));
+
+      final replies = await sessionB
+          .livelinessGet('zenoh/liveliness/test/*')
+          .toList()
+          .timeout(const Duration(seconds: 10));
+
+      expect(replies, hasLength(1));
+      expect(replies[0].isOk, isTrue);
+      expect(replies[0].sample!.keyExpr, contains('zenoh/liveliness/test/get1'));
+    });
+
+    test('livelinessGet returns empty stream when no tokens alive', () async {
+      final replies = await sessionB
+          .livelinessGet(
+            'zenoh/liveliness/test/*',
+            timeout: const Duration(seconds: 2),
+          )
+          .toList()
+          .timeout(const Duration(seconds: 10));
+
+      expect(replies, isEmpty);
+    });
+
+    test('livelinessGet returns empty after token dropped', () async {
+      final token = sessionA.declareLivelinessToken(
+        'zenoh/liveliness/test/get3',
+      );
+      await Future.delayed(const Duration(seconds: 1));
+      token.close();
+      await Future.delayed(const Duration(seconds: 1));
+
+      final replies = await sessionB
+          .livelinessGet(
+            'zenoh/liveliness/test/*',
+            timeout: const Duration(seconds: 2),
+          )
+          .toList()
+          .timeout(const Duration(seconds: 10));
+
+      expect(replies, isEmpty);
+    });
+
+    test('livelinessGet with custom timeout', () async {
+      final token = sessionA.declareLivelinessToken(
+        'zenoh/liveliness/test/get4',
+      );
+      addTearDown(token.close);
+
+      await Future.delayed(const Duration(seconds: 1));
+
+      final replies = await sessionB
+          .livelinessGet(
+            'zenoh/liveliness/test/*',
+            timeout: const Duration(seconds: 5),
+          )
+          .toList()
+          .timeout(const Duration(seconds: 10));
+
+      expect(replies, hasLength(1));
+      expect(replies[0].isOk, isTrue);
+    });
+
+    test('livelinessGet on closed session throws StateError', () {
+      final closedSession = Session.open();
+      closedSession.close();
+      expect(
+        () => closedSession.livelinessGet('zenoh/liveliness/test/*'),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('closed'),
+          ),
+        ),
+      );
+    });
+
+    test('livelinessGet with invalid key expression throws ZenohException',
+        () {
+      expect(
+        () => sessionA.livelinessGet(''),
+        throwsA(isA<ZenohException>()),
+      );
+    });
+  });
 }
