@@ -1,4 +1,22 @@
 # Changelog
+## 0.11.0
+
+### Added
+- `Session.declareLivelinessToken()` returns `LivelinessToken` — announces
+  entity presence on the network; token disappearance triggers DELETE events
+- `Session.declareLivelinessSubscriber()` returns `Subscriber` — observes
+  token PUT (appearance) and DELETE (disappearance) events with optional
+  `history` parameter to receive pre-existing alive tokens
+- `Session.livelinessGet()` returns `Stream<Reply>` — discovers currently
+  alive tokens with configurable timeout
+- `LivelinessToken` class with `keyExpr` and `close()`
+- 5 new C shim functions (83 → 88 total): zd_liveliness_token_sizeof,
+  zd_liveliness_declare_token, zd_liveliness_token_drop,
+  zd_liveliness_declare_subscriber, zd_liveliness_get
+- CLI examples: `z_liveliness.dart`, `z_sub_liveliness.dart`,
+  `z_get_liveliness.dart`
+- 30 new integration tests (310 → 340 total)
+
 ## 0.10.0
 
 ### Added
