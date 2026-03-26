@@ -1401,3 +1401,40 @@ FFI_PLUGIN_EXPORT int8_t zd_querier_get(
 
   return (int8_t)rc;
 }
+
+FFI_PLUGIN_EXPORT int8_t zd_querier_declare_background_matching_listener(
+    const uint8_t* querier, int64_t dart_port) {
+  const z_loaned_querier_t* loaned =
+      z_querier_loan((const z_owned_querier_t*)querier);
+
+  zd_matching_context_t* ctx =
+      (zd_matching_context_t*)malloc(sizeof(zd_matching_context_t));
+  if (!ctx) return -1;
+  ctx->dart_port = (Dart_Port_DL)dart_port;
+
+  z_owned_closure_matching_status_t callback;
+  z_closure_matching_status(
+      &callback, _zd_matching_status_callback, _zd_matching_drop, ctx);
+
+  int rc = z_querier_declare_background_matching_listener(
+      loaned, z_closure_matching_status_move(&callback));
+
+  if (rc != 0) {
+    z_closure_matching_status_drop(z_closure_matching_status_move(&callback));
+  }
+
+  return (int8_t)rc;
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_querier_get_matching_status(
+    const uint8_t* querier, int8_t* matching_out) {
+  const z_loaned_querier_t* loaned =
+      z_querier_loan((const z_owned_querier_t*)querier);
+
+  z_matching_status_t status;
+  int rc = z_querier_get_matching_status(loaned, &status);
+  if (rc == 0) {
+    *matching_out = status.matching ? 1 : 0;
+  }
+  return (int8_t)rc;
+}

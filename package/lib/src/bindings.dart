@@ -1799,6 +1799,52 @@ class ZenohDartBindings {
           ffi.Pointer<ffi.Char>,
         )
       >();
+
+  /// Declares a background matching listener for a querier.
+  ///
+  /// Reuses the same matching status callback and drop function as publisher.
+  ///
+  /// @param querier    Pointer to a z_owned_querier_t (as uint8_t*).
+  /// @param port       Dart NativePort for matching status callbacks.
+  /// @return 0 on success, negative on failure.
+  int zd_querier_declare_background_matching_listener(
+    ffi.Pointer<ffi.Uint8> querier,
+    int port,
+  ) {
+    return _zd_querier_declare_background_matching_listener(querier, port);
+  }
+
+  late final _zd_querier_declare_background_matching_listenerPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Int8 Function(ffi.Pointer<ffi.Uint8>, ffi.Int64)>
+      >('zd_querier_declare_background_matching_listener');
+  late final _zd_querier_declare_background_matching_listener =
+      _zd_querier_declare_background_matching_listenerPtr
+          .asFunction<int Function(ffi.Pointer<ffi.Uint8>, int)>();
+
+  /// Gets the current matching status of a querier.
+  ///
+  /// @param querier        Pointer to a z_owned_querier_t (as uint8_t*).
+  /// @param matching_out   Output: 1 if matching queryables exist, 0 otherwise.
+  /// @return 0 on success, negative on failure.
+  int zd_querier_get_matching_status(
+    ffi.Pointer<ffi.Uint8> querier,
+    ffi.Pointer<ffi.Int8> matching_out,
+  ) {
+    return _zd_querier_get_matching_status(querier, matching_out);
+  }
+
+  late final _zd_querier_get_matching_statusPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Int8>)
+        >
+      >('zd_querier_get_matching_status');
+  late final _zd_querier_get_matching_status =
+      _zd_querier_get_matching_statusPtr
+          .asFunction<
+            int Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Int8>)
+          >();
 }
 
 final class UnnamedStruct extends ffi.Struct {

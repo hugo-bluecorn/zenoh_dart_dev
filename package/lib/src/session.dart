@@ -266,6 +266,7 @@ class Session {
     QueryTarget target = QueryTarget.bestMatching,
     ConsolidationMode consolidation = ConsolidationMode.auto,
     Duration? timeout,
+    bool enableMatchingListener = false,
   }) {
     _ensureOpen();
     final loanedSession =
@@ -276,6 +277,7 @@ class Session {
       target: target,
       consolidation: consolidation,
       timeout: timeout,
+      enableMatchingListener: enableMatchingListener,
     );
   }
 

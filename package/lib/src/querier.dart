@@ -24,8 +24,11 @@ class Querier {
   final Pointer<Void> _ptr;
   final String _keyExpr;
   bool _closed = false;
+  final ReceivePort? _matchingPort;
+  final StreamController<bool>? _matchingController;
 
-  Querier._(this._ptr, this._keyExpr);
+  Querier._(this._ptr, this._keyExpr, this._matchingPort,
+      this._matchingController);
 
   /// Creates a querier on the given session and key expression.
   ///
@@ -36,6 +39,7 @@ class Querier {
     QueryTarget target = QueryTarget.bestMatching,
     ConsolidationMode consolidation = ConsolidationMode.auto,
     Duration? timeout,
+    bool enableMatchingListener = false,
   }) {
     final size = bindings.zd_querier_sizeof();
     final Pointer<Void> ptr = calloc.allocate(size);
@@ -60,7 +64,34 @@ class Querier {
       calloc.free(keyExprNative);
     }
 
-    return Querier._(ptr, keyExpr);
+    ReceivePort? matchingPort;
+    StreamController<bool>? matchingController;
+
+    if (enableMatchingListener) {
+      matchingPort = ReceivePort();
+      matchingController = StreamController<bool>();
+
+      matchingPort.listen((dynamic message) {
+        if (message is int) {
+          matchingController!.add(message != 0);
+        }
+      });
+
+      final mlRc = bindings.zd_querier_declare_background_matching_listener(
+        ptr.cast(),
+        matchingPort.sendPort.nativePort,
+      );
+
+      if (mlRc != 0) {
+        matchingPort.close();
+        matchingController.close();
+        bindings.zd_querier_drop(ptr.cast());
+        calloc.free(ptr);
+        throw ZenohException('Failed to declare matching listener', mlRc);
+      }
+    }
+
+    return Querier._(ptr, keyExpr, matchingPort, matchingController);
   }
 
   /// The key expression this querier is declared on.
@@ -166,6 +197,29 @@ class Querier {
     return controller.stream;
   }
 
+  /// Returns whether any queryables currently match this querier's
+  /// key expression.
+  bool hasMatchingQueryables() {
+    if (_closed) throw StateError('Querier has been closed');
+    final Pointer<Int8> matching = calloc<Int8>();
+    try {
+      final rc = bindings.zd_querier_get_matching_status(
+        _ptr.cast(),
+        matching,
+      );
+      if (rc != 0) {
+        throw ZenohException('Failed to get matching status', rc);
+      }
+      return matching.value != 0;
+    } finally {
+      calloc.free(matching);
+    }
+  }
+
+  /// A stream of matching status changes, or null if the matching listener
+  /// was not enabled when the querier was declared.
+  Stream<bool>? get matchingStatus => _matchingController?.stream;
+
   /// Undeclares the querier and releases native resources.
   ///
   /// Safe to call multiple times -- subsequent calls are no-ops.
@@ -173,6 +227,8 @@ class Querier {
     if (_closed) return;
     _closed = true;
     bindings.zd_querier_drop(_ptr.cast());
+    _matchingPort?.close();
+    _matchingController?.close();
     calloc.free(_ptr);
   }
 }

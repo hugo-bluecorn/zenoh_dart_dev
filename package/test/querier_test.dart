@@ -1,4 +1,5 @@
 // Querier lifecycle, get, and matching status tests (slices 2-4)
+// Slice 4: Querier matching status (one-shot and stream)
 import 'dart:async';
 import 'dart:typed_data';
 

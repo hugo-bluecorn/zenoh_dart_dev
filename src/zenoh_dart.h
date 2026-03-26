@@ -733,4 +733,22 @@ FFI_PLUGIN_EXPORT int8_t zd_querier_get(
     const uint8_t* querier, const char* parameters,
     int64_t port, uint8_t* payload, const char* encoding);
 
+/// Declares a background matching listener for a querier.
+///
+/// Reuses the same matching status callback and drop function as publisher.
+///
+/// @param querier    Pointer to a z_owned_querier_t (as uint8_t*).
+/// @param port       Dart NativePort for matching status callbacks.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_querier_declare_background_matching_listener(
+    const uint8_t* querier, int64_t port);
+
+/// Gets the current matching status of a querier.
+///
+/// @param querier        Pointer to a z_owned_querier_t (as uint8_t*).
+/// @param matching_out   Output: 1 if matching queryables exist, 0 otherwise.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_querier_get_matching_status(
+    const uint8_t* querier, int8_t* matching_out);
+
 #endif // ZENOH_DART_H
