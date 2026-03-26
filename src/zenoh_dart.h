@@ -772,4 +772,19 @@ FFI_PLUGIN_EXPORT int8_t zd_liveliness_declare_token(
 /// @param token  Pointer to a z_owned_liveliness_token_t (as uint8_t*).
 FFI_PLUGIN_EXPORT void zd_liveliness_token_drop(uint8_t* token);
 
+/// Declares a liveliness subscriber on the given key expression.
+///
+/// Reuses the same z_owned_subscriber_t type and _zd_sample_callback/drop
+/// as the regular subscriber. Samples are posted to the Dart NativePort.
+///
+/// @param subscriber_out  Pointer to an uninitialized z_owned_subscriber_t (as uint8_t*).
+/// @param session         Const pointer to a loaned session (as uint8_t*).
+/// @param key_expr        Null-terminated key expression string.
+/// @param port            Dart NativePort for sample callbacks.
+/// @param history         Boolean (0=false, 1=true) for receiving pre-existing token state.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_liveliness_declare_subscriber(
+    uint8_t* subscriber_out, const uint8_t* session,
+    const char* key_expr, int64_t port, int8_t history);
+
 #endif // ZENOH_DART_H

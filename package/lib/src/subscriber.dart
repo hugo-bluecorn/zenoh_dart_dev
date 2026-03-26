@@ -23,6 +23,20 @@ class Subscriber {
 
   Subscriber._(this._ptr, this._receivePort, this._controller);
 
+  /// Creates a Subscriber from pre-allocated parts.
+  ///
+  /// Used by [Session.declareLivelinessSubscriber] where the native
+  /// subscriber is declared through a different C shim function but
+  /// uses the same `z_owned_subscriber_t` type.
+  // ignore: use_setters_to_change_properties
+  factory Subscriber.fromParts(
+    Pointer<Void> ptr,
+    ReceivePort receivePort,
+    StreamController<Sample> controller,
+  ) {
+    return Subscriber._(ptr, receivePort, controller);
+  }
+
   /// Creates a subscriber on the given session and key expression.
   ///
   /// This is called internally by [Session.declareSubscriber].

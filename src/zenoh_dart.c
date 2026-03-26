@@ -1467,3 +1467,41 @@ FFI_PLUGIN_EXPORT void zd_liveliness_token_drop(uint8_t* token) {
   z_owned_liveliness_token_t* t = (z_owned_liveliness_token_t*)token;
   z_liveliness_token_drop(z_liveliness_token_move(t));
 }
+
+FFI_PLUGIN_EXPORT int8_t zd_liveliness_declare_subscriber(
+    uint8_t* subscriber_out, const uint8_t* session,
+    const char* key_expr, int64_t port, int8_t history) {
+  const z_loaned_session_t* loaned_session =
+      (const z_loaned_session_t*)session;
+
+  // Validate key expression
+  z_view_keyexpr_t ke;
+  int rc = z_view_keyexpr_from_str(&ke, key_expr);
+  if (rc != 0) return (int8_t)rc;
+
+  // Allocate context for the sample callback
+  zd_subscriber_context_t* ctx =
+      (zd_subscriber_context_t*)malloc(sizeof(zd_subscriber_context_t));
+  if (!ctx) return -1;
+  ctx->dart_port = (Dart_Port_DL)port;
+
+  // Create closure reusing the existing sample callback/drop
+  z_owned_closure_sample_t callback;
+  z_closure_sample(&callback, _zd_sample_callback, _zd_sample_drop, ctx);
+
+  // Set up options with history flag
+  z_liveliness_subscriber_options_t opts;
+  z_liveliness_subscriber_options_default(&opts);
+  opts.history = history ? true : false;
+
+  z_owned_subscriber_t* subscriber = (z_owned_subscriber_t*)subscriber_out;
+  rc = z_liveliness_declare_subscriber(
+      loaned_session, subscriber, z_view_keyexpr_loan(&ke),
+      z_closure_sample_move(&callback), &opts);
+
+  if (rc != 0) {
+    z_closure_sample_drop(z_closure_sample_move(&callback));
+  }
+
+  return (int8_t)rc;
+}

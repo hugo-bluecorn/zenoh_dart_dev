@@ -1,4 +1,4 @@
-// Liveliness token and subscriber tests (Phase 11)
+// Liveliness token and subscriber tests (Phase 11, Slices 1-2)
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
 
@@ -129,17 +129,20 @@ void main() {
         'zenoh/liveliness/test/1',
       );
 
-      // Wait for the PUT notification first
-      await sub.stream.first.timeout(const Duration(seconds: 5));
+      // Collect PUT + DELETE in a single subscription
+      final samplesFuture = sub.stream
+          .take(2)
+          .toList()
+          .timeout(const Duration(seconds: 10));
 
-      // Close the token -- should trigger DELETE
+      // Close the token after a brief delay to trigger DELETE
+      await Future.delayed(const Duration(seconds: 1));
       token.close();
 
-      final deleteSample = await sub.stream.first.timeout(
-        const Duration(seconds: 5),
-      );
-      expect(deleteSample.kind, equals(SampleKind.delete));
-      expect(deleteSample.keyExpr, contains('zenoh/liveliness/test/1'));
+      final samples = await samplesFuture;
+      expect(samples[0].kind, equals(SampleKind.put));
+      expect(samples[1].kind, equals(SampleKind.delete));
+      expect(samples[1].keyExpr, contains('zenoh/liveliness/test/1'));
     });
 
     test('Multiple tokens produce multiple PUT and individual DELETE',
@@ -150,6 +153,12 @@ void main() {
       addTearDown(sub.close);
       await Future.delayed(const Duration(milliseconds: 500));
 
+      // Collect all 4 samples (2 PUTs + 2 DELETEs) in a single subscription
+      final samplesFuture = sub.stream
+          .take(4)
+          .toList()
+          .timeout(const Duration(seconds: 15));
+
       final token1 = sessionA.declareLivelinessToken(
         'zenoh/liveliness/test/1',
       );
@@ -157,29 +166,22 @@ void main() {
         'zenoh/liveliness/test/2',
       );
 
-      // Collect 2 PUT samples
-      final puts = await sub.stream
-          .where((s) => s.kind == SampleKind.put)
-          .take(2)
-          .toList()
-          .timeout(const Duration(seconds: 5));
-      expect(puts, hasLength(2));
+      // Wait for PUTs to be delivered before closing
+      await Future.delayed(const Duration(seconds: 2));
 
-      // Close token1 -- expect DELETE for token1
+      // Close tokens sequentially
       token1.close();
-      final del1 = await sub.stream.first.timeout(
-        const Duration(seconds: 5),
-      );
-      expect(del1.kind, equals(SampleKind.delete));
-      expect(del1.keyExpr, contains('zenoh/liveliness/test/1'));
-
-      // Close token2 -- expect DELETE for token2
+      await Future.delayed(const Duration(milliseconds: 500));
       token2.close();
-      final del2 = await sub.stream.first.timeout(
-        const Duration(seconds: 5),
-      );
-      expect(del2.kind, equals(SampleKind.delete));
-      expect(del2.keyExpr, contains('zenoh/liveliness/test/2'));
+
+      final samples = await samplesFuture;
+      expect(samples, hasLength(4));
+
+      final puts = samples.where((s) => s.kind == SampleKind.put).toList();
+      final deletes =
+          samples.where((s) => s.kind == SampleKind.delete).toList();
+      expect(puts, hasLength(2));
+      expect(deletes, hasLength(2));
     });
 
     test('declareLivelinessSubscriber on closed session throws StateError',

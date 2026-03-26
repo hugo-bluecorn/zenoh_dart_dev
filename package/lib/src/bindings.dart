@@ -1904,6 +1904,57 @@ class ZenohDartBindings {
       );
   late final _zd_liveliness_token_drop = _zd_liveliness_token_dropPtr
       .asFunction<void Function(ffi.Pointer<ffi.Uint8>)>();
+
+  /// Declares a liveliness subscriber on the given key expression.
+  ///
+  /// Reuses the same z_owned_subscriber_t type and _zd_sample_callback/drop
+  /// as the regular subscriber. Samples are posted to the Dart NativePort.
+  ///
+  /// @param subscriber_out  Pointer to an uninitialized z_owned_subscriber_t (as uint8_t*).
+  /// @param session         Const pointer to a loaned session (as uint8_t*).
+  /// @param key_expr        Null-terminated key expression string.
+  /// @param port            Dart NativePort for sample callbacks.
+  /// @param history         Boolean (0=false, 1=true) for receiving pre-existing token state.
+  /// @return 0 on success, negative on failure.
+  int zd_liveliness_declare_subscriber(
+    ffi.Pointer<ffi.Uint8> subscriber_out,
+    ffi.Pointer<ffi.Uint8> session,
+    ffi.Pointer<ffi.Char> key_expr,
+    int port,
+    int history,
+  ) {
+    return _zd_liveliness_declare_subscriber(
+      subscriber_out,
+      session,
+      key_expr,
+      port,
+      history,
+    );
+  }
+
+  late final _zd_liveliness_declare_subscriberPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Int64,
+            ffi.Int8,
+          )
+        >
+      >('zd_liveliness_declare_subscriber');
+  late final _zd_liveliness_declare_subscriber =
+      _zd_liveliness_declare_subscriberPtr
+          .asFunction<
+            int Function(
+              ffi.Pointer<ffi.Uint8>,
+              ffi.Pointer<ffi.Uint8>,
+              ffi.Pointer<ffi.Char>,
+              int,
+              int,
+            )
+          >();
 }
 
 final class UnnamedStruct extends ffi.Struct {

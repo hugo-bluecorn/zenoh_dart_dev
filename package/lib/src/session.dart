@@ -361,6 +361,80 @@ class Session {
     return Queryable.declare(loanedSession, keyExpr, complete: complete);
   }
 
+  /// Declares a liveliness subscriber on the given [keyExpr].
+  ///
+  /// Returns a [Subscriber] whose [Subscriber.stream] delivers [Sample]s
+  /// with [SampleKind.put] when a liveliness token is declared and
+  /// [SampleKind.delete] when a token is undeclared.
+  ///
+  /// If [history] is true, the subscriber will also receive notifications
+  /// for liveliness tokens that were declared before the subscription.
+  ///
+  /// Throws [ZenohException] if the key expression is invalid.
+  /// Throws [StateError] if the session has been closed.
+  Subscriber declareLivelinessSubscriber(
+    String keyExpr, {
+    bool history = false,
+  }) {
+    _ensureOpen();
+
+    final size = bindings.zd_subscriber_sizeof();
+    final Pointer<Void> ptr = calloc.allocate(size);
+
+    final receivePort = ReceivePort();
+    final controller = StreamController<Sample>();
+
+    receivePort.listen((dynamic message) {
+      if (message is List) {
+        final keyExprStr = message[0] as String;
+        final payloadBytes = message[1] as Uint8List;
+        final kind = message[2] as int;
+        final attachmentBytes = message[3] as Uint8List?;
+        final encoding = message.length > 4 ? message[4] as String? : null;
+
+        final sample = Sample(
+          keyExpr: keyExprStr,
+          payload: utf8.decode(payloadBytes),
+          payloadBytes: payloadBytes,
+          kind: kind == 0 ? SampleKind.put : SampleKind.delete,
+          attachment: attachmentBytes != null
+              ? utf8.decode(attachmentBytes)
+              : null,
+          encoding: encoding,
+        );
+        controller.add(sample);
+      }
+    });
+
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+    final keyExprNative = keyExpr.toNativeUtf8();
+
+    try {
+      final rc = bindings.zd_liveliness_declare_subscriber(
+        ptr.cast(),
+        loanedSession.cast(),
+        keyExprNative.cast(),
+        receivePort.sendPort.nativePort,
+        history ? 1 : 0,
+      );
+
+      if (rc != 0) {
+        receivePort.close();
+        controller.close();
+        calloc.free(ptr);
+        throw ZenohException(
+          'Failed to declare liveliness subscriber',
+          rc,
+        );
+      }
+    } finally {
+      calloc.free(keyExprNative);
+    }
+
+    return Subscriber.fromParts(ptr, receivePort, controller);
+  }
+
   /// Declares a liveliness token on the given [keyExpr].
   ///
   /// The token advertises this session's presence on the key expression
