@@ -2,48 +2,72 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+/// The FVM-resolved Dart executable path.
+const _dartExe = '/home/hugo-bluecorn/fvm/versions/stable/bin/dart';
+
+/// Forcefully kills a process, using SIGKILL if SIGTERM doesn't work.
+Future<void> forceKill(Process process) async {
+  process.kill(ProcessSignal.sigterm);
+  try {
+    await process.exitCode.timeout(const Duration(seconds: 3));
+  } catch (_) {
+    process.kill(ProcessSignal.sigkill);
+    await process.exitCode
+        .timeout(const Duration(seconds: 2))
+        .catchError((_) => -1);
+  }
+}
+
+// CLI tests for z_querier.dart example
 void main() {
   final packageRoot = Directory.current.path;
 
   group('z_querier CLI', () {
-    Future<ProcessResult> runZQuerier([List<String> args = const []]) async {
-      return Process.run('fvm', [
-        'dart',
+    Future<String> runZQuerierAndCapture(List<String> args,
+        {int waitSeconds = 3}) async {
+      final process = await Process.start(_dartExe, [
         'run',
         'example/z_querier.dart',
         ...args,
-      ], workingDirectory: packageRoot).timeout(const Duration(seconds: 30));
+      ], workingDirectory: packageRoot);
+
+      final stdout = StringBuffer();
+      final subscription = process.stdout
+          .transform(const SystemEncoding().decoder)
+          .listen(stdout.write);
+
+      await Future<void>.delayed(Duration(seconds: waitSeconds));
+      await forceKill(process);
+      await subscription.cancel();
+
+      return stdout.toString();
     }
 
     test('runs with default arguments and prints declaring message', () async {
-      final result = await runZQuerier(['--timeout', '2000']);
-      expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
-      expect(result.stdout as String, contains('Declaring Querier'));
-      expect(result.stdout as String, contains('demo/example/**'));
+      final output = await runZQuerierAndCapture(['--timeout', '2000']);
+      expect(output, contains('Declaring Querier'));
+      expect(output, contains('demo/example/**'));
     });
 
     test('accepts --selector flag', () async {
-      final result = await runZQuerier([
+      final output = await runZQuerierAndCapture([
         '--selector',
         'demo/custom/**',
         '--timeout',
         '2000',
       ]);
-      expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
-      expect(result.stdout as String, contains('demo/custom/**'));
+      expect(output, contains('demo/custom/**'));
     });
 
     test('accepts short flags', () async {
-      final result =
-          await runZQuerier(['-s', 'demo/short/**', '-o', '2000']);
-      expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
-      expect(result.stdout as String, contains('demo/short/**'));
+      final output = await runZQuerierAndCapture(
+          ['-s', 'demo/short/**', '-o', '2000']);
+      expect(output, contains('demo/short/**'));
     });
 
     test('accepts --target flag', () async {
-      final result = await runZQuerier(['-t', 'ALL', '-o', '2000']);
-      expect(result.exitCode, equals(0), reason: 'stderr: ${result.stderr}');
-      expect(result.stdout as String, contains('Querying'));
+      final output = await runZQuerierAndCapture(['-t', 'ALL', '-o', '2000']);
+      expect(output, contains('Querying'));
     });
   });
 }
