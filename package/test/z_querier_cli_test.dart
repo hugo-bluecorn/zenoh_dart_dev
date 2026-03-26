@@ -23,8 +23,10 @@ void main() {
   final packageRoot = Directory.current.path;
 
   group('z_querier CLI', () {
-    Future<String> runZQuerierAndCapture(List<String> args,
-        {int waitSeconds = 3}) async {
+    Future<String> runZQuerierAndCapture(
+      List<String> args, {
+      int waitSeconds = 3,
+    }) async {
       final process = await Process.start(_dartExe, [
         'run',
         'example/z_querier.dart',
@@ -60,8 +62,12 @@ void main() {
     });
 
     test('accepts short flags', () async {
-      final output = await runZQuerierAndCapture(
-          ['-s', 'demo/short/**', '-o', '2000']);
+      final output = await runZQuerierAndCapture([
+        '-s',
+        'demo/short/**',
+        '-o',
+        '2000',
+      ]);
       expect(output, contains('demo/short/**'));
     });
 

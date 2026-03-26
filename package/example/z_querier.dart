@@ -91,10 +91,7 @@ Future<void> main(List<String> arguments) async {
 
     final zbytes = payloadStr != null ? ZBytes.fromString(buf) : null;
 
-    final stream = querier.get(
-      payload: zbytes,
-      parameters: parameters,
-    );
+    final stream = querier.get(payload: zbytes, parameters: parameters);
 
     await for (final reply in stream) {
       if (reply.isOk) {

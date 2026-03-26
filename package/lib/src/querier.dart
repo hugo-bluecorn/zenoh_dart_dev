@@ -27,8 +27,12 @@ class Querier {
   final ReceivePort? _matchingPort;
   final StreamController<bool>? _matchingController;
 
-  Querier._(this._ptr, this._keyExpr, this._matchingPort,
-      this._matchingController);
+  Querier._(
+    this._ptr,
+    this._keyExpr,
+    this._matchingPort,
+    this._matchingController,
+  );
 
   /// Creates a querier on the given session and key expression.
   ///
@@ -107,11 +111,7 @@ class Querier {
   /// Optional [encoding] specifies the payload encoding.
   ///
   /// Throws [StateError] if the querier has been closed.
-  Stream<Reply> get({
-    String? parameters,
-    ZBytes? payload,
-    Encoding? encoding,
-  }) {
+  Stream<Reply> get({String? parameters, ZBytes? payload, Encoding? encoding}) {
     if (_closed) throw StateError('Querier is closed');
 
     final controller = StreamController<Reply>();
@@ -130,8 +130,7 @@ class Querier {
           final payloadBytes = message[2] as Uint8List;
           final kind = message[3] as int;
           final attachmentBytes = message[4] as Uint8List?;
-          final encodingStr =
-              message.length > 5 ? message[5] as String? : null;
+          final encodingStr = message.length > 5 ? message[5] as String? : null;
 
           final sample = Sample(
             keyExpr: keyExprStr,
@@ -147,8 +146,9 @@ class Querier {
         } else if (tag == 0) {
           // Error reply: [0, error_payload_bytes, error_encoding]
           final errorPayloadBytes = message[1] as Uint8List;
-          final errorEncoding =
-              message.length > 2 ? message[2] as String? : null;
+          final errorEncoding = message.length > 2
+              ? message[2] as String?
+              : null;
 
           final replyError = ReplyError(
             payloadBytes: errorPayloadBytes,
@@ -203,10 +203,7 @@ class Querier {
     if (_closed) throw StateError('Querier has been closed');
     final Pointer<Int8> matching = calloc<Int8>();
     try {
-      final rc = bindings.zd_querier_get_matching_status(
-        _ptr.cast(),
-        matching,
-      );
+      final rc = bindings.zd_querier_get_matching_status(_ptr.cast(), matching);
       if (rc != 0) {
         throw ZenohException('Failed to get matching status', rc);
       }

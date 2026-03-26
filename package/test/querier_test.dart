@@ -56,13 +56,15 @@ void main() {
       );
     });
 
-    test('declareQuerier with invalid key expression throws ZenohException',
-        () {
-      expect(
-        () => session.declareQuerier(''),
-        throwsA(isA<ZenohException>()),
-      );
-    });
+    test(
+      'declareQuerier with invalid key expression throws ZenohException',
+      () {
+        expect(
+          () => session.declareQuerier(''),
+          throwsA(isA<ZenohException>()),
+        );
+      },
+    );
 
     test('declareQuerier with non-default options succeeds', () {
       final querier = session.declareQuerier(
@@ -100,8 +102,7 @@ void main() {
     });
 
     test('basic querier get receives reply from queryable', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/qr/basic');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/qr/basic');
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -124,53 +125,57 @@ void main() {
       expect(replies.first.ok.payload, equals('hello from queryable'));
     });
 
-    test('querier get with parameters passes parameters to queryable',
-        () async {
-      final receivedParams = Completer<String>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/qr/params');
-      addTearDown(queryable.close);
+    test(
+      'querier get with parameters passes parameters to queryable',
+      () async {
+        final receivedParams = Completer<String>();
+        final queryable = sessionA.declareQueryable(
+          'zenoh/dart/test/qr/params',
+        );
+        addTearDown(queryable.close);
 
-      queryable.stream.listen((query) {
-        receivedParams.complete(query.parameters);
-        query.reply('zenoh/dart/test/qr/params', 'ok');
-        query.dispose();
-      });
+        queryable.stream.listen((query) {
+          receivedParams.complete(query.parameters);
+          query.reply('zenoh/dart/test/qr/params', 'ok');
+          query.dispose();
+        });
 
-      await Future.delayed(Duration(milliseconds: 200));
+        await Future.delayed(Duration(milliseconds: 200));
 
-      final querier = sessionB.declareQuerier(
-        'zenoh/dart/test/qr/params',
-        timeout: Duration(seconds: 5),
-      );
-      addTearDown(querier.close);
+        final querier = sessionB.declareQuerier(
+          'zenoh/dart/test/qr/params',
+          timeout: Duration(seconds: 5),
+        );
+        addTearDown(querier.close);
 
-      await querier.get(parameters: 'key=value').toList();
+        await querier.get(parameters: 'key=value').toList();
 
-      final params =
-          await receivedParams.future.timeout(Duration(seconds: 5));
-      expect(params, equals('key=value'));
-    });
+        final params = await receivedParams.future.timeout(
+          Duration(seconds: 5),
+        );
+        expect(params, equals('key=value'));
+      },
+    );
 
-    test('querier get timeout with no queryable returns empty stream',
-        () async {
-      final querier = sessionB.declareQuerier(
-        'zenoh/dart/test/qr/timeout',
-        timeout: Duration(seconds: 1),
-      );
-      addTearDown(querier.close);
+    test(
+      'querier get timeout with no queryable returns empty stream',
+      () async {
+        final querier = sessionB.declareQuerier(
+          'zenoh/dart/test/qr/timeout',
+          timeout: Duration(seconds: 1),
+        );
+        addTearDown(querier.close);
 
-      final replies = await querier
-          .get()
-          .toList()
-          .timeout(Duration(seconds: 5));
+        final replies = await querier.get().toList().timeout(
+          Duration(seconds: 5),
+        );
 
-      expect(replies, isEmpty);
-    });
+        expect(replies, isEmpty);
+      },
+    );
 
     test('querier repeated gets return correct replies each time', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/qr/repeat');
+      final queryable = sessionA.declareQueryable('zenoh/dart/test/qr/repeat');
       addTearDown(queryable.close);
 
       var queryCount = 0;
@@ -237,39 +242,44 @@ void main() {
       sessionA.close();
     });
 
-    test('querier get with ZBytes payload delivers payload to queryable',
-        () async {
-      final receivedPayload = Completer<Uint8List?>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/qr/payload');
-      addTearDown(queryable.close);
+    test(
+      'querier get with ZBytes payload delivers payload to queryable',
+      () async {
+        final receivedPayload = Completer<Uint8List?>();
+        final queryable = sessionA.declareQueryable(
+          'zenoh/dart/test/qr/payload',
+        );
+        addTearDown(queryable.close);
 
-      queryable.stream.listen((query) {
-        receivedPayload.complete(query.payloadBytes);
-        query.reply('zenoh/dart/test/qr/payload', 'ack');
-        query.dispose();
-      });
+        queryable.stream.listen((query) {
+          receivedPayload.complete(query.payloadBytes);
+          query.reply('zenoh/dart/test/qr/payload', 'ack');
+          query.dispose();
+        });
 
-      await Future.delayed(Duration(milliseconds: 200));
+        await Future.delayed(Duration(milliseconds: 200));
 
-      final querier = sessionB.declareQuerier(
-        'zenoh/dart/test/qr/payload',
-        timeout: Duration(seconds: 5),
-      );
-      addTearDown(querier.close);
+        final querier = sessionB.declareQuerier(
+          'zenoh/dart/test/qr/payload',
+          timeout: Duration(seconds: 5),
+        );
+        addTearDown(querier.close);
 
-      final payload = ZBytes.fromUint8List(Uint8List.fromList([1, 2, 3]));
-      await querier.get(payload: payload).toList();
+        final payload = ZBytes.fromUint8List(Uint8List.fromList([1, 2, 3]));
+        await querier.get(payload: payload).toList();
 
-      final received =
-          await receivedPayload.future.timeout(Duration(seconds: 5));
-      expect(received, isNotNull);
-      expect(received, equals(Uint8List.fromList([1, 2, 3])));
-    });
+        final received = await receivedPayload.future.timeout(
+          Duration(seconds: 5),
+        );
+        expect(received, isNotNull);
+        expect(received, equals(Uint8List.fromList([1, 2, 3])));
+      },
+    );
 
     test('ZBytes payload is consumed after querier get', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/qr/consumed');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/qr/consumed',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -288,15 +298,13 @@ void main() {
       final payload = ZBytes.fromUint8List(Uint8List.fromList([4, 5, 6]));
       await querier.get(payload: payload).toList();
 
-      expect(
-        () => payload.nativePtr,
-        throwsA(isA<StateError>()),
-      );
+      expect(() => payload.nativePtr, throwsA(isA<StateError>()));
     });
 
     test('querier get with encoding round-trips through reply', () async {
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/qr/encoding');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/qr/encoding',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -325,8 +333,9 @@ void main() {
 
     test('querier get with null payload sends no payload', () async {
       final receivedPayload = Completer<Uint8List?>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/qr/nopayload');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/qr/nopayload',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -345,15 +354,17 @@ void main() {
 
       await querier.get().toList();
 
-      final received =
-          await receivedPayload.future.timeout(Duration(seconds: 5));
+      final received = await receivedPayload.future.timeout(
+        Duration(seconds: 5),
+      );
       expect(received, isNull);
     });
 
     test('querier get with empty parameters passes empty string', () async {
       final receivedParams = Completer<String>();
-      final queryable =
-          sessionA.declareQueryable('zenoh/dart/test/qr/emptyparams');
+      final queryable = sessionA.declareQueryable(
+        'zenoh/dart/test/qr/emptyparams',
+      );
       addTearDown(queryable.close);
 
       queryable.stream.listen((query) {
@@ -372,8 +383,7 @@ void main() {
 
       await querier.get().toList();
 
-      final params =
-          await receivedParams.future.timeout(Duration(seconds: 5));
+      final params = await receivedParams.future.timeout(Duration(seconds: 5));
       expect(params, equals(''));
     });
   });
@@ -416,24 +426,21 @@ void main() {
       },
     );
 
-    test(
-      'hasMatchingQueryables returns true when queryable exists',
-      () async {
-        final queryable = session2.declareQueryable(
-          'zenoh/dart/test/qrmatch/yes',
-        );
-        addTearDown(queryable.close);
-        final querier = session1.declareQuerier(
-          'zenoh/dart/test/qrmatch/yes',
-          timeout: Duration(seconds: 5),
-        );
-        addTearDown(querier.close);
+    test('hasMatchingQueryables returns true when queryable exists', () async {
+      final queryable = session2.declareQueryable(
+        'zenoh/dart/test/qrmatch/yes',
+      );
+      addTearDown(queryable.close);
+      final querier = session1.declareQuerier(
+        'zenoh/dart/test/qrmatch/yes',
+        timeout: Duration(seconds: 5),
+      );
+      addTearDown(querier.close);
 
-        await Future<void>.delayed(const Duration(seconds: 1));
+      await Future<void>.delayed(const Duration(seconds: 1));
 
-        expect(querier.hasMatchingQueryables(), isTrue);
-      },
-    );
+      expect(querier.hasMatchingQueryables(), isTrue);
+    });
 
     test('hasMatchingQueryables after close throws StateError', () {
       final querier = session1.declareQuerier(
@@ -441,10 +448,7 @@ void main() {
         timeout: Duration(seconds: 5),
       );
       querier.close();
-      expect(
-        () => querier.hasMatchingQueryables(),
-        throwsA(isA<StateError>()),
-      );
+      expect(() => querier.hasMatchingQueryables(), throwsA(isA<StateError>()));
     });
   });
 
