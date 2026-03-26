@@ -1,4 +1,18 @@
 # Changelog
+## 0.9.0
+
+### Added
+- `Session.declarePullSubscriber()` returns `PullSubscriber` with synchronous
+  `tryRecv()` polling via ring buffer
+- `PullSubscriber` class with `tryRecv()` (returns `Sample?`), `keyExpr`,
+  `close()`, and configurable ring buffer `capacity` (lossy: drops oldest on
+  overflow)
+- 4 new C shim functions (73 → 77 total): zd_ring_handler_sample_sizeof,
+  zd_declare_pull_subscriber, zd_pull_subscriber_try_recv,
+  zd_ring_handler_sample_drop
+- CLI example: `z_pull.dart` (interactive stdin polling)
+- 20 new integration tests (262 → 282 total)
+
 ## 0.8.0
 
 ### Changed
