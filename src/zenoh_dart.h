@@ -348,6 +348,23 @@ FFI_PLUGIN_EXPORT int zd_declare_subscriber(
 /// @param subscriber  Pointer to a z_owned_subscriber_t to drop.
 FFI_PLUGIN_EXPORT void zd_subscriber_drop(z_owned_subscriber_t* subscriber);
 
+/// Declares a background subscriber on the given key expression.
+///
+/// Unlike a regular subscriber, a background subscriber has no handle --
+/// it lives until the session is closed. Samples are posted to the Dart
+/// native port. When the session closes and the background subscriber is
+/// dropped internally by zenoh-c, a null sentinel is posted to signal
+/// stream completion.
+///
+/// @param session   Const pointer to a loaned session.
+/// @param key_expr  The key expression string.
+/// @param dart_port The Dart native port to post samples to.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_declare_background_subscriber(
+    const z_loaned_session_t* session,
+    const char* key_expr,
+    int64_t dart_port);
+
 // ---------------------------------------------------------------------------
 // Publisher
 // ---------------------------------------------------------------------------

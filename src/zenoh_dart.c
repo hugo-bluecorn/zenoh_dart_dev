@@ -313,6 +313,17 @@ static void _zd_sample_drop(void* context) {
   free(context);
 }
 
+/// Drop callback that posts a null sentinel before freeing.
+/// Used by background subscribers to signal stream completion when the
+/// session closes and the background subscriber is dropped by zenoh-c.
+static void _zd_sample_drop_with_sentinel(void* context) {
+  zd_subscriber_context_t* ctx = (zd_subscriber_context_t*)context;
+  Dart_CObject null_obj;
+  null_obj.type = Dart_CObject_kNull;
+  Dart_PostCObject_DL(ctx->dart_port, &null_obj);
+  free(context);
+}
+
 FFI_PLUGIN_EXPORT size_t zd_subscriber_sizeof(void) {
   return sizeof(z_owned_subscriber_t);
 }
@@ -344,6 +355,36 @@ FFI_PLUGIN_EXPORT int zd_declare_subscriber(
 
 FFI_PLUGIN_EXPORT void zd_subscriber_drop(z_owned_subscriber_t* subscriber) {
   z_subscriber_drop(z_subscriber_move(subscriber));
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_declare_background_subscriber(
+    const z_loaned_session_t* session,
+    const char* key_expr,
+    int64_t dart_port) {
+  // Validate key expression
+  z_view_keyexpr_t ke;
+  if (z_view_keyexpr_from_str(&ke, key_expr) != 0) {
+    return -1;
+  }
+
+  zd_subscriber_context_t* ctx =
+      (zd_subscriber_context_t*)malloc(sizeof(zd_subscriber_context_t));
+  if (!ctx) return -1;
+  ctx->dart_port = (Dart_Port_DL)dart_port;
+
+  z_owned_closure_sample_t callback;
+  z_closure_sample(&callback, _zd_sample_callback,
+                   _zd_sample_drop_with_sentinel, ctx);
+
+  int rc = z_declare_background_subscriber(
+      session, z_view_keyexpr_loan(&ke),
+      z_closure_sample_move(&callback), NULL);
+
+  if (rc != 0) {
+    z_closure_sample_drop(z_closure_sample_move(&callback));
+  }
+
+  return rc;
 }
 
 // ---------------------------------------------------------------------------

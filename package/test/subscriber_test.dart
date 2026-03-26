@@ -579,6 +579,7 @@ void main() {
     });
   });
 
+  // Background subscriber tests - no handle, lives until session closes
   group('Background Subscriber (TCP 17512-17514)', () {
     group('basic operations (TCP 17512)', () {
       late Session session1;

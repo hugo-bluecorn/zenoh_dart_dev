@@ -34,7 +34,10 @@ class Subscriber {
     final controller = StreamController<Sample>();
 
     receivePort.listen((dynamic message) {
-      if (message is List) {
+      if (message == null) {
+        receivePort.close();
+        controller.close();
+      } else if (message is List) {
         final keyExpr = message[0] as String;
         final payloadBytes = message[1] as Uint8List;
         final kind = message[2] as int;

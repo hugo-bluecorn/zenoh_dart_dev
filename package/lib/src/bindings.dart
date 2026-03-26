@@ -754,6 +754,42 @@ class ZenohDartBindings {
   late final _zd_subscriber_drop = _zd_subscriber_dropPtr
       .asFunction<void Function(ffi.Pointer<ffi.Opaque>)>();
 
+  /// Declares a background subscriber on the given key expression.
+  ///
+  /// Unlike a regular subscriber, a background subscriber has no handle --
+  /// it lives until the session is closed. Samples are posted to the Dart
+  /// native port. When the session closes and the background subscriber is
+  /// dropped internally by zenoh-c, a null sentinel is posted to signal
+  /// stream completion.
+  ///
+  /// @param session   Const pointer to a loaned session.
+  /// @param key_expr  The key expression string.
+  /// @param dart_port The Dart native port to post samples to.
+  /// @return 0 on success, negative on failure.
+  int zd_declare_background_subscriber(
+    ffi.Pointer<ffi.Opaque> session,
+    ffi.Pointer<ffi.Char> key_expr,
+    int dart_port,
+  ) {
+    return _zd_declare_background_subscriber(session, key_expr, dart_port);
+  }
+
+  late final _zd_declare_background_subscriberPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Opaque>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Int64,
+          )
+        >
+      >('zd_declare_background_subscriber');
+  late final _zd_declare_background_subscriber =
+      _zd_declare_background_subscriberPtr
+          .asFunction<
+            int Function(ffi.Pointer<ffi.Opaque>, ffi.Pointer<ffi.Char>, int)
+          >();
+
   /// Returns the size of z_owned_publisher_t in bytes.
   int zd_publisher_sizeof() {
     return _zd_publisher_sizeof();
