@@ -109,6 +109,94 @@ void main() {
     });
   });
 
+  group('ZBytes.toBytes()', () {
+    test('round-trip from string', () {
+      // Given: ZBytes created from string 'hello'
+      final zbytes = ZBytes.fromString('hello');
+
+      // When: toBytes() is called
+      final result = zbytes.toBytes();
+
+      // Then: returns UTF-8 bytes [104, 101, 108, 108, 111]
+      expect(result, equals(Uint8List.fromList([104, 101, 108, 108, 111])));
+      zbytes.dispose();
+    });
+
+    test('round-trip from Uint8List', () {
+      // Given: ZBytes created from Uint8List [1, 2, 3, 4, 5]
+      final data = Uint8List.fromList([1, 2, 3, 4, 5]);
+      final zbytes = ZBytes.fromUint8List(data);
+
+      // When: toBytes() is called
+      final result = zbytes.toBytes();
+
+      // Then: returns identical bytes
+      expect(result, equals(data));
+      zbytes.dispose();
+    });
+
+    test('empty bytes returns empty Uint8List', () {
+      // Given: ZBytes created from empty string
+      final zbytes = ZBytes.fromString('');
+
+      // When: toBytes() is called
+      final result = zbytes.toBytes();
+
+      // Then: returns empty Uint8List
+      expect(result, equals(Uint8List(0)));
+      expect(result.length, equals(0));
+      zbytes.dispose();
+    });
+
+    test('can be called multiple times (non-destructive read)', () {
+      // Given: ZBytes created from 'reuse'
+      final zbytes = ZBytes.fromString('reuse');
+
+      // When: toBytes() is called three times
+      final r1 = zbytes.toBytes();
+      final r2 = zbytes.toBytes();
+      final r3 = zbytes.toBytes();
+
+      // Then: all results are identical
+      expect(r1, equals(Uint8List.fromList([114, 101, 117, 115, 101])));
+      expect(r2, equals(r1));
+      expect(r3, equals(r1));
+      zbytes.dispose();
+    });
+
+    test('on disposed ZBytes throws StateError', () {
+      // Given: a disposed ZBytes
+      final zbytes = ZBytes.fromString('test');
+      zbytes.dispose();
+
+      // When/Then: toBytes() throws StateError
+      expect(() => zbytes.toBytes(), throwsStateError);
+    });
+
+    test('on consumed ZBytes throws StateError', () {
+      // Given: a consumed ZBytes
+      final zbytes = ZBytes.fromString('test');
+      zbytes.markConsumed();
+
+      // When/Then: toBytes() throws StateError
+      expect(() => zbytes.toBytes(), throwsStateError);
+    });
+
+    test('large payload (10KB)', () {
+      // Given: ZBytes created from 10KB of zeros
+      final data = Uint8List(10240);
+      final zbytes = ZBytes.fromUint8List(data);
+
+      // When: toBytes() is called
+      final result = zbytes.toBytes();
+
+      // Then: returns identical 10KB buffer
+      expect(result.length, equals(10240));
+      expect(result, equals(data));
+      zbytes.dispose();
+    });
+  });
+
   group('Barrel export', () {
     test('provides all public types', () {
       // Given: the zenoh package is imported via package:zenoh/zenoh.dart
