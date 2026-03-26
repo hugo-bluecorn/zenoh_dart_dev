@@ -751,4 +751,54 @@ FFI_PLUGIN_EXPORT int8_t zd_querier_declare_background_matching_listener(
 FFI_PLUGIN_EXPORT int8_t zd_querier_get_matching_status(
     const uint8_t* querier, int8_t* matching_out);
 
+// ---------------------------------------------------------------------------
+// Liveliness
+// ---------------------------------------------------------------------------
+
+/// Returns the size of z_owned_liveliness_token_t in bytes.
+FFI_PLUGIN_EXPORT size_t zd_liveliness_token_sizeof(void);
+
+/// Declares a liveliness token on the given key expression.
+///
+/// @param token_out  Pointer to an uninitialized z_owned_liveliness_token_t (as uint8_t*).
+/// @param session    Const pointer to a loaned session (as uint8_t*).
+/// @param key_expr   Null-terminated key expression string.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_liveliness_declare_token(
+    uint8_t* token_out, const uint8_t* session, const char* key_expr);
+
+/// Drops (undeclares and frees) a liveliness token.
+///
+/// @param token  Pointer to a z_owned_liveliness_token_t (as uint8_t*).
+FFI_PLUGIN_EXPORT void zd_liveliness_token_drop(uint8_t* token);
+
+/// Declares a liveliness subscriber on the given key expression.
+///
+/// Reuses the same z_owned_subscriber_t type and _zd_sample_callback/drop
+/// as the regular subscriber. Samples are posted to the Dart NativePort.
+///
+/// @param subscriber_out  Pointer to an uninitialized z_owned_subscriber_t (as uint8_t*).
+/// @param session         Const pointer to a loaned session (as uint8_t*).
+/// @param key_expr        Null-terminated key expression string.
+/// @param port            Dart NativePort for sample callbacks.
+/// @param history         Boolean (0=false, 1=true) for receiving pre-existing token state.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_liveliness_declare_subscriber(
+    uint8_t* subscriber_out, const uint8_t* session,
+    const char* key_expr, int64_t port, int8_t history);
+
+/// Queries liveliness tokens matching the given key expression.
+///
+/// Replies are posted to the Dart NativePort as arrays (same format as
+/// zd_get replies). A null sentinel signals completion.
+///
+/// @param session   Loaned session pointer.
+/// @param key_expr  Key expression to query liveliness for.
+/// @param port      Dart NativePort for reply callbacks.
+/// @param timeout_ms  Timeout in milliseconds (0 = default).
+/// @return 0 on success.
+FFI_PLUGIN_EXPORT int8_t zd_liveliness_get(
+    const uint8_t* session, const char* key_expr,
+    int64_t port, uint64_t timeout_ms);
+
 #endif // ZENOH_DART_H

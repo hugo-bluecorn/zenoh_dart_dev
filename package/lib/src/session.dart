@@ -14,6 +14,7 @@ import 'encoding.dart';
 import 'exceptions.dart';
 import 'id.dart';
 import 'keyexpr.dart';
+import 'liveliness.dart';
 import 'native_lib.dart';
 import 'priority.dart';
 import 'pull_subscriber.dart';
@@ -360,6 +361,108 @@ class Session {
     return Queryable.declare(loanedSession, keyExpr, complete: complete);
   }
 
+  /// Declares a liveliness subscriber on the given [keyExpr].
+  ///
+  /// Returns a [Subscriber] whose [Subscriber.stream] delivers [Sample]s
+  /// with [SampleKind.put] when a liveliness token is declared and
+  /// [SampleKind.delete] when a token is undeclared.
+  ///
+  /// If [history] is true, the subscriber will also receive notifications
+  /// for liveliness tokens that were declared before the subscription.
+  ///
+  /// Throws [ZenohException] if the key expression is invalid.
+  /// Throws [StateError] if the session has been closed.
+  Subscriber declareLivelinessSubscriber(
+    String keyExpr, {
+    bool history = false,
+  }) {
+    _ensureOpen();
+
+    final size = bindings.zd_subscriber_sizeof();
+    final Pointer<Void> ptr = calloc.allocate(size);
+
+    final (receivePort, controller) = Subscriber.createSampleChannel();
+
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+    final keyExprNative = keyExpr.toNativeUtf8();
+
+    try {
+      final rc = bindings.zd_liveliness_declare_subscriber(
+        ptr.cast(),
+        loanedSession.cast(),
+        keyExprNative.cast(),
+        receivePort.sendPort.nativePort,
+        history ? 1 : 0,
+      );
+
+      if (rc != 0) {
+        receivePort.close();
+        controller.close();
+        calloc.free(ptr);
+        throw ZenohException('Failed to declare liveliness subscriber', rc);
+      }
+    } finally {
+      calloc.free(keyExprNative);
+    }
+
+    return Subscriber.fromParts(ptr, receivePort, controller);
+  }
+
+  /// Declares a liveliness token on the given [keyExpr].
+  ///
+  /// The token advertises this session's presence on the key expression
+  /// for as long as it remains undeclared. Call [LivelinessToken.close]
+  /// when done.
+  ///
+  /// Throws [ZenohException] if the key expression is invalid.
+  /// Throws [StateError] if the session has been closed.
+  LivelinessToken declareLivelinessToken(String keyExpr) {
+    _ensureOpen();
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+    return LivelinessToken.declare(loanedSession, keyExpr);
+  }
+
+  /// Queries liveliness tokens matching the given [keyExpr].
+  ///
+  /// Returns a [Stream] of [Reply] objects for each alive token. The stream
+  /// completes when all replies have been received or the [timeout] expires.
+  /// Defaults to 10 seconds if [timeout] is not specified.
+  ///
+  /// Throws [ZenohException] if the key expression is invalid or the query
+  /// fails.
+  /// Throws [StateError] if the session has been closed.
+  Stream<Reply> livelinessGet(String keyExpr, {Duration? timeout}) {
+    _ensureOpen();
+
+    final (receivePort, controller) = _createReplyChannel();
+    final timeoutMs = (timeout ?? const Duration(seconds: 10)).inMilliseconds;
+
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+    final keyExprNative = keyExpr.toNativeUtf8();
+
+    try {
+      final rc = bindings.zd_liveliness_get(
+        loanedSession.cast(),
+        keyExprNative.cast(),
+        receivePort.sendPort.nativePort,
+        timeoutMs,
+      );
+
+      if (rc != 0) {
+        receivePort.close();
+        controller.close();
+        throw ZenohException('Liveliness get failed', rc);
+      }
+    } finally {
+      calloc.free(keyExprNative);
+    }
+
+    return controller.stream;
+  }
+
   /// Sends a query on the given [selector] and returns a stream of replies.
   ///
   /// The returned stream completes when all replies have been received
@@ -382,52 +485,8 @@ class Session {
   }) {
     _ensureOpen();
 
-    final controller = StreamController<Reply>();
-    final receivePort = ReceivePort();
+    final (receivePort, controller) = _createReplyChannel();
     final timeoutMs = (timeout ?? const Duration(seconds: 10)).inMilliseconds;
-
-    receivePort.listen((dynamic message) {
-      if (message == null) {
-        // Null sentinel: query complete
-        receivePort.close();
-        controller.close();
-      } else if (message is List) {
-        final tag = message[0] as int;
-        if (tag == 1) {
-          // Ok reply: [1, keyexpr, payload_bytes, kind, attachment, encoding]
-          final keyExpr = message[1] as String;
-          final payloadBytes = message[2] as Uint8List;
-          final kind = message[3] as int;
-          final attachmentBytes = message[4] as Uint8List?;
-          final encodingStr = message.length > 5 ? message[5] as String? : null;
-
-          final sample = Sample(
-            keyExpr: keyExpr,
-            payload: utf8.decode(payloadBytes),
-            payloadBytes: payloadBytes,
-            kind: kind == 0 ? SampleKind.put : SampleKind.delete,
-            attachment: attachmentBytes != null
-                ? utf8.decode(attachmentBytes)
-                : null,
-            encoding: encodingStr,
-          );
-          controller.add(Reply.ok(sample));
-        } else if (tag == 0) {
-          // Error reply: [0, error_payload_bytes, error_encoding]
-          final errorPayloadBytes = message[1] as Uint8List;
-          final errorEncoding = message.length > 2
-              ? message[2] as String?
-              : null;
-
-          final replyError = ReplyError(
-            payloadBytes: errorPayloadBytes,
-            payload: utf8.decode(errorPayloadBytes),
-            encoding: errorEncoding,
-          );
-          controller.add(Reply.error(replyError));
-        }
-      }
-    });
 
     final loanedSession =
         bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
@@ -474,5 +533,57 @@ class Session {
     }
 
     return controller.stream;
+  }
+
+  /// Creates a [ReceivePort] and [StreamController] wired for reply parsing.
+  ///
+  /// The returned [ReceivePort] listens for NativePort messages from the C
+  /// shim reply callback. Ok replies (tag=1) and error replies (tag=0) are
+  /// forwarded to the [StreamController]. A null sentinel closes both.
+  static (ReceivePort, StreamController<Reply>) _createReplyChannel() {
+    final controller = StreamController<Reply>();
+    final receivePort = ReceivePort();
+
+    receivePort.listen((dynamic message) {
+      if (message == null) {
+        receivePort.close();
+        controller.close();
+      } else if (message is List) {
+        final tag = message[0] as int;
+        if (tag == 1) {
+          final keyExpr = message[1] as String;
+          final payloadBytes = message[2] as Uint8List;
+          final kind = message[3] as int;
+          final attachmentBytes = message[4] as Uint8List?;
+          final encodingStr = message.length > 5 ? message[5] as String? : null;
+
+          final sample = Sample(
+            keyExpr: keyExpr,
+            payload: utf8.decode(payloadBytes),
+            payloadBytes: payloadBytes,
+            kind: kind == 0 ? SampleKind.put : SampleKind.delete,
+            attachment: attachmentBytes != null
+                ? utf8.decode(attachmentBytes)
+                : null,
+            encoding: encodingStr,
+          );
+          controller.add(Reply.ok(sample));
+        } else if (tag == 0) {
+          final errorPayloadBytes = message[1] as Uint8List;
+          final errorEncoding = message.length > 2
+              ? message[2] as String?
+              : null;
+
+          final replyError = ReplyError(
+            payloadBytes: errorPayloadBytes,
+            payload: utf8.decode(errorPayloadBytes),
+            encoding: errorEncoding,
+          );
+          controller.add(Reply.error(replyError));
+        }
+      }
+    });
+
+    return (receivePort, controller);
   }
 }
