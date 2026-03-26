@@ -1,4 +1,6 @@
 // Liveliness token, subscriber, and get tests (Phase 11)
+import 'dart:async';
+
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
 
@@ -331,6 +333,78 @@ void main() {
       expect(
         () => sessionA.livelinessGet(''),
         throwsA(isA<ZenohException>()),
+      );
+    });
+  });
+
+  group('Liveliness Subscriber History (TCP 17501)', () {
+    late Session sessionA;
+    late Session sessionB;
+
+    setUp(() async {
+      sessionA = Session.open(
+        config: Config()
+          ..insertJson5('listen/endpoints', '["tcp/127.0.0.1:17501"]'),
+      );
+      await Future.delayed(const Duration(milliseconds: 500));
+      sessionB = Session.open(
+        config: Config()
+          ..insertJson5('connect/endpoints', '["tcp/127.0.0.1:17501"]'),
+      );
+      await Future.delayed(const Duration(milliseconds: 500));
+    });
+
+    tearDown(() {
+      sessionB.close();
+      sessionA.close();
+    });
+
+    test('history=true receives existing alive tokens as PUT', () async {
+      // Session A declares a token BEFORE session B subscribes
+      final token = sessionA.declareLivelinessToken(
+        'zenoh/liveliness/test/hist1',
+      );
+      addTearDown(token.close);
+
+      // Wait for token to propagate
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Session B subscribes with history: true — should receive existing token
+      final sub = sessionB.declareLivelinessSubscriber(
+        'zenoh/liveliness/test/*',
+        history: true,
+      );
+      addTearDown(sub.close);
+
+      final sample = await sub.stream.first.timeout(
+        const Duration(seconds: 5),
+      );
+      expect(sample.kind, equals(SampleKind.put));
+      expect(sample.keyExpr, contains('zenoh/liveliness/test/hist1'));
+    });
+
+    test('history=false does NOT receive existing alive tokens', () async {
+      // Session A declares a token BEFORE session B subscribes
+      final token = sessionA.declareLivelinessToken(
+        'zenoh/liveliness/test/hist2',
+      );
+      addTearDown(token.close);
+
+      // Wait for token to propagate
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Session B subscribes with history: false (default) — should NOT
+      // receive the existing token
+      final sub = sessionB.declareLivelinessSubscriber(
+        'zenoh/liveliness/test/*',
+        history: false,
+      );
+      addTearDown(sub.close);
+
+      // Wait 2 seconds and verify no sample arrives
+      expect(
+        () => sub.stream.first.timeout(const Duration(seconds: 2)),
+        throwsA(isA<TimeoutException>()),
       );
     });
   });
