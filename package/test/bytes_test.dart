@@ -197,6 +197,93 @@ void main() {
     });
   });
 
+  group('ZBytes.clone()', () {
+    test('clone produces valid independent copy', () {
+      // Given: a ZBytes created from a string
+      final original = ZBytes.fromString('hello clone');
+
+      // When: clone() is called
+      final cloned = original.clone();
+
+      // Then: both return the same string
+      expect(cloned.toStr(), equals('hello clone'));
+      expect(original.toStr(), equals('hello clone'));
+
+      cloned.dispose();
+      original.dispose();
+    });
+
+    test('clone and original can be disposed independently', () {
+      // Given: a ZBytes and its clone
+      final original = ZBytes.fromString('independent');
+      final cloned = original.clone();
+
+      // When: original is disposed first
+      original.dispose();
+
+      // Then: clone still works
+      expect(cloned.toStr(), equals('independent'));
+      cloned.dispose();
+
+      // And vice versa: disposing clone after original is fine
+      final a = ZBytes.fromString('reverse');
+      final b = a.clone();
+      b.dispose();
+      expect(a.toStr(), equals('reverse'));
+      a.dispose();
+    });
+
+    test('clone of clone works', () {
+      // Given: a ZBytes
+      final original = ZBytes.fromString('deep');
+
+      // When: clone of clone is created
+      final clone1 = original.clone();
+      final clone2 = clone1.clone();
+
+      // Then: all three hold the same value
+      expect(original.toStr(), equals('deep'));
+      expect(clone1.toStr(), equals('deep'));
+      expect(clone2.toStr(), equals('deep'));
+
+      clone2.dispose();
+      clone1.dispose();
+      original.dispose();
+    });
+
+    test('clone on disposed throws StateError', () {
+      // Given: a disposed ZBytes
+      final zbytes = ZBytes.fromString('disposed');
+      zbytes.dispose();
+
+      // When/Then: clone() throws StateError
+      expect(() => zbytes.clone(), throwsStateError);
+    });
+
+    test('clone on consumed throws StateError', () {
+      // Given: a consumed ZBytes
+      final zbytes = ZBytes.fromString('consumed');
+      zbytes.markConsumed();
+
+      // When/Then: clone() throws StateError
+      expect(() => zbytes.clone(), throwsStateError);
+    });
+
+    test('clone of empty bytes works', () {
+      // Given: ZBytes created from an empty string
+      final original = ZBytes.fromString('');
+
+      // When: clone() is called
+      final cloned = original.clone();
+
+      // Then: clone is valid and returns empty string
+      expect(cloned.toStr(), equals(''));
+
+      cloned.dispose();
+      original.dispose();
+    });
+  });
+
   group('Barrel export', () {
     test('provides all public types', () {
       // Given: the zenoh package is imported via package:zenoh/zenoh.dart
