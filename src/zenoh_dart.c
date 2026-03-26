@@ -1315,3 +1315,126 @@ FFI_PLUGIN_EXPORT void zd_ring_handler_sample_drop(uint8_t* handler) {
   z_owned_ring_handler_sample_t* h = (z_owned_ring_handler_sample_t*)handler;
   z_ring_handler_sample_drop(z_ring_handler_sample_move(h));
 }
+
+// ---------------------------------------------------------------------------
+// Querier
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT size_t zd_querier_sizeof(void) {
+  return sizeof(z_owned_querier_t);
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_declare_querier(
+    uint8_t* querier_out, const uint8_t* session,
+    const char* key_expr, int8_t target,
+    int8_t consolidation, uint64_t timeout_ms) {
+  // Create key expression view
+  z_view_keyexpr_t ke;
+  if (z_view_keyexpr_from_str(&ke, key_expr) != 0) {
+    return -1;
+  }
+
+  z_querier_options_t opts;
+  z_querier_options_default(&opts);
+
+  opts.target = (z_query_target_t)target;
+
+  if (consolidation == -1) {
+    opts.consolidation = z_query_consolidation_default();
+  } else {
+    opts.consolidation.mode = (z_consolidation_mode_t)consolidation;
+  }
+
+  if (timeout_ms > 0) {
+    opts.timeout_ms = timeout_ms;
+  }
+
+  return (int8_t)z_declare_querier(
+      (const z_loaned_session_t*)session,
+      (z_owned_querier_t*)querier_out,
+      z_view_keyexpr_loan(&ke),
+      &opts);
+}
+
+FFI_PLUGIN_EXPORT void zd_querier_drop(uint8_t* querier) {
+  z_querier_drop(z_querier_move((z_owned_querier_t*)querier));
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_querier_get(
+    const uint8_t* querier, const char* parameters,
+    int64_t port, uint8_t* payload, const char* encoding) {
+  const z_loaned_querier_t* loaned =
+      z_querier_loan((const z_owned_querier_t*)querier);
+
+  zd_get_context_t* ctx =
+      (zd_get_context_t*)malloc(sizeof(zd_get_context_t));
+  if (!ctx) return -1;
+  ctx->dart_port = (Dart_Port_DL)port;
+
+  z_owned_closure_reply_t callback;
+  z_closure_reply(&callback, _zd_reply_callback, _zd_get_drop, ctx);
+
+  z_querier_get_options_t opts;
+  z_querier_get_options_default(&opts);
+
+  // Optional payload (z_owned_bytes_t*, consumed via move)
+  if (payload != NULL) {
+    opts.payload = z_bytes_move((z_owned_bytes_t*)payload);
+  }
+
+  // Optional encoding
+  z_owned_encoding_t owned_encoding;
+  if (encoding != NULL) {
+    z_encoding_from_str(&owned_encoding, encoding);
+    opts.encoding = z_encoding_move(&owned_encoding);
+  }
+
+  int rc = z_querier_get(
+      loaned,
+      parameters,
+      z_closure_reply_move(&callback),
+      &opts);
+
+  if (rc != 0) {
+    z_closure_reply_drop(z_closure_reply_move(&callback));
+  }
+
+  return (int8_t)rc;
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_querier_declare_background_matching_listener(
+    const uint8_t* querier, int64_t dart_port) {
+  const z_loaned_querier_t* loaned =
+      z_querier_loan((const z_owned_querier_t*)querier);
+
+  zd_matching_context_t* ctx =
+      (zd_matching_context_t*)malloc(sizeof(zd_matching_context_t));
+  if (!ctx) return -1;
+  ctx->dart_port = (Dart_Port_DL)dart_port;
+
+  z_owned_closure_matching_status_t callback;
+  z_closure_matching_status(
+      &callback, _zd_matching_status_callback, _zd_matching_drop, ctx);
+
+  int rc = z_querier_declare_background_matching_listener(
+      loaned, z_closure_matching_status_move(&callback));
+
+  if (rc != 0) {
+    z_closure_matching_status_drop(z_closure_matching_status_move(&callback));
+  }
+
+  return (int8_t)rc;
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_querier_get_matching_status(
+    const uint8_t* querier, int8_t* matching_out) {
+  const z_loaned_querier_t* loaned =
+      z_querier_loan((const z_owned_querier_t*)querier);
+
+  z_matching_status_t status;
+  int rc = z_querier_get_matching_status(loaned, &status);
+  if (rc == 0) {
+    *matching_out = status.matching ? 1 : 0;
+  }
+  return (int8_t)rc;
+}

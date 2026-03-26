@@ -13,6 +13,7 @@ export 'src/keyexpr.dart';
 export 'src/priority.dart';
 export 'src/pull_subscriber.dart';
 export 'src/publisher.dart';
+export 'src/querier.dart';
 export 'src/query.dart';
 export 'src/query_target.dart';
 export 'src/queryable.dart';
