@@ -703,6 +703,7 @@ class ZenohDartBindings {
   /// @param encoding            MIME type string for default encoding (NULL = default).
   /// @param congestion_control  Congestion control strategy (-1 = default/block).
   /// @param priority            Message priority (-1 = default/data=5).
+  /// @param is_express          Express mode (-1 = default, 0 = false, 1 = true).
   /// @return 0 on success, negative on failure.
   int zd_declare_publisher(
     ffi.Pointer<ffi.Opaque> session,
@@ -711,6 +712,7 @@ class ZenohDartBindings {
     ffi.Pointer<ffi.Char> encoding,
     int congestion_control,
     int priority,
+    int is_express,
   ) {
     return _zd_declare_publisher(
       session,
@@ -719,6 +721,7 @@ class ZenohDartBindings {
       encoding,
       congestion_control,
       priority,
+      is_express,
     );
   }
 
@@ -732,6 +735,7 @@ class ZenohDartBindings {
             ffi.Pointer<ffi.Char>,
             ffi.Int,
             ffi.Int,
+            ffi.Int8,
           )
         >
       >('zd_declare_publisher');
@@ -742,6 +746,7 @@ class ZenohDartBindings {
           ffi.Pointer<ffi.Opaque>,
           ffi.Pointer<ffi.Opaque>,
           ffi.Pointer<ffi.Char>,
+          int,
           int,
           int,
         )

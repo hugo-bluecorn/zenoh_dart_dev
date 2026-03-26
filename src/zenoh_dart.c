@@ -337,7 +337,8 @@ FFI_PLUGIN_EXPORT int zd_declare_publisher(
     const z_loaned_keyexpr_t* keyexpr,
     const char* encoding,
     int congestion_control,
-    int priority) {
+    int priority,
+    int8_t is_express) {
   z_publisher_options_t opts;
   z_publisher_options_default(&opts);
 
@@ -351,6 +352,9 @@ FFI_PLUGIN_EXPORT int zd_declare_publisher(
   }
   if (priority >= 0) {
     opts.priority = (z_priority_t)priority;
+  }
+  if (is_express >= 0) {
+    opts.is_express = (bool)is_express;
   }
 
   return z_declare_publisher(session, publisher, keyexpr, &opts);

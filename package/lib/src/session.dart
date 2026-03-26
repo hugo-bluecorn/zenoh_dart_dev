@@ -228,6 +228,7 @@ class Session {
     Encoding? encoding,
     CongestionControl congestionControl = CongestionControl.block,
     Priority priority = Priority.data,
+    bool isExpress = false,
     bool enableMatchingListener = false,
   }) {
     _ensureOpen();
@@ -243,6 +244,7 @@ class Session {
         encoding: encoding,
         congestionControl: congestionControl,
         priority: priority,
+        isExpress: isExpress,
         enableMatchingListener: enableMatchingListener,
       );
     } finally {

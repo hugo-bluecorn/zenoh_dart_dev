@@ -423,7 +423,7 @@ void main() {
     });
   });
 
-  group('Publisher isExpress option', () {
+  group('Publisher isExpress option', () { // Phase 12 slice 1
     late Session session;
 
     setUpAll(() {

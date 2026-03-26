@@ -336,6 +336,7 @@ FFI_PLUGIN_EXPORT size_t zd_publisher_sizeof(void);
 /// @param encoding            MIME type string for default encoding (NULL = default).
 /// @param congestion_control  Congestion control strategy (-1 = default/block).
 /// @param priority            Message priority (-1 = default/data=5).
+/// @param is_express          Express mode (-1 = default, 0 = false, 1 = true).
 /// @return 0 on success, negative on failure.
 FFI_PLUGIN_EXPORT int zd_declare_publisher(
     const z_loaned_session_t* session,
@@ -343,7 +344,8 @@ FFI_PLUGIN_EXPORT int zd_declare_publisher(
     const z_loaned_keyexpr_t* keyexpr,
     const char* encoding,
     int congestion_control,
-    int priority);
+    int priority,
+    int8_t is_express);
 
 /// Obtains a const loaned reference to the publisher.
 FFI_PLUGIN_EXPORT const z_loaned_publisher_t* zd_publisher_loan(
