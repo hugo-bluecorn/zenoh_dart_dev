@@ -381,30 +381,7 @@ class Session {
     final size = bindings.zd_subscriber_sizeof();
     final Pointer<Void> ptr = calloc.allocate(size);
 
-    final receivePort = ReceivePort();
-    final controller = StreamController<Sample>();
-
-    receivePort.listen((dynamic message) {
-      if (message is List) {
-        final keyExprStr = message[0] as String;
-        final payloadBytes = message[1] as Uint8List;
-        final kind = message[2] as int;
-        final attachmentBytes = message[3] as Uint8List?;
-        final encoding = message.length > 4 ? message[4] as String? : null;
-
-        final sample = Sample(
-          keyExpr: keyExprStr,
-          payload: utf8.decode(payloadBytes),
-          payloadBytes: payloadBytes,
-          kind: kind == 0 ? SampleKind.put : SampleKind.delete,
-          attachment: attachmentBytes != null
-              ? utf8.decode(attachmentBytes)
-              : null,
-          encoding: encoding,
-        );
-        controller.add(sample);
-      }
-    });
+    final (receivePort, controller) = Subscriber.createSampleChannel();
 
     final loanedSession =
         bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;

@@ -1,4 +1,4 @@
-// Liveliness token and subscriber tests (Phase 11, Slices 1-2)
+// Liveliness token and subscriber tests (Phase 11, Slices 1 & 2)
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
 
