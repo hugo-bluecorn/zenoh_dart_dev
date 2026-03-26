@@ -469,6 +469,29 @@ class ZenohDartBindings {
   late final _zd_bytes_drop = _zd_bytes_dropPtr
       .asFunction<void Function(ffi.Pointer<ffi.Opaque>)>();
 
+  /// Clones owned bytes into a pre-allocated destination.
+  ///
+  /// Loans the source, then calls z_bytes_clone() to produce an independent
+  /// copy that shares the underlying reference-counted data.
+  ///
+  /// @param dst  Pointer to an uninitialized z_owned_bytes_t (cast to uint8_t*).
+  /// @param src  Pointer to a valid z_owned_bytes_t (cast to uint8_t*).
+  /// @return 0 on success.
+  int zd_bytes_clone(ffi.Pointer<ffi.Uint8> dst, ffi.Pointer<ffi.Uint8> src) {
+    return _zd_bytes_clone(dst, src);
+  }
+
+  late final _zd_bytes_clonePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>)
+        >
+      >('zd_bytes_clone');
+  late final _zd_bytes_clone = _zd_bytes_clonePtr
+      .asFunction<
+        int Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>)
+      >();
+
   /// Returns the size of z_owned_string_t in bytes.
   ///
   /// Used by Dart to allocate the correct amount of native memory

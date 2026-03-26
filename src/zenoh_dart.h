@@ -209,6 +209,16 @@ FFI_PLUGIN_EXPORT int8_t zd_bytes_to_buf(const uint8_t* bytes,
 /// @param bytes  Pointer to a z_owned_bytes_t to drop.
 FFI_PLUGIN_EXPORT void zd_bytes_drop(z_owned_bytes_t* bytes);
 
+/// Clones owned bytes into a pre-allocated destination.
+///
+/// Loans the source, then calls z_bytes_clone() to produce an independent
+/// copy that shares the underlying reference-counted data.
+///
+/// @param dst  Pointer to an uninitialized z_owned_bytes_t (cast to uint8_t*).
+/// @param src  Pointer to a valid z_owned_bytes_t (cast to uint8_t*).
+/// @return 0 on success.
+FFI_PLUGIN_EXPORT int8_t zd_bytes_clone(uint8_t* dst, const uint8_t* src);
+
 // ---------------------------------------------------------------------------
 // Owned String
 // ---------------------------------------------------------------------------

@@ -113,6 +113,14 @@ FFI_PLUGIN_EXPORT void zd_bytes_drop(z_owned_bytes_t* bytes) {
   z_bytes_drop(z_bytes_move(bytes));
 }
 
+FFI_PLUGIN_EXPORT int8_t zd_bytes_clone(uint8_t* dst, const uint8_t* src) {
+  z_owned_bytes_t* dst_owned = (z_owned_bytes_t*)dst;
+  const z_owned_bytes_t* src_owned = (const z_owned_bytes_t*)src;
+  const z_loaned_bytes_t* loaned = z_bytes_loan(src_owned);
+  z_bytes_clone(dst_owned, loaned);
+  return 0;
+}
+
 // ---------------------------------------------------------------------------
 // Owned String
 // ---------------------------------------------------------------------------

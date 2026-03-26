@@ -122,6 +122,26 @@ class ZBytes {
     }
   }
 
+  /// Creates an independent shallow copy of this [ZBytes].
+  ///
+  /// The clone shares the underlying reference-counted data but has its own
+  /// native ownership -- disposing the clone does not affect the original,
+  /// and vice versa.
+  ///
+  /// Throws [StateError] if this [ZBytes] has been disposed or consumed.
+  /// Throws [ZenohException] if the native clone fails.
+  ZBytes clone() {
+    _ensureNotDisposed();
+    _ensureNotConsumed();
+    final Pointer<Void> dst = calloc.allocate(bindings.zd_bytes_sizeof());
+    final rc = bindings.zd_bytes_clone(dst.cast(), _ptr.cast());
+    if (rc != 0) {
+      calloc.free(dst);
+      throw ZenohException('Failed to clone ZBytes', rc);
+    }
+    return ZBytes._(dst);
+  }
+
   /// Returns whether this payload is backed by shared memory.
   ///
   /// Throws [StateError] if this [ZBytes] has been consumed or disposed.
