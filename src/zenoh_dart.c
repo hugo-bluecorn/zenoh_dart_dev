@@ -94,6 +94,21 @@ FFI_PLUGIN_EXPORT const z_loaned_bytes_t* zd_bytes_loan(
   return z_bytes_loan(bytes);
 }
 
+FFI_PLUGIN_EXPORT int32_t zd_bytes_len(const uint8_t* bytes) {
+  const z_owned_bytes_t* owned = (const z_owned_bytes_t*)bytes;
+  const z_loaned_bytes_t* loaned = z_bytes_loan(owned);
+  return (int32_t)z_bytes_len(loaned);
+}
+
+FFI_PLUGIN_EXPORT int8_t zd_bytes_to_buf(const uint8_t* bytes,
+                                          uint8_t* out, int32_t capacity) {
+  const z_owned_bytes_t* owned = (const z_owned_bytes_t*)bytes;
+  const z_loaned_bytes_t* loaned = z_bytes_loan(owned);
+  z_bytes_reader_t reader = z_bytes_get_reader(loaned);
+  z_bytes_reader_read(&reader, out, (size_t)capacity);
+  return 0;
+}
+
 FFI_PLUGIN_EXPORT void zd_bytes_drop(z_owned_bytes_t* bytes) {
   z_bytes_drop(z_bytes_move(bytes));
 }

@@ -102,6 +102,26 @@ class ZBytes {
     return result;
   }
 
+  /// Reads the payload content as a [Uint8List].
+  ///
+  /// This is a non-destructive read -- the [ZBytes] can still be used after
+  /// calling this method.
+  ///
+  /// Throws [StateError] if this [ZBytes] has been disposed or consumed.
+  Uint8List toBytes() {
+    _ensureNotDisposed();
+    _ensureNotConsumed();
+    final len = bindings.zd_bytes_len(_ptr.cast());
+    if (len == 0) return Uint8List(0);
+    final buf = malloc<Uint8>(len);
+    try {
+      bindings.zd_bytes_to_buf(_ptr.cast(), buf, len);
+      return Uint8List.fromList(buf.asTypedList(len));
+    } finally {
+      malloc.free(buf);
+    }
+  }
+
   /// Returns whether this payload is backed by shared memory.
   ///
   /// Throws [StateError] if this [ZBytes] has been consumed or disposed.

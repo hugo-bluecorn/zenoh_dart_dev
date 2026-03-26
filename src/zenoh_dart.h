@@ -184,6 +184,23 @@ FFI_PLUGIN_EXPORT int zd_bytes_to_string(const z_loaned_bytes_t* bytes,
 FFI_PLUGIN_EXPORT const z_loaned_bytes_t* zd_bytes_loan(
     const z_owned_bytes_t* bytes);
 
+/// Returns the total number of bytes in the payload.
+///
+/// @param bytes  Pointer to a z_owned_bytes_t (cast to uint8_t*).
+/// @return Total number of bytes.
+FFI_PLUGIN_EXPORT int32_t zd_bytes_len(const uint8_t* bytes);
+
+/// Reads the content of owned bytes into a caller-provided buffer.
+///
+/// Uses z_bytes_reader to copy up to `capacity` bytes into `out`.
+///
+/// @param bytes     Pointer to a z_owned_bytes_t (cast to uint8_t*).
+/// @param out       Pointer to a buffer to receive the data.
+/// @param capacity  Maximum number of bytes to read.
+/// @return 0 on success.
+FFI_PLUGIN_EXPORT int8_t zd_bytes_to_buf(const uint8_t* bytes,
+                                          uint8_t* out, int32_t capacity);
+
 /// Drops (frees) owned bytes.
 ///
 /// After this call the owned bytes are in gravestone state.

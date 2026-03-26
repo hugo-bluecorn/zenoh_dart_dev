@@ -406,6 +406,52 @@ class ZenohDartBindings {
   late final _zd_bytes_loan = _zd_bytes_loanPtr
       .asFunction<ffi.Pointer<ffi.Opaque> Function(ffi.Pointer<ffi.Opaque>)>();
 
+  /// Returns the total number of bytes in the payload.
+  ///
+  /// @param bytes  Pointer to a z_owned_bytes_t (cast to uint8_t*).
+  /// @return Total number of bytes.
+  int zd_bytes_len(ffi.Pointer<ffi.Uint8> bytes) {
+    return _zd_bytes_len(bytes);
+  }
+
+  late final _zd_bytes_lenPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Uint8>)>>(
+        'zd_bytes_len',
+      );
+  late final _zd_bytes_len = _zd_bytes_lenPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Uint8>)>();
+
+  /// Reads the content of owned bytes into a caller-provided buffer.
+  ///
+  /// Uses z_bytes_reader to copy up to `capacity` bytes into `out`.
+  ///
+  /// @param bytes     Pointer to a z_owned_bytes_t (cast to uint8_t*).
+  /// @param out       Pointer to a buffer to receive the data.
+  /// @param capacity  Maximum number of bytes to read.
+  /// @return 0 on success.
+  int zd_bytes_to_buf(
+    ffi.Pointer<ffi.Uint8> bytes,
+    ffi.Pointer<ffi.Uint8> out,
+    int capacity,
+  ) {
+    return _zd_bytes_to_buf(bytes, out, capacity);
+  }
+
+  late final _zd_bytes_to_bufPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Int32,
+          )
+        >
+      >('zd_bytes_to_buf');
+  late final _zd_bytes_to_buf = _zd_bytes_to_bufPtr
+      .asFunction<
+        int Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int)
+      >();
+
   /// Drops (frees) owned bytes.
   ///
   /// After this call the owned bytes are in gravestone state.
