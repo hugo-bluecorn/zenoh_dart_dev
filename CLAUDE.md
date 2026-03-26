@@ -42,14 +42,16 @@ zenoh_dart_dev/                 # git repo root (development workshop)
 **Patch v0.6.3: Android native library support** — `native_lib.dart` adds `Platform.isAndroid` short-circuit (bare `DynamicLibrary.open`); `hook/build.dart` is now target-aware (dispatches on `targetOS`/`targetArchitecture` for Android ABI mapping); `build_zenoh_android.sh` cross-compiles both `libzenohc.so` (cargo-ndk) and `libzenoh_dart.so` (CMake + NDK toolchain) per ABI; SHM feature flags excluded on Android (`if(NOT ANDROID)` in CMakeLists.txt). Prebuilts at `native/android/<abi>/`. Validated E2E: C++ SHM publisher → zenohd → WiFi → Pixel 9a → Flutter subscriber.
 **Phase 6 Get/Queryable: COMPLETE** — 72 C shim functions, 237 integration tests. `Session.get()` returns `Stream<Reply>`; `Session.declareQueryable()` returns `Queryable`; `Query`, `Reply`, `ReplyError`, `QueryTarget`, `ConsolidationMode` types; CLI examples `z_get.dart` and `z_queryable.dart`.
 **Phase 7 SHM Get/Queryable: COMPLETE** — 73 C shim functions, 262 integration tests. `Session.get()` and `Query.replyBytes()` widened to accept `ZBytes` (SHM zero-copy); `ZBytes.isShmBacked` property detects SHM-backed bytes; CLI examples `z_get_shm.dart` and `z_queryable_shm.dart`.
+**Phase 9 Pull Subscriber: COMPLETE** — 77 C shim functions, 282 integration tests. `PullSubscriber` with synchronous `tryRecv()` via ring buffer; configurable `capacity` (lossy: drops oldest on overflow); CLI example `z_pull.dart`.
 
 Available Dart API classes:
 - `Zenoh` — Static utilities: `initLog(fallback)` for runtime logger initialization (call before `Session.open()`); `scout(config)` discovers zenoh entities on the network
 - `Config` — Session configuration with JSON5 insertion
-- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`; `declarePublisher(keyExpr)` returns a `Publisher`; `get(selector, payload: ZBytes?)` returns `Stream<Reply>` (payload accepts SHM-backed `ZBytes` for zero-copy query payloads); `declareQueryable(keyExpr)` returns a `Queryable`; `zid` returns own `ZenohId`; `routersZid()` and `peersZid()` return connected router/peer IDs
+- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`; `declarePublisher(keyExpr)` returns a `Publisher`; `get(selector, payload: ZBytes?)` returns `Stream<Reply>` (payload accepts SHM-backed `ZBytes` for zero-copy query payloads); `declareQueryable(keyExpr)` returns a `Queryable`; `declarePullSubscriber(keyExpr, capacity: N)` returns a `PullSubscriber`; `zid` returns own `ZenohId`; `routersZid()` and `peersZid()` return connected router/peer IDs
 - `KeyExpr` — Key expression creation and validation
 - `ZBytes` — Binary payload container with string round-trip; `markConsumed()` for FFI ownership semantics; `isShmBacked` detects whether bytes are backed by shared memory (SHM feature-guarded, returns false on Android)
 - `Publisher` — Declared publisher with `put()`, `putBytes()`, `deleteResource()`, `keyExpr`, `hasMatchingSubscribers()`, `matchingStatus` stream, and `close()`
+- `PullSubscriber` — Ring-buffer-backed pull subscriber with synchronous `tryRecv()` returning `Sample?`; configurable `capacity` (lossy: drops oldest on overflow); `keyExpr` and `close()`
 - `Query` — Received query with `keyExpr`, `parameters`, `payloadBytes`; reply via `reply()`/`replyBytes(ZBytes)` (accepts SHM-backed `ZBytes` for zero-copy reply payloads); `dispose()` frees the cloned query handle
 - `Queryable` — Callback-based queryable delivering queries via `Stream<Query>`; `close()` undeclares and frees the native queryable
 - `Reply` — Tagged union result from `Session.get()`: `isOk` flag, `ok` accessor returning `Sample`, `error` accessor returning `ReplyError`
@@ -69,7 +71,7 @@ Available Dart API classes:
 - `Hello` — Scouting result with `zid` (`ZenohId`), `whatami` (`WhatAmI`), and `locators` (list of strings) fields
 - `ZenohException` — Error type for zenoh operations
 
-Phases 8–18 (liveliness/throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
+Phases 10–18 (liveliness/throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
 
 ## FVM Requirement
 
@@ -183,6 +185,9 @@ cd package && fvm dart run example/z_get_shm.dart -s 'demo/example/**' -p 'Query
 
 # Declare a queryable and reply with SHM-backed payload (runs until Ctrl-C)
 cd package && fvm dart run example/z_queryable_shm.dart -k demo/example/zenoh-dart-queryable -p 'SHM reply from Dart!'
+
+# Declare a pull subscriber; press ENTER to poll buffered samples, 'q' to quit
+cd package && fvm dart run example/z_pull.dart -k 'demo/example/**'
 ```
 
 CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When adding a new CLI example in any phase:

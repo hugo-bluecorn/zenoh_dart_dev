@@ -1541,6 +1541,144 @@ class ZenohDartBindings {
       );
   late final _zd_bytes_is_shm = _zd_bytes_is_shmPtr
       .asFunction<int Function(ffi.Pointer<ffi.Uint8>)>();
+
+  /// Returns the size of z_owned_ring_handler_sample_t in bytes.
+  int zd_ring_handler_sample_sizeof() {
+    return _zd_ring_handler_sample_sizeof();
+  }
+
+  late final _zd_ring_handler_sample_sizeofPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function()>>(
+        'zd_ring_handler_sample_sizeof',
+      );
+  late final _zd_ring_handler_sample_sizeof = _zd_ring_handler_sample_sizeofPtr
+      .asFunction<int Function()>();
+
+  /// Declares a pull subscriber using a ring channel buffer.
+  ///
+  /// @param subscriber_out  Pointer to an uninitialized z_owned_subscriber_t (as uint8_t*).
+  /// @param handler_out     Pointer to an uninitialized z_owned_ring_handler_sample_t (as uint8_t*).
+  /// @param session         Const pointer to a loaned session (as uint8_t*).
+  /// @param key_expr        Null-terminated key expression string.
+  /// @param capacity        Ring buffer capacity.
+  /// @return 0 on success, negative on failure.
+  int zd_declare_pull_subscriber(
+    ffi.Pointer<ffi.Uint8> subscriber_out,
+    ffi.Pointer<ffi.Uint8> handler_out,
+    ffi.Pointer<ffi.Uint8> session,
+    ffi.Pointer<ffi.Char> key_expr,
+    int capacity,
+  ) {
+    return _zd_declare_pull_subscriber(
+      subscriber_out,
+      handler_out,
+      session,
+      key_expr,
+      capacity,
+    );
+  }
+
+  late final _zd_declare_pull_subscriberPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Int32,
+          )
+        >
+      >('zd_declare_pull_subscriber');
+  late final _zd_declare_pull_subscriber = _zd_declare_pull_subscriberPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<ffi.Char>,
+          int,
+        )
+      >();
+
+  /// Tries to receive a sample from the ring handler.
+  ///
+  /// Return codes: 0=sample available, 1=channel disconnected, 2=buffer empty.
+  /// When 0, all out_ parameters are populated (malloc'd; caller must free).
+  ///
+  /// @param handler           Const pointer to an owned ring handler (as uint8_t*).
+  /// @param out_keyexpr       Out: malloc'd null-terminated key expression string.
+  /// @param out_payload       Out: malloc'd payload bytes.
+  /// @param out_payload_len   Out: payload length.
+  /// @param out_kind          Out: sample kind (0=put, 1=delete).
+  /// @param out_encoding      Out: malloc'd null-terminated encoding string (or NULL).
+  /// @param out_attachment     Out: malloc'd attachment bytes (or NULL).
+  /// @param out_attachment_len Out: attachment length.
+  /// @return 0=sample, 1=disconnected, 2=empty.
+  int zd_pull_subscriber_try_recv(
+    ffi.Pointer<ffi.Uint8> handler,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> out_keyexpr,
+    ffi.Pointer<ffi.Pointer<ffi.Uint8>> out_payload,
+    ffi.Pointer<ffi.Int32> out_payload_len,
+    ffi.Pointer<ffi.Int8> out_kind,
+    ffi.Pointer<ffi.Pointer<ffi.Char>> out_encoding,
+    ffi.Pointer<ffi.Pointer<ffi.Uint8>> out_attachment,
+    ffi.Pointer<ffi.Int32> out_attachment_len,
+  ) {
+    return _zd_pull_subscriber_try_recv(
+      handler,
+      out_keyexpr,
+      out_payload,
+      out_payload_len,
+      out_kind,
+      out_encoding,
+      out_attachment,
+      out_attachment_len,
+    );
+  }
+
+  late final _zd_pull_subscriber_try_recvPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Pointer<ffi.Char>>,
+            ffi.Pointer<ffi.Pointer<ffi.Uint8>>,
+            ffi.Pointer<ffi.Int32>,
+            ffi.Pointer<ffi.Int8>,
+            ffi.Pointer<ffi.Pointer<ffi.Char>>,
+            ffi.Pointer<ffi.Pointer<ffi.Uint8>>,
+            ffi.Pointer<ffi.Int32>,
+          )
+        >
+      >('zd_pull_subscriber_try_recv');
+  late final _zd_pull_subscriber_try_recv = _zd_pull_subscriber_try_recvPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<ffi.Uint8>,
+          ffi.Pointer<ffi.Pointer<ffi.Char>>,
+          ffi.Pointer<ffi.Pointer<ffi.Uint8>>,
+          ffi.Pointer<ffi.Int32>,
+          ffi.Pointer<ffi.Int8>,
+          ffi.Pointer<ffi.Pointer<ffi.Char>>,
+          ffi.Pointer<ffi.Pointer<ffi.Uint8>>,
+          ffi.Pointer<ffi.Int32>,
+        )
+      >();
+
+  /// Drops (frees) the ring handler.
+  ///
+  /// @param handler  Pointer to a z_owned_ring_handler_sample_t (as uint8_t*).
+  void zd_ring_handler_sample_drop(ffi.Pointer<ffi.Uint8> handler) {
+    return _zd_ring_handler_sample_drop(handler);
+  }
+
+  late final _zd_ring_handler_sample_dropPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Uint8>)>>(
+        'zd_ring_handler_sample_drop',
+      );
+  late final _zd_ring_handler_sample_drop = _zd_ring_handler_sample_dropPtr
+      .asFunction<void Function(ffi.Pointer<ffi.Uint8>)>();
 }
 
 final class UnnamedStruct extends ffi.Struct {
