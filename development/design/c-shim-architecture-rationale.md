@@ -3,8 +3,8 @@
 > **Audience:** Auditors, reviewers, and future contributors seeking to understand
 > the architectural decisions behind zenoh-dart's C shim layer.
 >
-> **Case study:** Phase 6 (Get/Queryable) — the most architecturally complex
-> phase, used throughout as the concrete example.
+> **Case study:** `z_get` / `z_queryable` (query/reply) — the most
+> architecturally complex example set, used throughout as the concrete case.
 >
 > **Date:** 2026-03-25
 
@@ -85,8 +85,8 @@ languages.
 ### 2.4 Scope Control
 
 The examples naturally define the phase boundary. Each example demonstrates one
-zenoh pattern: Phase 2 = `z_sub`, Phase 3 = `z_pub`, Phase 6 = `z_get` +
-`z_queryable`. The examples are the roadmap.
+zenoh pattern: `z_sub` for subscribe, `z_pub` for publish, `z_get` +
+`z_queryable` for query/reply. The examples are the roadmap.
 
 **The chain is:** C example shows the pattern. C++ example shows how a language
 binding wraps it. Dart CLI mirrors both. Dart API is the idiomatic layer
@@ -160,11 +160,12 @@ The architecture reflects two independent decisions:
 We chose "sole facade + push." This is the simplest architecture but has a
 consequence explored in Section 4.
 
-## 4. What: Phase 6 Function Audit (Case Study)
+## 4. What: `z_get` / `z_queryable` Function Audit (Case Study)
 
-Phase 6 (Get/Queryable) adds 10 C shim functions. During architectural review,
-we audited each function against the six barrier patterns to verify that the shim
-contains no unnecessary proxies.
+The get/queryable implementation adds 10 C shim functions wrapping `z_get()`,
+`z_declare_queryable()`, `z_query_reply()`, and related accessors. During
+architectural review, we audited each function against the six barrier patterns
+to verify that the shim contains no unnecessary proxies.
 
 ### Function-by-Function Analysis
 
@@ -195,7 +196,8 @@ design makes them unreachable in the current code path:
 
 ### Pattern Consistency Check
 
-Looking at Phases 0-5, the established convention is:
+Looking at the established convention across `z_put`, `z_pub`, `z_sub`,
+`z_scout`, and `z_info`:
 
 - **Entity properties** use pull-accessors (e.g., `zd_publisher_keyexpr()`,
   `zd_session_zid()`)
@@ -216,11 +218,11 @@ Despite being currently unreachable, we retain all 10 functions because:
    wrap operations Dart FFI genuinely cannot perform directly (loaning, move
    semantics, opaque sizes).
 
-2. **No foreknowledge of future phases.** Phases 7-18 are specified but not yet
-   implemented. A future phase could introduce a code path where Dart needs to
-   lazily access query fields (pull-based) rather than receiving them all upfront
-   (push-based). Removing the accessors now and re-adding them later costs a spec
-   revision, rebuild, and ffigen cycle.
+2. **No foreknowledge of future examples.** Later zenoh-c examples
+   (`z_get_liveliness`, `z_querier`, etc.) may introduce code paths where Dart
+   needs to lazily access query fields (pull-based) rather than receiving them
+   all upfront (push-based). Removing the accessors now and re-adding them later
+   costs a rebuild and ffigen cycle.
 
 3. **Marginal cost.** Each accessor is approximately 5-10 lines of trivial C
    code. They add no complexity, no maintenance burden, and no risk.
@@ -230,10 +232,10 @@ Despite being currently unreachable, we retain all 10 functions because:
    the C level; the barriers exist; the shim provides them. Whether Dart calls
    them today is a data flow question, not a shim completeness question.
 
-## 5. What: Phase 6 CLI Cross-Language Verification
+## 5. What: `z_get` / `z_queryable` CLI Cross-Language Verification
 
 To verify that our Dart CLI examples follow the example-driven approach, we
-compared the C, C++, and Dart specifications side by side.
+compared the C, C++, and Dart implementations side by side.
 
 ### z_get CLI Comparison
 
@@ -372,9 +374,216 @@ benchmarking, but for lightweight field extraction it may be acceptable.
 
 Until then: stay the course.
 
-## 7. Summary
+## 7. Why zenoh-dart Does Not Implement `z_queryable_with_channels` or `z_non_blocking_get`
 
-The zenoh-dart C shim architecture is governed by four principles:
+The zenoh-c examples include two channel-based alternatives to the callback
+pattern:
+
+- `z_queryable_with_channels.c` — declares a queryable backed by a FIFO
+  channel, receives queries via blocking `z_recv()` in a loop
+- `z_non_blocking_get.c` — sends a query with a FIFO handler, polls for
+  replies via `z_try_recv()` with sleep between attempts
+
+The zenoh-cpp equivalents use `channels::FifoChannel(16)` as a template
+parameter to `session.get()` and `session.declare_queryable()`, returning
+handler objects with `recv()` and `try_recv()` methods.
+
+**zenoh-dart does not implement these examples.** The analysis below explains
+why.
+
+### 7.1 The Channel Pattern Solves a Problem Dart Does Not Have
+
+The channel abstraction in zenoh-c exists because C has no async runtime.
+C developers need an explicit mechanism to decouple the zenoh callback thread
+from the processing thread:
+
+```c
+// C: the only way to consume events without a callback
+while (z_recv(z_loan(handler), &query) == Z_OK) {
+    // process query on main thread
+}
+```
+
+Dart has `Stream`, `Future`, and `async`/`await`. The zenoh-dart binding uses
+a NativePort + StreamController bridge that is functionally identical to a
+FIFO channel — events are buffered asynchronously and delivered to the
+consumer on the Dart event loop:
+
+```dart
+// Dart: Stream IS the channel
+await for (final query in queryable.stream) {
+    // process query — non-blocking, event-driven
+}
+```
+
+The existing `z_queryable.dart` and `z_get.dart` CLI examples already provide
+the Dart-idiomatic equivalent of both channel examples:
+
+| zenoh-c Channel Example | C Pattern | zenoh-dart Equivalent | Dart Pattern |
+|---|---|---|---|
+| `z_queryable_with_channels.c` | `while(1) z_recv()` blocking loop | `z_queryable.dart` | `await for (q in queryable.stream)` |
+| `z_non_blocking_get.c` | `while(1) z_try_recv(); sleep()` poll loop | `z_get.dart` | `await for (r in session.get(...))` |
+
+### 7.2 Blocking `recv()` Is Dangerous in Dart's Execution Model
+
+Dart isolates are single-threaded. A blocking FFI call to
+`z_fifo_handler_query_recv()` would freeze the entire isolate — no timers,
+no I/O, no UI updates. The workarounds all collapse back to the pattern
+already in use:
+
+| Approach | Consequence |
+|----------|-------------|
+| Block the main isolate | Event loop freezes — unacceptable |
+| Run on a helper isolate with message passing | Reinvents the NativePort bridge |
+| Make `recv()` async with a Completer | Reinvents StreamController |
+
+### 7.3 Polling `try_recv()` Is an Anti-Pattern in Async Dart
+
+The `z_non_blocking_get.c` example polls in a loop with `sleep()` between
+attempts. In Dart, this wastes CPU cycles and requires tuning the poll
+interval. Streams are event-driven — the consumer is notified exactly when
+data arrives, with no polling overhead:
+
+```c
+// C: poll with sleep (the only non-blocking option without callbacks)
+while (1) {
+    int rc = z_try_recv(z_loan(handler), &reply);
+    if (rc == Z_CHANNEL_DISCONNECTED) break;
+    if (rc == Z_CHANNEL_NODATA) { z_sleep_s(1); continue; }
+    process_reply(reply);
+}
+```
+
+```dart
+// Dart: event-driven, zero wasted cycles
+await for (final reply in session.get('demo/**')) {
+    processReply(reply);
+}
+// Stream completes automatically on sentinel
+```
+
+### 7.4 Barrier Analysis: Most Functions Would Be Pure Facades
+
+Independent analysis of the 11 C shim functions that would be required
+reveals that only 2 have genuine FFI barriers. The remaining 9 wrap
+zenoh-c functions that are actual exported symbols (`ZENOHC_API`), not
+macros or static inlines:
+
+| Would-Be Shim Function | Wraps | FFI Barrier? |
+|---|---|---|
+| `zd_declare_queryable_with_fifo_channel` | `z_fifo_channel_query_new` + `z_declare_queryable` | **Yes** — closure creation |
+| `zd_get_with_handler` | `z_fifo_channel_reply_new` + `z_get` | **Yes** — closure + options |
+| `zd_fifo_handler_query_recv` | `z_fifo_handler_query_recv` | No — exported function |
+| `zd_fifo_handler_query_loan` | `z_fifo_handler_query_loan` | No — exported function |
+| `zd_fifo_handler_query_drop` | `z_fifo_handler_query_drop` | Move wrapper only |
+| `zd_fifo_handler_reply_try_recv` | `z_fifo_handler_reply_try_recv` | No — exported function |
+| `zd_fifo_handler_reply_loan` | `z_fifo_handler_reply_loan` | No — exported function |
+| `zd_fifo_handler_reply_drop` | `z_fifo_handler_reply_drop` | Move wrapper only |
+| `zd_reply_is_ok` | `z_reply_is_ok` | No — exported function |
+| `zd_reply_ok` | `z_reply_ok` | No — exported function |
+| `zd_reply_drop` | `z_reply_drop` | Move wrapper only |
+
+This would be the most proxy-heavy set of functions in the shim, violating
+the principle that the C shim exists for FFI barriers, not as a full proxy
+layer.
+
+### 7.5 Conclusion
+
+The `z_queryable_with_channels` and `z_non_blocking_get` examples demonstrate
+an alternative consumption model (polling/blocking channels) for the same
+query/reply operations that zenoh-dart already supports via Streams. Dart's
+async runtime provides the buffering, non-blocking delivery, and completion
+signaling that C achieves through explicit channel objects.
+
+Implementing these examples in zenoh-dart would add redundant API surface,
+introduce dangerous blocking semantics, and require 9 facade functions with
+no FFI barrier justification. The existing `z_queryable.dart` and `z_get.dart`
+CLI examples are the Dart-idiomatic implementations of the same behaviors.
+
+## 8. How zenoh-dart Implements `z_pull` (C-Side Ring Buffer)
+
+Unlike the channel examples skipped in Section 7, `z_pull.c` introduces a
+genuinely new semantic: **lossy buffering**. A ring buffer drops the oldest
+samples when full, guaranteeing the consumer always sees the most recent data.
+This cannot be replicated by Dart's `Stream` (which buffers indefinitely) or
+`StreamController` (which has no drop-oldest policy).
+
+### 8.1 Why C-Side, Not Dart-Side
+
+The ring buffer must live in C, not Dart. The reason is **freshness**.
+
+If the ring buffer sits in Dart (after NativePort delivery), all samples
+cross the FFI boundary — including ones that will be dropped. When Dart's
+event loop stalls (GC pause, Flutter frame render), the "surviving" samples
+in a Dart-side ring are stale: they were recent when C posted them, but old
+by the time Dart processes them.
+
+With a C-side ring buffer, drops happen before NativePort. Only surviving
+samples cross FFI. If Dart stalls for 500ms and a sensor publishes at 100Hz,
+the 3 samples in a C-side ring of capacity 3 are from the last 30ms. In a
+Dart-side ring, they'd be 500ms old.
+
+```
+C-side:  zenoh thread → [ring buffer, drops oldest] → NativePort → Dart
+Dart-side: zenoh thread → NativePort → [ring buffer, drops oldest] → Dart
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                        samples already stale if Dart stalled
+```
+
+### 8.2 The "Fat tryRecv" Pattern
+
+The pull subscriber does not use NativePort at all. Instead, Dart polls via a
+synchronous FFI call: `zd_pull_subscriber_try_recv()`. This single call does:
+
+1. `z_ring_handler_sample_try_recv()` — non-blocking receive from ring
+2. `z_sample_loan()` — borrow the sample
+3. Extract all fields (keyexpr, payload, kind, encoding, attachment)
+4. `z_sample_drop()` — release the sample
+5. Return extracted data via output pointers
+
+One FFI call per poll. Dart never holds a sample handle. This mirrors the
+subscriber callback pattern (extract everything in C, deliver to Dart in one
+operation) but inverts the control flow — Dart pulls instead of C pushing.
+
+### 8.3 Return Code Semantics
+
+`z_pull.c` uses `z_try_recv()` which returns three possible values:
+
+| Return | Constant | Meaning | Dart action |
+|--------|----------|---------|-------------|
+| 0 | `Z_OK` | Sample available | Construct `Sample`, return it |
+| 1 | `Z_CHANNEL_NODATA` | Ring empty | Return `null` |
+| 2 | `Z_CHANNEL_DISCONNECTED` | Subscriber closed | Throw `StateError` |
+
+These are **positive** return codes — unlike the usual zenoh-c convention
+where errors are negative. The Dart side must not use the `!= 0` error
+pattern here.
+
+### 8.4 Barrier Justification
+
+All 4 C shim functions have genuine FFI barriers:
+
+| Function | Barrier |
+|----------|---------|
+| `zd_ring_handler_sample_sizeof` | P4 — opaque type size |
+| `zd_declare_pull_subscriber` | P5 (closure) + P1 (move) |
+| `zd_pull_subscriber_try_recv` | P2 (`z_try_recv`/`z_loan` are `_Generic` macros) + extraction chain |
+| `zd_ring_handler_sample_drop` | P1 (`z_move` is static inline) |
+
+Zero facades. The pull subscriber is the leanest new-capability addition
+in the shim's history: 4 functions, all barrier-justified, one new Dart
+class, one CLI example.
+
+### 8.5 CLI: `z_pull.dart` Mirrors `z_pull.c` via `stdin.readLineSync()`
+
+`z_pull.c` uses `getchar()` for interactive polling — the user presses Enter
+to pull. Dart mirrors this exactly with `stdin.readLineSync()`, which blocks
+the CLI process until user input (acceptable in a CLI context). No timer, no
+invented flags — the user controls the poll interval by pressing Enter.
+
+## 9. Summary
+
+The zenoh-dart C shim architecture is governed by five principles:
 
 1. **Dual reference** — C for correctness, C++ for design. Neither alone
    suffices.
@@ -387,8 +596,14 @@ The zenoh-dart C shim architecture is governed by four principles:
    shim remains necessary because zenoh-c's loaned pointers are only valid
    during the synchronous callback — no Dart-side API can solve this structural
    constraint. Revisit when `NativeCallable.isolateGroupBound` reaches stable.
+5. **Skip what the language already provides** — zenoh-c's channel pattern
+   (`z_recv`/`z_try_recv` with FIFO/Ring handlers) compensates for C's lack
+   of async runtime. Dart's `Stream` provides identical semantics natively.
+   The `z_queryable_with_channels` and `z_non_blocking_get` examples are not
+   implemented because `z_queryable.dart` and `z_get.dart` already deliver the
+   same behavior via Streams.
 
-Phase 6 validates these principles: 10 functions, each barrier-justified, 6
-actively called, 4 retained for completeness and future-proofing. The CLI
-examples match C/C++ flags, defaults, and output format. The architecture is
-minimal, auditable, and consistent with Phases 0-5.
+The architecture is minimal, auditable, and consistent across all implemented
+examples. Each C shim function is barrier-justified, and examples that map to
+native Dart abstractions are implemented idiomatically rather than ported
+literally.
