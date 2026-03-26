@@ -89,8 +89,9 @@ class PullSubscriber {
       final attachmentPtr = outAttachment.value;
       String? attachmentStr;
       if (attachmentLen > 0 && attachmentPtr != nullptr) {
-        final attachmentBytes =
-            Uint8List.fromList(attachmentPtr.asTypedList(attachmentLen));
+        final attachmentBytes = Uint8List.fromList(
+          attachmentPtr.asTypedList(attachmentLen),
+        );
         attachmentStr = utf8.decode(attachmentBytes);
       }
 

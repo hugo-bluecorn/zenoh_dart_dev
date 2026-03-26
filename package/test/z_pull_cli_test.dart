@@ -79,77 +79,81 @@ void main() {
       expect(result.exitCode, isNot(0));
     });
 
-    test('receives sample from in-process put', () async {
-      const port = 18571;
-      const endpoint = 'tcp/127.0.0.1:$port';
+    test(
+      'receives sample from in-process put',
+      () async {
+        const port = 18571;
+        const endpoint = 'tcp/127.0.0.1:$port';
 
-      // Start z_pull listening on a specific key with TCP listener
-      final pullProcess = await Process.start(_dartExe, [
-        'run',
-        'example/z_pull.dart',
-        '-k',
-        'demo/cli/pull',
-        '-l',
-        endpoint,
-      ], workingDirectory: packageRoot);
+        // Start z_pull listening on a specific key with TCP listener
+        final pullProcess = await Process.start(_dartExe, [
+          'run',
+          'example/z_pull.dart',
+          '-k',
+          'demo/cli/pull',
+          '-l',
+          endpoint,
+        ], workingDirectory: packageRoot);
 
-      final pullStdout = StringBuffer();
-      final declaringCompleter = Completer<void>();
-      final receivedCompleter = Completer<void>();
-      final pullSubscription = pullProcess.stdout
-          .transform(const SystemEncoding().decoder)
-          .listen((data) {
-            pullStdout.write(data);
-            if (!declaringCompleter.isCompleted &&
-                pullStdout.toString().contains('Press ENTER')) {
-              declaringCompleter.complete();
-            }
-            if (!receivedCompleter.isCompleted &&
-                pullStdout.toString().contains('Received PUT')) {
-              receivedCompleter.complete();
-            }
-          });
+        final pullStdout = StringBuffer();
+        final declaringCompleter = Completer<void>();
+        final receivedCompleter = Completer<void>();
+        final pullSubscription = pullProcess.stdout
+            .transform(const SystemEncoding().decoder)
+            .listen((data) {
+              pullStdout.write(data);
+              if (!declaringCompleter.isCompleted &&
+                  pullStdout.toString().contains('Press ENTER')) {
+                declaringCompleter.complete();
+              }
+              if (!receivedCompleter.isCompleted &&
+                  pullStdout.toString().contains('Received PUT')) {
+                receivedCompleter.complete();
+              }
+            });
 
-      try {
-        // Wait for subscriber to be ready
-        await declaringCompleter.future.timeout(const Duration(seconds: 15));
-        // Extra time for TCP listener to bind
-        await Future<void>.delayed(const Duration(seconds: 3));
+        try {
+          // Wait for subscriber to be ready
+          await declaringCompleter.future.timeout(const Duration(seconds: 15));
+          // Extra time for TCP listener to bind
+          await Future<void>.delayed(const Duration(seconds: 3));
 
-        // Open in-process session connecting to the pull subscriber
-        final config = Config();
-        config.insertJson5('connect/endpoints', '["$endpoint"]');
-        final session = Session.open(config: config);
+          // Open in-process session connecting to the pull subscriber
+          final config = Config();
+          config.insertJson5('connect/endpoints', '["$endpoint"]');
+          final session = Session.open(config: config);
 
-        // Give TCP connection time to negotiate
-        await Future<void>.delayed(const Duration(seconds: 2));
+          // Give TCP connection time to negotiate
+          await Future<void>.delayed(const Duration(seconds: 2));
 
-        // Publish a sample
-        session.put('demo/cli/pull', 'test payload');
+          // Publish a sample
+          session.put('demo/cli/pull', 'test payload');
 
-        // Wait a bit for the sample to arrive in the ring buffer
-        await Future<void>.delayed(const Duration(seconds: 1));
+          // Wait a bit for the sample to arrive in the ring buffer
+          await Future<void>.delayed(const Duration(seconds: 1));
 
-        // Send newline to stdin to trigger pull
-        pullProcess.stdin.writeln('');
-        await pullProcess.stdin.flush();
+          // Send newline to stdin to trigger pull
+          pullProcess.stdin.writeln('');
+          await pullProcess.stdin.flush();
 
-        // Wait for sample to be received
-        await receivedCompleter.future.timeout(const Duration(seconds: 10));
+          // Wait for sample to be received
+          await receivedCompleter.future.timeout(const Duration(seconds: 10));
 
-        final output = pullStdout.toString();
-        expect(output, contains('Received PUT'));
-        expect(output, contains('test payload'));
+          final output = pullStdout.toString();
+          expect(output, contains('Received PUT'));
+          expect(output, contains('test payload'));
 
-        session.close();
-      } finally {
-        // Send 'q' to quit gracefully, then force kill
-        pullProcess.stdin.writeln('q');
-        await pullProcess.stdin.flush();
-        await Future<void>.delayed(const Duration(milliseconds: 500));
-        await forceKill(pullProcess);
-        await pullSubscription.cancel();
-      }
-    }, timeout: Timeout(Duration(seconds: 40)));
+          session.close();
+        } finally {
+          // Send 'q' to quit gracefully, then force kill
+          pullProcess.stdin.writeln('q');
+          await pullProcess.stdin.flush();
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+          await forceKill(pullProcess);
+          await pullSubscription.cancel();
+        }
+      },
+      timeout: Timeout(Duration(seconds: 40)),
+    );
   });
 }

@@ -36,10 +36,7 @@ void main(List<String> arguments) {
   print(
     "Declaring Subscriber on '$keyExpr' with ring buffer capacity $size...",
   );
-  final pullSubscriber = session.declarePullSubscriber(
-    keyExpr,
-    capacity: size,
-  );
+  final pullSubscriber = session.declarePullSubscriber(keyExpr, capacity: size);
 
   print("Press ENTER to pull data or 'q' to quit...");
 

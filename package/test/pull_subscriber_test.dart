@@ -16,22 +16,19 @@ void main() {
     });
 
     test('declarePullSubscriber returns a PullSubscriber', () {
-      final pullSub =
-          session.declarePullSubscriber('demo/example/pull');
+      final pullSub = session.declarePullSubscriber('demo/example/pull');
       expect(pullSub, isA<PullSubscriber>());
       pullSub.close();
     });
 
     test('PullSubscriber.keyExpr returns declared key expression', () {
-      final pullSub =
-          session.declarePullSubscriber('demo/example/pull/ke');
+      final pullSub = session.declarePullSubscriber('demo/example/pull/ke');
       expect(pullSub.keyExpr, equals('demo/example/pull/ke'));
       pullSub.close();
     });
 
     test('tryRecv returns null when buffer is empty', () {
-      final pullSub =
-          session.declarePullSubscriber('demo/example/pull/empty');
+      final pullSub = session.declarePullSubscriber('demo/example/pull/empty');
       addTearDown(pullSub.close);
 
       final sample = pullSub.tryRecv();
@@ -39,15 +36,15 @@ void main() {
     });
 
     test('PullSubscriber.close is idempotent', () {
-      final pullSub =
-          session.declarePullSubscriber('demo/example/pull/idempotent');
+      final pullSub = session.declarePullSubscriber(
+        'demo/example/pull/idempotent',
+      );
       pullSub.close();
       expect(() => pullSub.close(), returnsNormally);
     });
 
     test('tryRecv on closed PullSubscriber throws StateError', () {
-      final pullSub =
-          session.declarePullSubscriber('demo/example/pull/closed');
+      final pullSub = session.declarePullSubscriber('demo/example/pull/closed');
       pullSub.close();
       expect(() => pullSub.tryRecv(), throwsA(isA<StateError>()));
     });
@@ -107,8 +104,11 @@ void main() {
       // The retained samples should be among the most recent
       for (final s in samples) {
         final msgNum = int.parse(s.payload.replaceFirst('msg-', ''));
-        expect(msgNum, greaterThanOrEqualTo(7),
-            reason: 'Expected recent messages (7-9), got msg-$msgNum');
+        expect(
+          msgNum,
+          greaterThanOrEqualTo(7),
+          reason: 'Expected recent messages (7-9), got msg-$msgNum',
+        );
       }
     });
 
@@ -178,15 +178,17 @@ void main() {
     });
 
     test('PullSubscriber.close is idempotent', () {
-      final pullSub =
-          session1.declarePullSubscriber('zenoh/dart/test/pull/idem2');
+      final pullSub = session1.declarePullSubscriber(
+        'zenoh/dart/test/pull/idem2',
+      );
       pullSub.close();
       expect(() => pullSub.close(), returnsNormally);
     });
 
     test('tryRecv after close throws StateError', () {
-      final pullSub =
-          session1.declarePullSubscriber('zenoh/dart/test/pull/closed2');
+      final pullSub = session1.declarePullSubscriber(
+        'zenoh/dart/test/pull/closed2',
+      );
       pullSub.close();
       expect(
         () => pullSub.tryRecv(),
@@ -279,8 +281,9 @@ void main() {
     });
 
     test('basic pull receives sample', () async {
-      final pullSub =
-          session2.declarePullSubscriber('zenoh/dart/test/pull/basic');
+      final pullSub = session2.declarePullSubscriber(
+        'zenoh/dart/test/pull/basic',
+      );
       addTearDown(pullSub.close);
 
       await Future<void>.delayed(const Duration(seconds: 1));
@@ -304,8 +307,9 @@ void main() {
       );
       addTearDown(publisher.close);
 
-      final pullSub =
-          session2.declarePullSubscriber('zenoh/dart/test/pull/enc');
+      final pullSub = session2.declarePullSubscriber(
+        'zenoh/dart/test/pull/enc',
+      );
       addTearDown(pullSub.close);
 
       await Future<void>.delayed(const Duration(seconds: 1));
@@ -323,8 +327,9 @@ void main() {
     });
 
     test('multiple tryRecv drains buffer', () async {
-      final pullSub =
-          session2.declarePullSubscriber('zenoh/dart/test/pull/multi');
+      final pullSub = session2.declarePullSubscriber(
+        'zenoh/dart/test/pull/multi',
+      );
       addTearDown(pullSub.close);
 
       await Future<void>.delayed(const Duration(seconds: 1));

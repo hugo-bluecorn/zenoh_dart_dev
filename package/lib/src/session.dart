@@ -277,10 +277,7 @@ class Session {
   ///
   /// Throws [ZenohException] if the key expression is invalid.
   /// Throws [StateError] if the session has been closed.
-  PullSubscriber declarePullSubscriber(
-    String keyExpr, {
-    int capacity = 256,
-  }) {
+  PullSubscriber declarePullSubscriber(String keyExpr, {int capacity = 256}) {
     _ensureOpen();
 
     final subscriberSize = bindings.zd_subscriber_sizeof();
