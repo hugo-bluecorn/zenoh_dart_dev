@@ -338,7 +338,7 @@ void main() {
     });
 
     /// Helper: allocate [size] bytes, fill with pattern i % 10, return ZBytes.
-    ZBytes _allocShmPattern(int size) {
+    ZBytes allocShmPattern(int size) {
       final buffer = provider.allocGcDefragBlocking(size)!;
       final dataPtr = buffer.data;
       for (var i = 0; i < size; i++) {
@@ -348,7 +348,7 @@ void main() {
     }
 
     /// Expected Uint8List for the i % 10 pattern of given [size].
-    Uint8List _expectedPattern(int size) {
+    Uint8List expectedPattern(int size) {
       return Uint8List.fromList(
         List<int>.generate(size, (i) => i % 10),
       );
@@ -367,7 +367,7 @@ void main() {
     });
 
     test('Clone of SHM bytes is SHM-backed', () {
-      final shmBytes = _allocShmPattern(64);
+      final shmBytes = allocShmPattern(64);
       addTearDown(shmBytes.dispose);
 
       final clone = shmBytes.clone();
@@ -377,13 +377,13 @@ void main() {
     });
 
     test('Clone of SHM bytes preserves content', () {
-      final shmBytes = _allocShmPattern(64);
+      final shmBytes = allocShmPattern(64);
       addTearDown(shmBytes.dispose);
 
       final clone = shmBytes.clone();
       addTearDown(clone.dispose);
 
-      final expected = _expectedPattern(64);
+      final expected = expectedPattern(64);
       expect(shmBytes.toBytes(), equals(expected));
       expect(clone.toBytes(), equals(expected));
     });
@@ -400,9 +400,9 @@ void main() {
 
       await Future<void>.delayed(const Duration(seconds: 1));
 
-      final shmBytes = _allocShmPattern(32);
+      final shmBytes = allocShmPattern(32);
       addTearDown(shmBytes.dispose);
-      final expected = _expectedPattern(32);
+      final expected = expectedPattern(32);
 
       for (var i = 0; i < 3; i++) {
         final clone = shmBytes.clone();
@@ -432,7 +432,7 @@ void main() {
 
       await Future<void>.delayed(const Duration(seconds: 1));
 
-      final shmBytes = _allocShmPattern(32);
+      final shmBytes = allocShmPattern(32);
       addTearDown(shmBytes.dispose);
 
       // Publish 3 clones (each clone is consumed by putBytes)
@@ -449,12 +449,12 @@ void main() {
 
       // Original should still be fully usable
       expect(shmBytes.toStr(), isNotNull);
-      expect(shmBytes.toBytes(), equals(_expectedPattern(32)));
+      expect(shmBytes.toBytes(), equals(expectedPattern(32)));
       expect(shmBytes.isShmBacked, isTrue);
     });
 
     test('Clone of SHM bytes has independent lifetime', () {
-      final shmBytes = _allocShmPattern(32);
+      final shmBytes = allocShmPattern(32);
       final clone = shmBytes.clone();
       addTearDown(clone.dispose);
 
@@ -462,7 +462,7 @@ void main() {
       shmBytes.dispose();
 
       // Clone should still be readable
-      expect(clone.toBytes(), equals(_expectedPattern(32)));
+      expect(clone.toBytes(), equals(expectedPattern(32)));
     });
   });
 }
