@@ -45,15 +45,16 @@ zenoh_dart_dev/                 # git repo root (development workshop)
 **Phase 9 Pull Subscriber: COMPLETE** — 77 C shim functions, 282 integration tests. `PullSubscriber` with synchronous `tryRecv()` via ring buffer; configurable `capacity` (lossy: drops oldest on overflow); CLI example `z_pull.dart`.
 **Phase 10 Declared Querier: COMPLETE** — 83 C shim functions, 310 integration tests. `Querier` with `get()` (returns `Stream<Reply>`), `keyExpr`, `close()`, `hasMatchingQueryables()`, `matchingStatus` stream; declaration-time options (target, consolidation, timeout); CLI example `z_querier.dart`.
 **Phase 11 Liveliness: COMPLETE** — 88 C shim functions, 340 integration tests. `Session.declareLivelinessToken()` returns `LivelinessToken`; `Session.declareLivelinessSubscriber()` returns `Subscriber` (with `history` option for existing tokens); `Session.livelinessGet()` returns `Stream<Reply>` for querying alive tokens; CLI examples `z_liveliness.dart`, `z_sub_liveliness.dart`, `z_get_liveliness.dart`.
+**Phase 12 Ping/Pong Benchmark: COMPLETE** — 92 C shim functions, 372 integration tests. `Session.declareBackgroundSubscriber()` returns `Stream<Sample>` (fire-and-forget, lives until session closes); `Publisher.isExpress` parameter for low-latency batching control; `ZBytes.clone()` (shallow ref-counted) and `ZBytes.toBytes()` (read content as `Uint8List`); CLI examples `z_ping.dart` and `z_pong.dart`.
 
 Available Dart API classes:
 - `Zenoh` — Static utilities: `initLog(fallback)` for runtime logger initialization (call before `Session.open()`); `scout(config)` discovers zenoh entities on the network
 - `Config` — Session configuration with JSON5 insertion
-- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`; `declarePublisher(keyExpr)` returns a `Publisher`; `get(selector, payload: ZBytes?)` returns `Stream<Reply>` (payload accepts SHM-backed `ZBytes` for zero-copy query payloads); `declareQueryable(keyExpr)` returns a `Queryable`; `declarePullSubscriber(keyExpr, capacity: N)` returns a `PullSubscriber`; `declareQuerier(keyExpr)` returns a `Querier`; `declareLivelinessToken(keyExpr)` returns a `LivelinessToken`; `declareLivelinessSubscriber(keyExpr, history:)` returns a `Subscriber`; `livelinessGet(keyExpr, timeout:)` returns `Stream<Reply>`; `zid` returns own `ZenohId`; `routersZid()` and `peersZid()` return connected router/peer IDs
+- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`; `declareBackgroundSubscriber(keyExpr)` returns `Stream<Sample>` (fire-and-forget, lives until session closes); `declarePublisher(keyExpr, isExpress:)` returns a `Publisher`; `get(selector, payload: ZBytes?)` returns `Stream<Reply>` (payload accepts SHM-backed `ZBytes` for zero-copy query payloads); `declareQueryable(keyExpr)` returns a `Queryable`; `declarePullSubscriber(keyExpr, capacity: N)` returns a `PullSubscriber`; `declareQuerier(keyExpr)` returns a `Querier`; `declareLivelinessToken(keyExpr)` returns a `LivelinessToken`; `declareLivelinessSubscriber(keyExpr, history:)` returns a `Subscriber`; `livelinessGet(keyExpr, timeout:)` returns `Stream<Reply>`; `zid` returns own `ZenohId`; `routersZid()` and `peersZid()` return connected router/peer IDs
 - `KeyExpr` — Key expression creation and validation
-- `ZBytes` — Binary payload container with string round-trip; `markConsumed()` for FFI ownership semantics; `isShmBacked` detects whether bytes are backed by shared memory (SHM feature-guarded, returns false on Android)
+- `ZBytes` — Binary payload container with string round-trip; `clone()` (shallow ref-counted copy); `toBytes()` (read content as `Uint8List`); `markConsumed()` for FFI ownership semantics; `isShmBacked` detects whether bytes are backed by shared memory (SHM feature-guarded, returns false on Android)
 - `LivelinessToken` — Announces entity presence on the network; intersecting liveliness subscribers receive PUT on declaration, DELETE on `close()` or connectivity loss; `keyExpr` and `close()`
-- `Publisher` — Declared publisher with `put()`, `putBytes()`, `deleteResource()`, `keyExpr`, `hasMatchingSubscribers()`, `matchingStatus` stream, and `close()`
+- `Publisher` — Declared publisher with `put()`, `putBytes()`, `deleteResource()`, `keyExpr`, `hasMatchingSubscribers()`, `matchingStatus` stream, `isExpress` mode (disables batching for low latency), and `close()`
 - `PullSubscriber` — Ring-buffer-backed pull subscriber with synchronous `tryRecv()` returning `Sample?`; configurable `capacity` (lossy: drops oldest on overflow); `keyExpr` and `close()`
 - `Query` — Received query with `keyExpr`, `parameters`, `payloadBytes`; reply via `reply()`/`replyBytes(ZBytes)` (accepts SHM-backed `ZBytes` for zero-copy reply payloads); `dispose()` frees the cloned query handle
 - `Queryable` — Callback-based queryable delivering queries via `Stream<Query>`; `close()` undeclares and frees the native queryable
@@ -75,7 +76,7 @@ Available Dart API classes:
 - `Hello` — Scouting result with `zid` (`ZenohId`), `whatami` (`WhatAmI`), and `locators` (list of strings) fields
 - `ZenohException` — Error type for zenoh operations
 
-Phases 12–18 (ping-pong/throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
+Phases 13–18 (SHM-ping/throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
 
 ## FVM Requirement
 
@@ -204,6 +205,12 @@ cd package && fvm dart run example/z_sub_liveliness.dart -k 'group1/**' --histor
 
 # Query currently alive liveliness tokens (runs until timeout)
 cd package && fvm dart run example/z_get_liveliness.dart -k 'group1/**'
+
+# Start pong responder (background subscriber echoes ping payload, runs until Ctrl-C)
+cd package && fvm dart run example/z_pong.dart
+
+# Measure round-trip latency (requires z_pong running; PAYLOAD_SIZE in bytes)
+cd package && fvm dart run example/z_ping.dart 64 -n 100 -w 1000
 ```
 
 CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When adding a new CLI example in any phase:
