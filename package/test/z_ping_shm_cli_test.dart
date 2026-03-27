@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
-/// The FVM-resolved Dart executable path.
+/// The direct Dart executable path (not via fvm, to avoid zombie processes).
 const _dartExe = '/home/hugo-bluecorn/fvm/versions/stable/bin/dart';
 
 /// Forcefully kills a process, using SIGKILL if SIGTERM doesn't work.
