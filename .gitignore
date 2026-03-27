@@ -39,6 +39,7 @@ migrate_working_dir/
 # Claude Code — commit settings.json, skills/, rules/; ignore local/machine state
 .claude/settings.local.json
 .claude/agent-memory/
+.claude/projects/*/memory/
 
 # Coverage artifacts
 package/coverage/
