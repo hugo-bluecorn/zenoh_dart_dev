@@ -1,4 +1,17 @@
 # Changelog
+## 0.13.0
+
+### Added
+- CLI example: `z_ping_shm.dart` — SHM zero-copy latency benchmark
+  using allocate-once-clone-in-loop pattern
+- 10 new integration tests (372 → 382 total): SHM clone semantics
+  (6 tests) and z_ping_shm CLI (4 tests)
+
+### Changed
+- SHM pool minimum size enforced at 65536 bytes for Talc allocator
+  compatibility with small payloads
+
+
 ## 0.12.0
 
 ### Added
