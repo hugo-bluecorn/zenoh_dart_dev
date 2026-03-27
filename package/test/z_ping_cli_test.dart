@@ -47,33 +47,35 @@ void main() {
       expect(result.exitCode, isNot(0));
     });
 
-    test('prints latency results with z_pong running', () async {
-      const port = 18572;
-      const endpoint = 'tcp/127.0.0.1:$port';
+    test(
+      'prints latency results with z_pong running',
+      () async {
+        const port = 18572;
+        const endpoint = 'tcp/127.0.0.1:$port';
 
-      final pongProcess = await startPong(endpoint, packageRoot);
+        final pongProcess = await startPong(endpoint, packageRoot);
 
-      try {
-        final result = await Process.run(_dartExe, [
-          'run',
-          'example/z_ping.dart',
-          '8',
-          '--samples',
-          '3',
-          '--warmup',
-          '0',
-          '-e',
-          endpoint,
-        ],
-            workingDirectory: packageRoot,
-        );
+        try {
+          final result = await Process.run(_dartExe, [
+            'run',
+            'example/z_ping.dart',
+            '8',
+            '--samples',
+            '3',
+            '--warmup',
+            '0',
+            '-e',
+            endpoint,
+          ], workingDirectory: packageRoot);
 
-        expect(result.exitCode, equals(0));
-        expect(result.stdout as String, contains('8 bytes: seq=0 rtt='));
-      } finally {
-        await forceKill(pongProcess);
-      }
-    }, timeout: Timeout(Duration(seconds: 60)));
+          expect(result.exitCode, equals(0));
+          expect(result.stdout as String, contains('8 bytes: seq=0 rtt='));
+        } finally {
+          await forceKill(pongProcess);
+        }
+      },
+      timeout: Timeout(Duration(seconds: 60)),
+    );
 
     test('accepts -n/--samples flag', () async {
       const port = 18573;
@@ -92,9 +94,7 @@ void main() {
           '0',
           '-e',
           endpoint,
-        ],
-            workingDirectory: packageRoot,
-        );
+        ], workingDirectory: packageRoot);
 
         expect(result.exitCode, equals(0));
         final lines = (result.stdout as String)
@@ -125,9 +125,7 @@ void main() {
           '0',
           '-e',
           endpoint,
-        ],
-            workingDirectory: packageRoot,
-        );
+        ], workingDirectory: packageRoot);
 
         expect(result.exitCode, equals(0));
         expect(result.stdout as String, contains('rtt='));
@@ -153,9 +151,7 @@ void main() {
           '500',
           '-e',
           endpoint,
-        ],
-            workingDirectory: packageRoot,
-        );
+        ], workingDirectory: packageRoot);
 
         expect(result.exitCode, equals(0));
         final output = result.stdout as String;

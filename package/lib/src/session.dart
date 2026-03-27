@@ -310,8 +310,7 @@ class Session {
       if (rc != 0) {
         receivePort.close();
         controller.close();
-        throw ZenohException(
-            'Failed to declare background subscriber', rc);
+        throw ZenohException('Failed to declare background subscriber', rc);
       }
     } finally {
       calloc.free(keyExprNative);

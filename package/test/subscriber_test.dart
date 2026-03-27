@@ -605,16 +605,15 @@ void main() {
       });
 
       test('receives PUT sample', () async {
-        final stream =
-            session2.declareBackgroundSubscriber('zenoh/dart/test/bg-put');
+        final stream = session2.declareBackgroundSubscriber(
+          'zenoh/dart/test/bg-put',
+        );
 
         await Future<void>.delayed(const Duration(seconds: 1));
 
         session1.put('zenoh/dart/test/bg-put', 'bg-hello');
 
-        final sample = await stream.first.timeout(
-          const Duration(seconds: 5),
-        );
+        final sample = await stream.first.timeout(const Duration(seconds: 5));
 
         expect(sample.keyExpr, equals('zenoh/dart/test/bg-put'));
         expect(sample.payload, equals('bg-hello'));
@@ -622,8 +621,9 @@ void main() {
       });
 
       test('receives multiple samples in order', () async {
-        final stream =
-            session2.declareBackgroundSubscriber('zenoh/dart/test/bg-multi');
+        final stream = session2.declareBackgroundSubscriber(
+          'zenoh/dart/test/bg-multi',
+        );
 
         await Future<void>.delayed(const Duration(seconds: 1));
 
@@ -643,8 +643,9 @@ void main() {
       });
 
       test('receives wildcard-matched samples', () async {
-        final stream = session2
-            .declareBackgroundSubscriber('zenoh/dart/test/bg-wild/**');
+        final stream = session2.declareBackgroundSubscriber(
+          'zenoh/dart/test/bg-wild/**',
+        );
 
         await Future<void>.delayed(const Duration(seconds: 1));
 
@@ -701,8 +702,9 @@ void main() {
 
         await Future<void>.delayed(const Duration(seconds: 1));
 
-        final stream =
-            s2.declareBackgroundSubscriber('zenoh/dart/test/bg-close');
+        final stream = s2.declareBackgroundSubscriber(
+          'zenoh/dart/test/bg-close',
+        );
 
         await Future<void>.delayed(const Duration(seconds: 1));
 
@@ -711,10 +713,7 @@ void main() {
 
         final doneCompleter = Completer<void>();
         final samples = <Sample>[];
-        stream.listen(
-          samples.add,
-          onDone: () => doneCompleter.complete(),
-        );
+        stream.listen(samples.add, onDone: () => doneCompleter.complete());
 
         // Wait for sample to arrive
         await Future<void>.delayed(const Duration(seconds: 2));
@@ -752,21 +751,19 @@ void main() {
       });
 
       test('two bg subscribers on same key both receive sample', () async {
-        final stream1 = session2
-            .declareBackgroundSubscriber('zenoh/dart/test/bg-dual');
-        final stream2 = session2
-            .declareBackgroundSubscriber('zenoh/dart/test/bg-dual');
+        final stream1 = session2.declareBackgroundSubscriber(
+          'zenoh/dart/test/bg-dual',
+        );
+        final stream2 = session2.declareBackgroundSubscriber(
+          'zenoh/dart/test/bg-dual',
+        );
 
         await Future<void>.delayed(const Duration(seconds: 1));
 
         session1.put('zenoh/dart/test/bg-dual', 'for-both');
 
-        final sample1 = await stream1.first.timeout(
-          const Duration(seconds: 5),
-        );
-        final sample2 = await stream2.first.timeout(
-          const Duration(seconds: 5),
-        );
+        final sample1 = await stream1.first.timeout(const Duration(seconds: 5));
+        final sample2 = await stream2.first.timeout(const Duration(seconds: 5));
 
         expect(sample1.payload, equals('for-both'));
         expect(sample2.payload, equals('for-both'));

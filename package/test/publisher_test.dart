@@ -473,28 +473,30 @@ void main() {
       session2.close();
     });
 
-    test('Publisher with isExpress true can publish and subscriber receives',
-        () async {
-      final subscriber = session2.declareSubscriber(
-        'zenoh/dart/test/express-pub',
-      );
-      addTearDown(subscriber.close);
-      final publisher = session1.declarePublisher(
-        'zenoh/dart/test/express-pub',
-        isExpress: true,
-      );
-      addTearDown(publisher.close);
+    test(
+      'Publisher with isExpress true can publish and subscriber receives',
+      () async {
+        final subscriber = session2.declareSubscriber(
+          'zenoh/dart/test/express-pub',
+        );
+        addTearDown(subscriber.close);
+        final publisher = session1.declarePublisher(
+          'zenoh/dart/test/express-pub',
+          isExpress: true,
+        );
+        addTearDown(publisher.close);
 
-      await Future<void>.delayed(const Duration(seconds: 1));
+        await Future<void>.delayed(const Duration(seconds: 1));
 
-      publisher.put('express message');
+        publisher.put('express message');
 
-      final sample = await subscriber.stream.first.timeout(
-        const Duration(seconds: 5),
-      );
-      expect(sample.payload, equals('express message'));
-      expect(sample.kind, equals(SampleKind.put));
-    });
+        final sample = await subscriber.stream.first.timeout(
+          const Duration(seconds: 5),
+        );
+        expect(sample.payload, equals('express message'));
+        expect(sample.kind, equals(SampleKind.put));
+      },
+    );
   });
 
   group('Matching status stream', () {

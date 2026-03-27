@@ -110,9 +110,9 @@ void main() {
         session.put('test/ping', 'echo-test');
 
         // Wait for echo on test/pong
-        final sample = await subscriber.stream
-            .first
-            .timeout(const Duration(seconds: 10));
+        final sample = await subscriber.stream.first.timeout(
+          const Duration(seconds: 10),
+        );
 
         // Verify we received something on pong
         expect(sample.keyExpr, equals('test/pong'));
