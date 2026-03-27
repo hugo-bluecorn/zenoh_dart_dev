@@ -1,4 +1,23 @@
 # Changelog
+## 0.12.0
+
+### Added
+- `Session.declareBackgroundSubscriber()` returns `Stream<Sample>` — fire-and-forget
+  subscriber that lives until session closes, no explicit close needed
+- `ZBytes.toBytes()` — reads content as `Uint8List` (non-destructive, can be called
+  multiple times)
+- `ZBytes.clone()` — shallow ref-counted copy with independent lifetime
+- CLI examples: `z_ping.dart` (latency measurement), `z_pong.dart` (echo responder)
+- 4 new C shim functions (88 → 92 total): zd_declare_background_subscriber,
+  zd_bytes_clone, zd_bytes_len, zd_bytes_to_buf
+- 32 new integration tests (340 → 372 total)
+
+### Changed
+- `Session.declarePublisher()` now accepts `isExpress` parameter (default false)
+  for low-latency batching control
+- `zd_declare_publisher` C signature extended with 7th parameter `is_express`
+  (sentinel -1 = default)
+
 ## 0.11.0
 
 ### Added
