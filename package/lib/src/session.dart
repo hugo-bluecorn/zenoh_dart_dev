@@ -228,6 +228,7 @@ class Session {
     Encoding? encoding,
     CongestionControl congestionControl = CongestionControl.block,
     Priority priority = Priority.data,
+    bool isExpress = false,
     bool enableMatchingListener = false,
   }) {
     _ensureOpen();
@@ -243,6 +244,7 @@ class Session {
         encoding: encoding,
         congestionControl: congestionControl,
         priority: priority,
+        isExpress: isExpress,
         enableMatchingListener: enableMatchingListener,
       );
     } finally {
@@ -280,6 +282,41 @@ class Session {
       timeout: timeout,
       enableMatchingListener: enableMatchingListener,
     );
+  }
+
+  /// Declares a background subscriber on the given [keyExpr].
+  ///
+  /// Returns a [Stream] of [Sample]s. Unlike [declareSubscriber], the
+  /// background subscriber has no handle and cannot be explicitly closed.
+  /// It lives until the session is closed, at which point the stream
+  /// completes automatically.
+  ///
+  /// Throws [ZenohException] if the key expression is invalid.
+  /// Throws [StateError] if the session has been closed.
+  Stream<Sample> declareBackgroundSubscriber(String keyExpr) {
+    _ensureOpen();
+    final (receivePort, controller) = Subscriber.createSampleChannel();
+    final loanedSession =
+        bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+    final keyExprNative = keyExpr.toNativeUtf8();
+
+    try {
+      final rc = bindings.zd_declare_background_subscriber(
+        loanedSession.cast(),
+        keyExprNative.cast(),
+        receivePort.sendPort.nativePort,
+      );
+
+      if (rc != 0) {
+        receivePort.close();
+        controller.close();
+        throw ZenohException('Failed to declare background subscriber', rc);
+      }
+    } finally {
+      calloc.free(keyExprNative);
+    }
+
+    return controller.stream;
   }
 
   /// Declares a subscriber on the given [keyExpr].

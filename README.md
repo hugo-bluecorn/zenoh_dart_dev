@@ -4,7 +4,7 @@
 >
 > **This is the development workshop repository.** It contains phase specs, design documents, experiments, audits, LaTeX papers, 7 git submodules, and the full archaeological record of building zenoh-dart from scratch. It is a complicated mess by design.
 >
-> **Looking for the package?** Go to **[zenoh_dart](https://github.com/hugo-bluecorn/zenoh_dart)** — the clean product repository with a single submodule, `package/` publish boundary, and 340 passing tests.
+> **Looking for the package?** Go to **[zenoh_dart](https://github.com/hugo-bluecorn/zenoh_dart)** — the clean product repository with a single submodule, `package/` publish boundary, and 372 passing tests.
 
 Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protocol for real-time, distributed systems. This package wraps [zenoh-c](https://github.com/eclipse-zenoh/zenoh-c) v1.7.2 through a thin C shim layer, giving Dart and Flutter applications access to zenoh's wire protocol without native plugin boilerplate.
 
@@ -20,7 +20,7 @@ It runs anywhere Dart runs: CLI tools, Serverpod backends, Flutter apps on Linux
 │  Generated FFI Bindings          │  bindings.dart — class-based ZenohDartBindings(DynamicLibrary)
 │  (auto-generated, never edited)  │
 ├─────────────────────────────────┤
-│  C Shim (src/zenoh_dart.{h,c})   │  88 zd_* functions
+│  C Shim (src/zenoh_dart.{h,c})   │  92 zd_* functions
 ├─────────────────────────────────┤
 │  libzenohc.so (zenoh-c v1.7.2)   │  Rust-based zenoh — linked via DT_NEEDED
 └─────────────────────────────────┘
@@ -55,7 +55,7 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 
 ## Current Status
 
-**88 C shim functions, 27 Dart API classes, 340 integration tests, 16 CLI examples.**
+**92 C shim functions, 27 Dart API classes, 372 integration tests, 18 CLI examples.**
 
 | Phase | What it added | Tests |
 |-------|---------------|-------|
@@ -70,8 +70,9 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 | 9 — Pull Subscriber | `PullSubscriber` with synchronous `tryRecv()` via ring buffer; configurable `capacity` (lossy); `Session.declarePullSubscriber()`; 4 new C shim functions; `z_pull.dart` | 282 |
 | 10 — Declared Querier | `Querier` with `get()` → `Stream<Reply>`, `keyExpr`, `close()`, `hasMatchingQueryables()`, `matchingStatus` stream; `Session.declareQuerier()`; 6 new C shim functions; `z_querier.dart` | 310 |
 | 11 — Liveliness | `LivelinessToken` with `keyExpr`, `close()`; `Session.declareLivelinessToken()`, `declareLivelinessSubscriber(history:)`, `livelinessGet(timeout:)`; 5 new C shim functions; `z_liveliness.dart`, `z_sub_liveliness.dart`, `z_get_liveliness.dart` | 340 |
+| 12 — Ping/Pong | `Session.declareBackgroundSubscriber()` → `Stream<Sample>` (fire-and-forget); `Publisher.isExpress` for low-latency; `ZBytes.clone()`, `ZBytes.toBytes()`; 4 new + 1 modified C shim functions; `z_ping.dart`, `z_pong.dart` | 372 |
 
-Phases 12-18 (ping-pong, throughput, storage, advanced) are [specified](development/phases/) but not yet implemented.
+Phases 13-18 (SHM-ping, throughput, storage, advanced) are [specified](development/phases/) but not yet implemented.
 
 ### Patches
 
@@ -219,6 +220,12 @@ fvm dart run example/z_sub_liveliness.dart -k 'group1/**' --history
 
 # Query currently alive liveliness tokens (runs until timeout)
 fvm dart run example/z_get_liveliness.dart -k 'group1/**'
+
+# Start pong responder (background subscriber echoes ping payload, runs until Ctrl-C)
+fvm dart run example/z_pong.dart
+
+# Measure round-trip latency (requires z_pong running; PAYLOAD_SIZE in bytes)
+fvm dart run example/z_ping.dart 64 -n 100 -w 1000
 ```
 
 CLI flags match zenoh-c's examples exactly (`-k`/`--key`, `-p`/`--payload`, `-e`/`--connect`, `-l`/`--listen`).
@@ -312,7 +319,7 @@ cd package && fvm dart run ffigen --config ffigen.yaml
 | 9 | [Pull](development/phases/phase-09-pull.md) | — **COMPLETE** |
 | 10 | [Querier](development/phases/phase-10-querier.md) | — **COMPLETE** |
 | 11 | [Liveliness](development/phases/phase-11-liveliness.md) | — **COMPLETE** |
-| 12 | [Ping/Pong](development/phases/phase-12-ping-pong.md) | |
+| 12 | [Ping/Pong](development/phases/phase-12-ping-pong.md) | — **COMPLETE** |
 | 13 | [SHM Ping](development/phases/phase-13-shm-ping.md) | |
 | 14 | [Throughput](development/phases/phase-14-throughput.md) | |
 | 15 | [SHM Throughput](development/phases/phase-15-shm-throughput.md) | |

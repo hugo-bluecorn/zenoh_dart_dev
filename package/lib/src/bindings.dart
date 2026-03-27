@@ -406,6 +406,52 @@ class ZenohDartBindings {
   late final _zd_bytes_loan = _zd_bytes_loanPtr
       .asFunction<ffi.Pointer<ffi.Opaque> Function(ffi.Pointer<ffi.Opaque>)>();
 
+  /// Returns the total number of bytes in the payload.
+  ///
+  /// @param bytes  Pointer to a z_owned_bytes_t (cast to uint8_t*).
+  /// @return Total number of bytes.
+  int zd_bytes_len(ffi.Pointer<ffi.Uint8> bytes) {
+    return _zd_bytes_len(bytes);
+  }
+
+  late final _zd_bytes_lenPtr =
+      _lookup<ffi.NativeFunction<ffi.Int32 Function(ffi.Pointer<ffi.Uint8>)>>(
+        'zd_bytes_len',
+      );
+  late final _zd_bytes_len = _zd_bytes_lenPtr
+      .asFunction<int Function(ffi.Pointer<ffi.Uint8>)>();
+
+  /// Reads the content of owned bytes into a caller-provided buffer.
+  ///
+  /// Uses z_bytes_reader to copy up to `capacity` bytes into `out`.
+  ///
+  /// @param bytes     Pointer to a z_owned_bytes_t (cast to uint8_t*).
+  /// @param out       Pointer to a buffer to receive the data.
+  /// @param capacity  Maximum number of bytes to read.
+  /// @return 0 on success.
+  int zd_bytes_to_buf(
+    ffi.Pointer<ffi.Uint8> bytes,
+    ffi.Pointer<ffi.Uint8> out,
+    int capacity,
+  ) {
+    return _zd_bytes_to_buf(bytes, out, capacity);
+  }
+
+  late final _zd_bytes_to_bufPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Int32,
+          )
+        >
+      >('zd_bytes_to_buf');
+  late final _zd_bytes_to_buf = _zd_bytes_to_bufPtr
+      .asFunction<
+        int Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>, int)
+      >();
+
   /// Drops (frees) owned bytes.
   ///
   /// After this call the owned bytes are in gravestone state.
@@ -422,6 +468,29 @@ class ZenohDartBindings {
       );
   late final _zd_bytes_drop = _zd_bytes_dropPtr
       .asFunction<void Function(ffi.Pointer<ffi.Opaque>)>();
+
+  /// Clones owned bytes into a pre-allocated destination.
+  ///
+  /// Loans the source, then calls z_bytes_clone() to produce an independent
+  /// copy that shares the underlying reference-counted data.
+  ///
+  /// @param dst  Pointer to an uninitialized z_owned_bytes_t (cast to uint8_t*).
+  /// @param src  Pointer to a valid z_owned_bytes_t (cast to uint8_t*).
+  /// @return 0 on success.
+  int zd_bytes_clone(ffi.Pointer<ffi.Uint8> dst, ffi.Pointer<ffi.Uint8> src) {
+    return _zd_bytes_clone(dst, src);
+  }
+
+  late final _zd_bytes_clonePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>)
+        >
+      >('zd_bytes_clone');
+  late final _zd_bytes_clone = _zd_bytes_clonePtr
+      .asFunction<
+        int Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Uint8>)
+      >();
 
   /// Returns the size of z_owned_string_t in bytes.
   ///
@@ -685,6 +754,42 @@ class ZenohDartBindings {
   late final _zd_subscriber_drop = _zd_subscriber_dropPtr
       .asFunction<void Function(ffi.Pointer<ffi.Opaque>)>();
 
+  /// Declares a background subscriber on the given key expression.
+  ///
+  /// Unlike a regular subscriber, a background subscriber has no handle --
+  /// it lives until the session is closed. Samples are posted to the Dart
+  /// native port. When the session closes and the background subscriber is
+  /// dropped internally by zenoh-c, a null sentinel is posted to signal
+  /// stream completion.
+  ///
+  /// @param session   Const pointer to a loaned session.
+  /// @param key_expr  The key expression string.
+  /// @param dart_port The Dart native port to post samples to.
+  /// @return 0 on success, negative on failure.
+  int zd_declare_background_subscriber(
+    ffi.Pointer<ffi.Opaque> session,
+    ffi.Pointer<ffi.Char> key_expr,
+    int dart_port,
+  ) {
+    return _zd_declare_background_subscriber(session, key_expr, dart_port);
+  }
+
+  late final _zd_declare_background_subscriberPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ffi.Opaque>,
+            ffi.Pointer<ffi.Char>,
+            ffi.Int64,
+          )
+        >
+      >('zd_declare_background_subscriber');
+  late final _zd_declare_background_subscriber =
+      _zd_declare_background_subscriberPtr
+          .asFunction<
+            int Function(ffi.Pointer<ffi.Opaque>, ffi.Pointer<ffi.Char>, int)
+          >();
+
   /// Returns the size of z_owned_publisher_t in bytes.
   int zd_publisher_sizeof() {
     return _zd_publisher_sizeof();
@@ -703,6 +808,7 @@ class ZenohDartBindings {
   /// @param encoding            MIME type string for default encoding (NULL = default).
   /// @param congestion_control  Congestion control strategy (-1 = default/block).
   /// @param priority            Message priority (-1 = default/data=5).
+  /// @param is_express          Express mode (-1 = default, 0 = false, 1 = true).
   /// @return 0 on success, negative on failure.
   int zd_declare_publisher(
     ffi.Pointer<ffi.Opaque> session,
@@ -711,6 +817,7 @@ class ZenohDartBindings {
     ffi.Pointer<ffi.Char> encoding,
     int congestion_control,
     int priority,
+    int is_express,
   ) {
     return _zd_declare_publisher(
       session,
@@ -719,6 +826,7 @@ class ZenohDartBindings {
       encoding,
       congestion_control,
       priority,
+      is_express,
     );
   }
 
@@ -732,6 +840,7 @@ class ZenohDartBindings {
             ffi.Pointer<ffi.Char>,
             ffi.Int,
             ffi.Int,
+            ffi.Int8,
           )
         >
       >('zd_declare_publisher');
@@ -742,6 +851,7 @@ class ZenohDartBindings {
           ffi.Pointer<ffi.Opaque>,
           ffi.Pointer<ffi.Opaque>,
           ffi.Pointer<ffi.Char>,
+          int,
           int,
           int,
         )

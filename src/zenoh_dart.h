@@ -184,6 +184,23 @@ FFI_PLUGIN_EXPORT int zd_bytes_to_string(const z_loaned_bytes_t* bytes,
 FFI_PLUGIN_EXPORT const z_loaned_bytes_t* zd_bytes_loan(
     const z_owned_bytes_t* bytes);
 
+/// Returns the total number of bytes in the payload.
+///
+/// @param bytes  Pointer to a z_owned_bytes_t (cast to uint8_t*).
+/// @return Total number of bytes.
+FFI_PLUGIN_EXPORT int32_t zd_bytes_len(const uint8_t* bytes);
+
+/// Reads the content of owned bytes into a caller-provided buffer.
+///
+/// Uses z_bytes_reader to copy up to `capacity` bytes into `out`.
+///
+/// @param bytes     Pointer to a z_owned_bytes_t (cast to uint8_t*).
+/// @param out       Pointer to a buffer to receive the data.
+/// @param capacity  Maximum number of bytes to read.
+/// @return 0 on success.
+FFI_PLUGIN_EXPORT int8_t zd_bytes_to_buf(const uint8_t* bytes,
+                                          uint8_t* out, int32_t capacity);
+
 /// Drops (frees) owned bytes.
 ///
 /// After this call the owned bytes are in gravestone state.
@@ -191,6 +208,16 @@ FFI_PLUGIN_EXPORT const z_loaned_bytes_t* zd_bytes_loan(
 ///
 /// @param bytes  Pointer to a z_owned_bytes_t to drop.
 FFI_PLUGIN_EXPORT void zd_bytes_drop(z_owned_bytes_t* bytes);
+
+/// Clones owned bytes into a pre-allocated destination.
+///
+/// Loans the source, then calls z_bytes_clone() to produce an independent
+/// copy that shares the underlying reference-counted data.
+///
+/// @param dst  Pointer to an uninitialized z_owned_bytes_t (cast to uint8_t*).
+/// @param src  Pointer to a valid z_owned_bytes_t (cast to uint8_t*).
+/// @return 0 on success.
+FFI_PLUGIN_EXPORT int8_t zd_bytes_clone(uint8_t* dst, const uint8_t* src);
 
 // ---------------------------------------------------------------------------
 // Owned String
@@ -321,6 +348,23 @@ FFI_PLUGIN_EXPORT int zd_declare_subscriber(
 /// @param subscriber  Pointer to a z_owned_subscriber_t to drop.
 FFI_PLUGIN_EXPORT void zd_subscriber_drop(z_owned_subscriber_t* subscriber);
 
+/// Declares a background subscriber on the given key expression.
+///
+/// Unlike a regular subscriber, a background subscriber has no handle --
+/// it lives until the session is closed. Samples are posted to the Dart
+/// native port. When the session closes and the background subscriber is
+/// dropped internally by zenoh-c, a null sentinel is posted to signal
+/// stream completion.
+///
+/// @param session   Const pointer to a loaned session.
+/// @param key_expr  The key expression string.
+/// @param dart_port The Dart native port to post samples to.
+/// @return 0 on success, negative on failure.
+FFI_PLUGIN_EXPORT int8_t zd_declare_background_subscriber(
+    const z_loaned_session_t* session,
+    const char* key_expr,
+    int64_t dart_port);
+
 // ---------------------------------------------------------------------------
 // Publisher
 // ---------------------------------------------------------------------------
@@ -336,6 +380,7 @@ FFI_PLUGIN_EXPORT size_t zd_publisher_sizeof(void);
 /// @param encoding            MIME type string for default encoding (NULL = default).
 /// @param congestion_control  Congestion control strategy (-1 = default/block).
 /// @param priority            Message priority (-1 = default/data=5).
+/// @param is_express          Express mode (-1 = default, 0 = false, 1 = true).
 /// @return 0 on success, negative on failure.
 FFI_PLUGIN_EXPORT int zd_declare_publisher(
     const z_loaned_session_t* session,
@@ -343,7 +388,8 @@ FFI_PLUGIN_EXPORT int zd_declare_publisher(
     const z_loaned_keyexpr_t* keyexpr,
     const char* encoding,
     int congestion_control,
-    int priority);
+    int priority,
+    int8_t is_express);
 
 /// Obtains a const loaned reference to the publisher.
 FFI_PLUGIN_EXPORT const z_loaned_publisher_t* zd_publisher_loan(
