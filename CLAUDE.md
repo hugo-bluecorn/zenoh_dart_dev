@@ -46,6 +46,7 @@ zenoh_dart_dev/                 # git repo root (development workshop)
 **Phase 10 Declared Querier: COMPLETE** — 83 C shim functions, 310 integration tests. `Querier` with `get()` (returns `Stream<Reply>`), `keyExpr`, `close()`, `hasMatchingQueryables()`, `matchingStatus` stream; declaration-time options (target, consolidation, timeout); CLI example `z_querier.dart`.
 **Phase 11 Liveliness: COMPLETE** — 88 C shim functions, 340 integration tests. `Session.declareLivelinessToken()` returns `LivelinessToken`; `Session.declareLivelinessSubscriber()` returns `Subscriber` (with `history` option for existing tokens); `Session.livelinessGet()` returns `Stream<Reply>` for querying alive tokens; CLI examples `z_liveliness.dart`, `z_sub_liveliness.dart`, `z_get_liveliness.dart`.
 **Phase 12 Ping/Pong Benchmark: COMPLETE** — 92 C shim functions, 372 integration tests. `Session.declareBackgroundSubscriber()` returns `Stream<Sample>` (fire-and-forget, lives until session closes); `Publisher.isExpress` parameter for low-latency batching control; `ZBytes.clone()` (shallow ref-counted) and `ZBytes.toBytes()` (read content as `Uint8List`); CLI examples `z_ping.dart` and `z_pong.dart`.
+**Phase 13 SHM Ping: COMPLETE** — 92 C shim functions, 382 integration tests. Composition phase (no new C shim functions or Dart API classes). `z_ping_shm.dart` CLI demonstrates allocate-once, clone-in-loop SHM zero-copy pattern using `ShmProvider.allocGcDefragBlocking()`, `ShmMutBuffer.toBytes()`, and `ZBytes.clone()`. Reuses `z_pong.dart` unchanged (SHM-transparent). SHM pool minimum size enforced at 65536 bytes for Talc allocator compatibility.
 
 Available Dart API classes:
 - `Zenoh` — Static utilities: `initLog(fallback)` for runtime logger initialization (call before `Session.open()`); `scout(config)` discovers zenoh entities on the network
@@ -76,7 +77,7 @@ Available Dart API classes:
 - `Hello` — Scouting result with `zid` (`ZenohId`), `whatami` (`WhatAmI`), and `locators` (list of strings) fields
 - `ZenohException` — Error type for zenoh operations
 
-Phases 13–18 (SHM-ping/throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
+Phases 14–18 (throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
 
 ## FVM Requirement
 
@@ -211,6 +212,9 @@ cd package && fvm dart run example/z_pong.dart
 
 # Measure round-trip latency (requires z_pong running; PAYLOAD_SIZE in bytes)
 cd package && fvm dart run example/z_ping.dart 64 -n 100 -w 1000
+
+# Measure round-trip latency with SHM zero-copy (requires z_pong running)
+cd package && fvm dart run example/z_ping_shm.dart 64 -n 100 -w 1000
 ```
 
 CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When adding a new CLI example in any phase:
@@ -284,7 +288,8 @@ This project uses a four-session role pattern for structured development:
 |---------|------|----------|-------|
 | **CA** | Architect / Reviewer | None (read-only) | Decisions, issues, memory, plan review, PR verification |
 | **CP** | Planner | `/tdd-plan` | Slice decomposition, plan iteration |
-| **CI** | Implementer | `/tdd-implement`, `/tdd-release`, `/tdd-finalize-docs` | Code, tests, releases, direct edits |
+| **CA2** | Independent Reviewer / Doc Finalizer | `/tdd-finalize-docs` | Spec review, codebase research, documentation (CLAUDE.md, README.md, example/README.md) |
+| **CI** | Implementer | `/tdd-implement`, `/tdd-release` | Code, tests, releases, direct edits |
 | **CB** | Packaging Advisor | None (read-only) | Build, cross-compilation, distribution, pub.dev |
 
 **Memory model:** CA is the sole memory writer. CP, CI, and CB read only.
@@ -476,8 +481,13 @@ When `/tdd-finalize-docs` runs after a release, update these specific sections:
 4. **"CLI Examples" section** — Add new CLI commands (no `LD_LIBRARY_PATH` needed). Verify ALL existing CLI examples are present (check `package/example/z_*.dart`).
 5. **"Phase Roadmap" table** — Mark the completed phase row with `— **COMPLETE**`.
 
+### package/example/README.md updates
+1. **Example entry** — Add a new entry in the Examples section using the template in "Updating This Guide." Every entry must include "The pattern it demonstrates" with an arrow-chain visual signature.
+2. **Coverage Map** — Update the example's row from "Planned" or "Future" to "Implemented." Update the current count line.
+3. **Absent Examples** — If the phase permanently skips a zenoh-c example, add it to the "Absent Examples" section with rationale.
+
 ### Verification checklist
-- Cross-check `package/example/z_*.dart` against CLI example sections in both CLAUDE.md and README.md — every CLI binary must be documented.
+- Cross-check `package/example/z_*.dart` against CLI example sections in CLAUDE.md, README.md, and `package/example/README.md` — every CLI binary must be documented in all three.
 - Cross-check `package/lib/zenoh.dart` exports against "Available Dart API classes" — every exported class/enum must be listed.
 - Run `fvm dart analyze package` to confirm no issues.
 
