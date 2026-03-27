@@ -76,36 +76,32 @@ void main() {
       timeout: Timeout(Duration(seconds: 60)),
     );
 
-    test(
-      'accepts --no-express flag',
-      () async {
-        const port = 18581;
-        const endpoint = 'tcp/127.0.0.1:$port';
+    test('accepts --no-express flag', () async {
+      const port = 18581;
+      const endpoint = 'tcp/127.0.0.1:$port';
 
-        final pongProcess = await startPong(endpoint, packageRoot);
+      final pongProcess = await startPong(endpoint, packageRoot);
 
-        try {
-          final result = await Process.run(_dartExe, [
-            'run',
-            'example/z_ping_shm.dart',
-            '--no-express',
-            '8',
-            '-n',
-            '1',
-            '--warmup',
-            '0',
-            '-e',
-            endpoint,
-          ], workingDirectory: packageRoot);
+      try {
+        final result = await Process.run(_dartExe, [
+          'run',
+          'example/z_ping_shm.dart',
+          '--no-express',
+          '8',
+          '-n',
+          '1',
+          '--warmup',
+          '0',
+          '-e',
+          endpoint,
+        ], workingDirectory: packageRoot);
 
-          expect(result.exitCode, equals(0));
-          expect(result.stdout as String, contains('rtt='));
-        } finally {
-          await forceKill(pongProcess);
-        }
-      },
-      timeout: Timeout(Duration(seconds: 60)),
-    );
+        expect(result.exitCode, equals(0));
+        expect(result.stdout as String, contains('rtt='));
+      } finally {
+        await forceKill(pongProcess);
+      }
+    }, timeout: Timeout(Duration(seconds: 60)));
 
     test(
       'prints SHM-related startup messages',

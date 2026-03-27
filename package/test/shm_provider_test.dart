@@ -349,9 +349,7 @@ void main() {
 
     /// Expected Uint8List for the i % 10 pattern of given [size].
     Uint8List expectedPattern(int size) {
-      return Uint8List.fromList(
-        List<int>.generate(size, (i) => i % 10),
-      );
+      return Uint8List.fromList(List<int>.generate(size, (i) => i % 10));
     }
 
     test('SHM bytes are SHM-backed after toBytes', () {
