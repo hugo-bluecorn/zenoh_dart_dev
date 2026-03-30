@@ -1,6 +1,9 @@
+import 'dart:typed_data';
+
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
 // Slice 2: arithmetic type serialize tests
+// Slice 3: compound type serialize tests
 
 void main() {
   group('ZSerializer lifecycle', () {
@@ -101,6 +104,52 @@ void main() {
       serializer.serializeInt8(-128);
       serializer.serializeInt8(127);
       serializer.serializeInt64(0x7FFFFFFFFFFFFFFF);
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+  });
+
+  group('ZSerializer compound types', () {
+    test('string serializes without error', () {
+      final serializer = ZSerializer();
+      serializer.serializeString('hello zenoh');
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+
+    test('bytes serialize without error', () {
+      final serializer = ZSerializer();
+      serializer.serializeBytes(Uint8List.fromList([1, 2, 3, 4]));
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+
+    test('sequence length serializes without error', () {
+      final serializer = ZSerializer();
+      serializer.serializeSequenceLength(4);
+      serializer.serializeInt32(10);
+      serializer.serializeInt32(20);
+      serializer.serializeInt32(30);
+      serializer.serializeInt32(40);
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+
+    test('empty string serializes without error', () {
+      final serializer = ZSerializer();
+      serializer.serializeString('');
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+
+    test('empty bytes serialize without error', () {
+      final serializer = ZSerializer();
+      serializer.serializeBytes(Uint8List(0));
       final bytes = serializer.finish();
       addTearDown(bytes.dispose);
       expect(bytes, isNotNull);
