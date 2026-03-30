@@ -125,5 +125,69 @@ void main() {
       expect(() => publisher.deleteResource(), throwsA(isA<StateError>()));
       expect(() => publisher.keyExpr, throwsA(isA<StateError>()));
     });
+    test('declareAdvancedPublisher with cache enabled succeeds', () {
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub-cache',
+        options: AdvancedPublisherOptions(cacheMaxSamples: 10),
+      );
+      expect(publisher, isA<AdvancedPublisher>());
+      publisher.close();
+    });
+
+    test('declareAdvancedPublisher with publisher detection enabled succeeds',
+        () {
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub-detect',
+        options: AdvancedPublisherOptions(publisherDetection: true),
+      );
+      expect(publisher, isA<AdvancedPublisher>());
+      publisher.close();
+    });
+
+    test(
+        'declareAdvancedPublisher with sample miss detection and periodic heartbeat succeeds',
+        () {
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub-miss',
+        options: AdvancedPublisherOptions(
+          sampleMissDetection: true,
+          heartbeatMode: HeartbeatMode.periodic,
+          heartbeatPeriodMs: 500,
+        ),
+      );
+      expect(publisher, isA<AdvancedPublisher>());
+      publisher.close();
+    });
+
+    test('declareAdvancedPublisher with all options enabled succeeds', () {
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub-all',
+        options: AdvancedPublisherOptions(
+          cacheMaxSamples: 5,
+          publisherDetection: true,
+          sampleMissDetection: true,
+          heartbeatMode: HeartbeatMode.periodic,
+          heartbeatPeriodMs: 500,
+        ),
+      );
+      expect(publisher, isA<AdvancedPublisher>());
+      publisher.close();
+    });
+
+    test('HeartbeatMode enum has correct values', () {
+      expect(HeartbeatMode.none.value, equals(0));
+      expect(HeartbeatMode.periodic.value, equals(1));
+      expect(HeartbeatMode.sporadic.value, equals(2));
+    });
+
+    test('declareAdvancedPublisher with cacheMaxSamples 0 (unlimited) succeeds',
+        () {
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub-unlim',
+        options: AdvancedPublisherOptions(cacheMaxSamples: 0),
+      );
+      expect(publisher, isA<AdvancedPublisher>());
+      publisher.close();
+    });
   }); // AdvancedPublisher group
 }
