@@ -3,6 +3,7 @@ library;
 
 export 'src/bytes.dart';
 export 'src/config.dart';
+export 'src/deserializer.dart';
 export 'src/congestion_control.dart';
 export 'src/consolidation_mode.dart';
 export 'src/encoding.dart';

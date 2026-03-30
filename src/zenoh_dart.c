@@ -1711,3 +1711,100 @@ FFI_PLUGIN_EXPORT
 int8_t zd_serializer_serialize_sequence_length(ze_loaned_serializer_t* ser, size_t len) {
   return (int8_t)ze_serializer_serialize_sequence_length(ser, len);
 }
+
+// ---------------------------------------------------------------------------
+// Deserializer
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT
+size_t zd_deserializer_sizeof(void) {
+  return sizeof(ze_deserializer_t);
+}
+
+FFI_PLUGIN_EXPORT
+void zd_deserializer_from_bytes(const z_loaned_bytes_t* bytes, ze_deserializer_t* out) {
+  *out = ze_deserializer_from_bytes(bytes);
+}
+
+FFI_PLUGIN_EXPORT
+bool zd_deserializer_is_done(const ze_deserializer_t* deser) {
+  return ze_deserializer_is_done(deser);
+}
+
+// ---------------------------------------------------------------------------
+// Deserializer — type deserialization
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_uint8(ze_deserializer_t* deser, uint8_t* out) {
+  return (int8_t)ze_deserializer_deserialize_uint8(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_uint16(ze_deserializer_t* deser, uint16_t* out) {
+  return (int8_t)ze_deserializer_deserialize_uint16(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_uint32(ze_deserializer_t* deser, uint32_t* out) {
+  return (int8_t)ze_deserializer_deserialize_uint32(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_uint64(ze_deserializer_t* deser, uint64_t* out) {
+  return (int8_t)ze_deserializer_deserialize_uint64(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_int8(ze_deserializer_t* deser, int8_t* out) {
+  return (int8_t)ze_deserializer_deserialize_int8(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_int16(ze_deserializer_t* deser, int16_t* out) {
+  return (int8_t)ze_deserializer_deserialize_int16(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_int32(ze_deserializer_t* deser, int32_t* out) {
+  return (int8_t)ze_deserializer_deserialize_int32(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_int64(ze_deserializer_t* deser, int64_t* out) {
+  return (int8_t)ze_deserializer_deserialize_int64(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_float(ze_deserializer_t* deser, float* out) {
+  return (int8_t)ze_deserializer_deserialize_float(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_double(ze_deserializer_t* deser, double* out) {
+  return (int8_t)ze_deserializer_deserialize_double(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_bool(ze_deserializer_t* deser, bool* out) {
+  return (int8_t)ze_deserializer_deserialize_bool(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_string(ze_deserializer_t* deser, z_owned_string_t* out) {
+  return (int8_t)ze_deserializer_deserialize_string(deser, out);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_buf(ze_deserializer_t* deser, z_owned_bytes_t* out) {
+  z_owned_slice_t slice;
+  z_result_t rc = ze_deserializer_deserialize_slice(deser, &slice);
+  if (rc != 0) return (int8_t)rc;
+  z_bytes_from_slice(out, z_slice_move(&slice));
+  return 0;
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_deserializer_deserialize_sequence_length(ze_deserializer_t* deser, size_t* out) {
+  return (int8_t)ze_deserializer_deserialize_sequence_length(deser, out);
+}

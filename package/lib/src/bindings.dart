@@ -2468,6 +2468,386 @@ class ZenohDartBindings {
   late final _zd_serializer_serialize_sequence_length =
       _zd_serializer_serialize_sequence_lengthPtr
           .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, int)>();
+
+  /// Returns the size of ze_deserializer_t in bytes.
+  int zd_deserializer_sizeof() {
+    return _zd_deserializer_sizeof();
+  }
+
+  late final _zd_deserializer_sizeofPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function()>>(
+        'zd_deserializer_sizeof',
+      );
+  late final _zd_deserializer_sizeof = _zd_deserializer_sizeofPtr
+      .asFunction<int Function()>();
+
+  /// Creates a deserializer from loaned bytes.
+  ///
+  /// @param bytes  Loaned bytes to deserialize from.
+  /// @param out    Pointer to an uninitialized ze_deserializer_t.
+  void zd_deserializer_from_bytes(
+    ffi.Pointer<ffi.Opaque> bytes,
+    ffi.Pointer<ze_deserializer_t> out,
+  ) {
+    return _zd_deserializer_from_bytes(bytes, out);
+  }
+
+  late final _zd_deserializer_from_bytesPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<ffi.Opaque>,
+            ffi.Pointer<ze_deserializer_t>,
+          )
+        >
+      >('zd_deserializer_from_bytes');
+  late final _zd_deserializer_from_bytes = _zd_deserializer_from_bytesPtr
+      .asFunction<
+        void Function(ffi.Pointer<ffi.Opaque>, ffi.Pointer<ze_deserializer_t>)
+      >();
+
+  /// Checks if the deserializer has consumed all data.
+  ///
+  /// @return true if no more data to parse, false otherwise.
+  bool zd_deserializer_is_done(ffi.Pointer<ze_deserializer_t> deser) {
+    return _zd_deserializer_is_done(deser);
+  }
+
+  late final _zd_deserializer_is_donePtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Bool Function(ffi.Pointer<ze_deserializer_t>)>
+      >('zd_deserializer_is_done');
+  late final _zd_deserializer_is_done = _zd_deserializer_is_donePtr
+      .asFunction<bool Function(ffi.Pointer<ze_deserializer_t>)>();
+
+  int zd_deserializer_deserialize_uint8(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Uint8> out,
+  ) {
+    return _zd_deserializer_deserialize_uint8(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_uint8Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Uint8>,
+          )
+        >
+      >('zd_deserializer_deserialize_uint8');
+  late final _zd_deserializer_deserialize_uint8 =
+      _zd_deserializer_deserialize_uint8Ptr
+          .asFunction<
+            int Function(ffi.Pointer<ze_deserializer_t>, ffi.Pointer<ffi.Uint8>)
+          >();
+
+  int zd_deserializer_deserialize_uint16(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Uint16> out,
+  ) {
+    return _zd_deserializer_deserialize_uint16(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_uint16Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Uint16>,
+          )
+        >
+      >('zd_deserializer_deserialize_uint16');
+  late final _zd_deserializer_deserialize_uint16 =
+      _zd_deserializer_deserialize_uint16Ptr
+          .asFunction<
+            int Function(
+              ffi.Pointer<ze_deserializer_t>,
+              ffi.Pointer<ffi.Uint16>,
+            )
+          >();
+
+  int zd_deserializer_deserialize_uint32(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Uint32> out,
+  ) {
+    return _zd_deserializer_deserialize_uint32(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_uint32Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Uint32>,
+          )
+        >
+      >('zd_deserializer_deserialize_uint32');
+  late final _zd_deserializer_deserialize_uint32 =
+      _zd_deserializer_deserialize_uint32Ptr
+          .asFunction<
+            int Function(
+              ffi.Pointer<ze_deserializer_t>,
+              ffi.Pointer<ffi.Uint32>,
+            )
+          >();
+
+  int zd_deserializer_deserialize_uint64(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Uint64> out,
+  ) {
+    return _zd_deserializer_deserialize_uint64(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_uint64Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Uint64>,
+          )
+        >
+      >('zd_deserializer_deserialize_uint64');
+  late final _zd_deserializer_deserialize_uint64 =
+      _zd_deserializer_deserialize_uint64Ptr
+          .asFunction<
+            int Function(
+              ffi.Pointer<ze_deserializer_t>,
+              ffi.Pointer<ffi.Uint64>,
+            )
+          >();
+
+  int zd_deserializer_deserialize_int8(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Int8> out,
+  ) {
+    return _zd_deserializer_deserialize_int8(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_int8Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Int8>,
+          )
+        >
+      >('zd_deserializer_deserialize_int8');
+  late final _zd_deserializer_deserialize_int8 =
+      _zd_deserializer_deserialize_int8Ptr
+          .asFunction<
+            int Function(ffi.Pointer<ze_deserializer_t>, ffi.Pointer<ffi.Int8>)
+          >();
+
+  int zd_deserializer_deserialize_int16(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Int16> out,
+  ) {
+    return _zd_deserializer_deserialize_int16(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_int16Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Int16>,
+          )
+        >
+      >('zd_deserializer_deserialize_int16');
+  late final _zd_deserializer_deserialize_int16 =
+      _zd_deserializer_deserialize_int16Ptr
+          .asFunction<
+            int Function(ffi.Pointer<ze_deserializer_t>, ffi.Pointer<ffi.Int16>)
+          >();
+
+  int zd_deserializer_deserialize_int32(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Int32> out,
+  ) {
+    return _zd_deserializer_deserialize_int32(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_int32Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Int32>,
+          )
+        >
+      >('zd_deserializer_deserialize_int32');
+  late final _zd_deserializer_deserialize_int32 =
+      _zd_deserializer_deserialize_int32Ptr
+          .asFunction<
+            int Function(ffi.Pointer<ze_deserializer_t>, ffi.Pointer<ffi.Int32>)
+          >();
+
+  int zd_deserializer_deserialize_int64(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Int64> out,
+  ) {
+    return _zd_deserializer_deserialize_int64(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_int64Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Int64>,
+          )
+        >
+      >('zd_deserializer_deserialize_int64');
+  late final _zd_deserializer_deserialize_int64 =
+      _zd_deserializer_deserialize_int64Ptr
+          .asFunction<
+            int Function(ffi.Pointer<ze_deserializer_t>, ffi.Pointer<ffi.Int64>)
+          >();
+
+  int zd_deserializer_deserialize_float(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Float> out,
+  ) {
+    return _zd_deserializer_deserialize_float(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_floatPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Float>,
+          )
+        >
+      >('zd_deserializer_deserialize_float');
+  late final _zd_deserializer_deserialize_float =
+      _zd_deserializer_deserialize_floatPtr
+          .asFunction<
+            int Function(ffi.Pointer<ze_deserializer_t>, ffi.Pointer<ffi.Float>)
+          >();
+
+  int zd_deserializer_deserialize_double(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Double> out,
+  ) {
+    return _zd_deserializer_deserialize_double(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_doublePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Double>,
+          )
+        >
+      >('zd_deserializer_deserialize_double');
+  late final _zd_deserializer_deserialize_double =
+      _zd_deserializer_deserialize_doublePtr
+          .asFunction<
+            int Function(
+              ffi.Pointer<ze_deserializer_t>,
+              ffi.Pointer<ffi.Double>,
+            )
+          >();
+
+  int zd_deserializer_deserialize_bool(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Bool> out,
+  ) {
+    return _zd_deserializer_deserialize_bool(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_boolPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Bool>,
+          )
+        >
+      >('zd_deserializer_deserialize_bool');
+  late final _zd_deserializer_deserialize_bool =
+      _zd_deserializer_deserialize_boolPtr
+          .asFunction<
+            int Function(ffi.Pointer<ze_deserializer_t>, ffi.Pointer<ffi.Bool>)
+          >();
+
+  /// Deserializes a string. Caller must drop the owned string.
+  int zd_deserializer_deserialize_string(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Opaque> out,
+  ) {
+    return _zd_deserializer_deserialize_string(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_stringPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Opaque>,
+          )
+        >
+      >('zd_deserializer_deserialize_string');
+  late final _zd_deserializer_deserialize_string =
+      _zd_deserializer_deserialize_stringPtr
+          .asFunction<
+            int Function(
+              ffi.Pointer<ze_deserializer_t>,
+              ffi.Pointer<ffi.Opaque>,
+            )
+          >();
+
+  /// Deserializes a byte buffer (slice). Outputs owned bytes.
+  int zd_deserializer_deserialize_buf(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Opaque> out,
+  ) {
+    return _zd_deserializer_deserialize_buf(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_bufPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Opaque>,
+          )
+        >
+      >('zd_deserializer_deserialize_buf');
+  late final _zd_deserializer_deserialize_buf =
+      _zd_deserializer_deserialize_bufPtr
+          .asFunction<
+            int Function(
+              ffi.Pointer<ze_deserializer_t>,
+              ffi.Pointer<ffi.Opaque>,
+            )
+          >();
+
+  /// Deserializes a sequence length header.
+  int zd_deserializer_deserialize_sequence_length(
+    ffi.Pointer<ze_deserializer_t> deser,
+    ffi.Pointer<ffi.Size> out,
+  ) {
+    return _zd_deserializer_deserialize_sequence_length(deser, out);
+  }
+
+  late final _zd_deserializer_deserialize_sequence_lengthPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_deserializer_t>,
+            ffi.Pointer<ffi.Size>,
+          )
+        >
+      >('zd_deserializer_deserialize_sequence_length');
+  late final _zd_deserializer_deserialize_sequence_length =
+      _zd_deserializer_deserialize_sequence_lengthPtr
+          .asFunction<
+            int Function(ffi.Pointer<ze_deserializer_t>, ffi.Pointer<ffi.Size>)
+          >();
 }
 
 final class UnnamedStruct extends ffi.Struct {
@@ -3268,6 +3648,12 @@ final class z_loaned_subscriber_t extends ffi.Struct {
 /// A user allocated string, viewed as a key expression.
 final class z_view_keyexpr_t extends ffi.Struct {
   @ffi.Array.multi([32])
+  external ffi.Array<ffi.Uint8> _0;
+}
+
+/// @brief A Zenoh serializer.
+final class ze_deserializer_t extends ffi.Struct {
+  @ffi.Array.multi([24])
   external ffi.Array<ffi.Uint8> _0;
 }
 

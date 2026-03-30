@@ -947,4 +947,72 @@ FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_buf(
 FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_sequence_length(
     ze_loaned_serializer_t* ser, size_t len);
 
+// ---------------------------------------------------------------------------
+// Deserializer
+// ---------------------------------------------------------------------------
+
+/// Returns the size of ze_deserializer_t in bytes.
+FFI_PLUGIN_EXPORT size_t zd_deserializer_sizeof(void);
+
+/// Creates a deserializer from loaned bytes.
+///
+/// @param bytes  Loaned bytes to deserialize from.
+/// @param out    Pointer to an uninitialized ze_deserializer_t.
+FFI_PLUGIN_EXPORT void zd_deserializer_from_bytes(
+    const z_loaned_bytes_t* bytes, ze_deserializer_t* out);
+
+/// Checks if the deserializer has consumed all data.
+///
+/// @return true if no more data to parse, false otherwise.
+FFI_PLUGIN_EXPORT bool zd_deserializer_is_done(const ze_deserializer_t* deser);
+
+// ---------------------------------------------------------------------------
+// Deserializer — type deserialization
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_uint8(
+    ze_deserializer_t* deser, uint8_t* out);
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_uint16(
+    ze_deserializer_t* deser, uint16_t* out);
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_uint32(
+    ze_deserializer_t* deser, uint32_t* out);
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_uint64(
+    ze_deserializer_t* deser, uint64_t* out);
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_int8(
+    ze_deserializer_t* deser, int8_t* out);
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_int16(
+    ze_deserializer_t* deser, int16_t* out);
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_int32(
+    ze_deserializer_t* deser, int32_t* out);
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_int64(
+    ze_deserializer_t* deser, int64_t* out);
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_float(
+    ze_deserializer_t* deser, float* out);
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_double(
+    ze_deserializer_t* deser, double* out);
+
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_bool(
+    ze_deserializer_t* deser, bool* out);
+
+/// Deserializes a string. Caller must drop the owned string.
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_string(
+    ze_deserializer_t* deser, z_owned_string_t* out);
+
+/// Deserializes a byte buffer (slice). Outputs owned bytes.
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_buf(
+    ze_deserializer_t* deser, z_owned_bytes_t* out);
+
+/// Deserializes a sequence length header.
+FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_sequence_length(
+    ze_deserializer_t* deser, size_t* out);
+
 #endif // ZENOH_DART_H
