@@ -1,4 +1,22 @@
 # Changelog
+## 0.16.0
+
+### Added
+- `ZSerializer` class — multi-value serialization with
+  arithmetic types (uint8–int64, float, double, bool),
+  strings, bytes, and sequence length headers
+- `ZDeserializer` class — type-safe deserialization with
+  round-trip fidelity for all serialized types
+- `ZBytesWriter` class — raw byte-level assembly via
+  `writeAll()` (raw bytes) and `append()` (ZBytes, consumed)
+- `ZBytes.fromInt()` / `toInt()`, `fromDouble()` / `toDouble()`,
+  `fromBool()` / `toBool()` convenience methods
+- `ZBytes.slices` getter — lazy iterable of internal byte slices
+- CLI example: `z_bytes.dart` — serialization round-trip demo
+  (no network, 10 PASS/FAIL sections)
+- 49 new C shim functions (92 → 141 total)
+- 61 new integration tests (394 → 455 total)
+
 ## 0.14.0
 
 ### Added
