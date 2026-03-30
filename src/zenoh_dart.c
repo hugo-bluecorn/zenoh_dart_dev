@@ -1633,3 +1633,62 @@ void zd_serializer_finish(
 void zd_serializer_drop(ze_owned_serializer_t* ser) {
   ze_serializer_drop(ze_serializer_move(ser));
 }
+
+// ---------------------------------------------------------------------------
+// Serializer — arithmetic type serialization
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_uint8(ze_loaned_serializer_t* ser, uint8_t val) {
+  return (int8_t)ze_serializer_serialize_uint8(ser, val);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_uint16(ze_loaned_serializer_t* ser, uint16_t val) {
+  return (int8_t)ze_serializer_serialize_uint16(ser, val);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_uint32(ze_loaned_serializer_t* ser, uint32_t val) {
+  return (int8_t)ze_serializer_serialize_uint32(ser, val);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_uint64(ze_loaned_serializer_t* ser, uint64_t val) {
+  return (int8_t)ze_serializer_serialize_uint64(ser, val);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_int8(ze_loaned_serializer_t* ser, int8_t val) {
+  return (int8_t)ze_serializer_serialize_int8(ser, val);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_int16(ze_loaned_serializer_t* ser, int16_t val) {
+  return (int8_t)ze_serializer_serialize_int16(ser, val);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_int32(ze_loaned_serializer_t* ser, int32_t val) {
+  return (int8_t)ze_serializer_serialize_int32(ser, val);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_int64(ze_loaned_serializer_t* ser, int64_t val) {
+  return (int8_t)ze_serializer_serialize_int64(ser, val);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_float(ze_loaned_serializer_t* ser, float val) {
+  return (int8_t)ze_serializer_serialize_float(ser, val);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_double(ze_loaned_serializer_t* ser, double val) {
+  return (int8_t)ze_serializer_serialize_double(ser, val);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_serializer_serialize_bool(ze_loaned_serializer_t* ser, bool val) {
+  return (int8_t)ze_serializer_serialize_bool(ser, val);
+}

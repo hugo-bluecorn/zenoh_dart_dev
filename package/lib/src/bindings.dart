@@ -2203,6 +2203,199 @@ class ZenohDartBindings {
       >('zd_serializer_drop');
   late final _zd_serializer_drop = _zd_serializer_dropPtr
       .asFunction<void Function(ffi.Pointer<ze_owned_serializer_t>)>();
+
+  /// Serializes a uint8_t value.
+  int zd_serializer_serialize_uint8(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    int val,
+  ) {
+    return _zd_serializer_serialize_uint8(ser, val);
+  }
+
+  late final _zd_serializer_serialize_uint8Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Uint8)
+        >
+      >('zd_serializer_serialize_uint8');
+  late final _zd_serializer_serialize_uint8 = _zd_serializer_serialize_uint8Ptr
+      .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, int)>();
+
+  /// Serializes a uint16_t value.
+  int zd_serializer_serialize_uint16(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    int val,
+  ) {
+    return _zd_serializer_serialize_uint16(ser, val);
+  }
+
+  late final _zd_serializer_serialize_uint16Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Uint16)
+        >
+      >('zd_serializer_serialize_uint16');
+  late final _zd_serializer_serialize_uint16 =
+      _zd_serializer_serialize_uint16Ptr
+          .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, int)>();
+
+  /// Serializes a uint32_t value.
+  int zd_serializer_serialize_uint32(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    int val,
+  ) {
+    return _zd_serializer_serialize_uint32(ser, val);
+  }
+
+  late final _zd_serializer_serialize_uint32Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Uint32)
+        >
+      >('zd_serializer_serialize_uint32');
+  late final _zd_serializer_serialize_uint32 =
+      _zd_serializer_serialize_uint32Ptr
+          .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, int)>();
+
+  /// Serializes a uint64_t value.
+  int zd_serializer_serialize_uint64(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    int val,
+  ) {
+    return _zd_serializer_serialize_uint64(ser, val);
+  }
+
+  late final _zd_serializer_serialize_uint64Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Uint64)
+        >
+      >('zd_serializer_serialize_uint64');
+  late final _zd_serializer_serialize_uint64 =
+      _zd_serializer_serialize_uint64Ptr
+          .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, int)>();
+
+  /// Serializes an int8_t value.
+  int zd_serializer_serialize_int8(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    int val,
+  ) {
+    return _zd_serializer_serialize_int8(ser, val);
+  }
+
+  late final _zd_serializer_serialize_int8Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Int8)
+        >
+      >('zd_serializer_serialize_int8');
+  late final _zd_serializer_serialize_int8 = _zd_serializer_serialize_int8Ptr
+      .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, int)>();
+
+  /// Serializes an int16_t value.
+  int zd_serializer_serialize_int16(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    int val,
+  ) {
+    return _zd_serializer_serialize_int16(ser, val);
+  }
+
+  late final _zd_serializer_serialize_int16Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Int16)
+        >
+      >('zd_serializer_serialize_int16');
+  late final _zd_serializer_serialize_int16 = _zd_serializer_serialize_int16Ptr
+      .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, int)>();
+
+  /// Serializes an int32_t value.
+  int zd_serializer_serialize_int32(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    int val,
+  ) {
+    return _zd_serializer_serialize_int32(ser, val);
+  }
+
+  late final _zd_serializer_serialize_int32Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Int32)
+        >
+      >('zd_serializer_serialize_int32');
+  late final _zd_serializer_serialize_int32 = _zd_serializer_serialize_int32Ptr
+      .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, int)>();
+
+  /// Serializes an int64_t value.
+  int zd_serializer_serialize_int64(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    int val,
+  ) {
+    return _zd_serializer_serialize_int64(ser, val);
+  }
+
+  late final _zd_serializer_serialize_int64Ptr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Int64)
+        >
+      >('zd_serializer_serialize_int64');
+  late final _zd_serializer_serialize_int64 = _zd_serializer_serialize_int64Ptr
+      .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, int)>();
+
+  /// Serializes a float value.
+  int zd_serializer_serialize_float(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    double val,
+  ) {
+    return _zd_serializer_serialize_float(ser, val);
+  }
+
+  late final _zd_serializer_serialize_floatPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Float)
+        >
+      >('zd_serializer_serialize_float');
+  late final _zd_serializer_serialize_float = _zd_serializer_serialize_floatPtr
+      .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, double)>();
+
+  /// Serializes a double value.
+  int zd_serializer_serialize_double(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    double val,
+  ) {
+    return _zd_serializer_serialize_double(ser, val);
+  }
+
+  late final _zd_serializer_serialize_doublePtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Double)
+        >
+      >('zd_serializer_serialize_double');
+  late final _zd_serializer_serialize_double =
+      _zd_serializer_serialize_doublePtr
+          .asFunction<
+            int Function(ffi.Pointer<ze_loaned_serializer_t>, double)
+          >();
+
+  /// Serializes a bool value.
+  int zd_serializer_serialize_bool(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    bool val,
+  ) {
+    return _zd_serializer_serialize_bool(ser, val);
+  }
+
+  late final _zd_serializer_serialize_boolPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Bool)
+        >
+      >('zd_serializer_serialize_bool');
+  late final _zd_serializer_serialize_bool = _zd_serializer_serialize_boolPtr
+      .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, bool)>();
 }
 
 final class UnnamedStruct extends ffi.Struct {

@@ -883,4 +883,52 @@ FFI_PLUGIN_EXPORT void zd_serializer_finish(
 /// @param ser  Pointer to a ze_owned_serializer_t to drop.
 FFI_PLUGIN_EXPORT void zd_serializer_drop(ze_owned_serializer_t* ser);
 
+// ---------------------------------------------------------------------------
+// Serializer — arithmetic type serialization
+// ---------------------------------------------------------------------------
+
+/// Serializes a uint8_t value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_uint8(
+    ze_loaned_serializer_t* ser, uint8_t val);
+
+/// Serializes a uint16_t value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_uint16(
+    ze_loaned_serializer_t* ser, uint16_t val);
+
+/// Serializes a uint32_t value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_uint32(
+    ze_loaned_serializer_t* ser, uint32_t val);
+
+/// Serializes a uint64_t value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_uint64(
+    ze_loaned_serializer_t* ser, uint64_t val);
+
+/// Serializes an int8_t value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_int8(
+    ze_loaned_serializer_t* ser, int8_t val);
+
+/// Serializes an int16_t value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_int16(
+    ze_loaned_serializer_t* ser, int16_t val);
+
+/// Serializes an int32_t value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_int32(
+    ze_loaned_serializer_t* ser, int32_t val);
+
+/// Serializes an int64_t value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_int64(
+    ze_loaned_serializer_t* ser, int64_t val);
+
+/// Serializes a float value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_float(
+    ze_loaned_serializer_t* ser, float val);
+
+/// Serializes a double value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_double(
+    ze_loaned_serializer_t* ser, double val);
+
+/// Serializes a bool value.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_bool(
+    ze_loaned_serializer_t* ser, bool val);
+
 #endif // ZENOH_DART_H

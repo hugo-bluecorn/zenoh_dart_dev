@@ -3,6 +3,7 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 
 import 'bytes.dart';
+import 'exceptions.dart';
 import 'native_lib.dart';
 
 /// A zenoh serializer for building structured payloads.
@@ -27,6 +28,102 @@ class ZSerializer {
   void _checkState() {
     if (_disposed) throw StateError('ZSerializer has been disposed');
     if (_finished) throw StateError('ZSerializer has been finished');
+  }
+
+  Pointer<Void> _loanMut() {
+    final out = calloc<Pointer<Void>>();
+    bindings.zd_serializer_loan_mut(_ptr.cast(), out.cast());
+    final loaned = out.value;
+    calloc.free(out);
+    return loaned;
+  }
+
+  /// Serializes a uint8 value.
+  void serializeUint8(int value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_uint8(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize uint8', rc);
+  }
+
+  /// Serializes a uint16 value.
+  void serializeUint16(int value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_uint16(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize uint16', rc);
+  }
+
+  /// Serializes a uint32 value.
+  void serializeUint32(int value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_uint32(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize uint32', rc);
+  }
+
+  /// Serializes a uint64 value.
+  void serializeUint64(int value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_uint64(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize uint64', rc);
+  }
+
+  /// Serializes an int8 value.
+  void serializeInt8(int value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_int8(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize int8', rc);
+  }
+
+  /// Serializes an int16 value.
+  void serializeInt16(int value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_int16(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize int16', rc);
+  }
+
+  /// Serializes an int32 value.
+  void serializeInt32(int value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_int32(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize int32', rc);
+  }
+
+  /// Serializes an int64 value.
+  void serializeInt64(int value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_int64(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize int64', rc);
+  }
+
+  /// Serializes a float value.
+  void serializeFloat(double value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_float(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize float', rc);
+  }
+
+  /// Serializes a double value.
+  void serializeDouble(double value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_double(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize double', rc);
+  }
+
+  /// Serializes a bool value.
+  void serializeBool(bool value) {
+    _checkState();
+    final rc =
+        bindings.zd_serializer_serialize_bool(_loanMut().cast(), value);
+    if (rc != 0) throw ZenohException('Failed to serialize bool', rc);
   }
 
   /// Finishes the serializer and returns the produced [ZBytes].
