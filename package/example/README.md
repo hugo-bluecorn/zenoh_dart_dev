@@ -95,11 +95,6 @@ These use zenoh-c's advanced publication API (`ze_declare_advanced_publisher`,
 recovery. Planned for a future phase when the advanced API surface is
 implemented.
 
-### z_pub_thr / z_sub_thr / z_pub_shm_thr — Throughput Benchmarks (Future)
-
-Throughput measurement examples. Planned for a future phase alongside
-advanced pub/sub.
-
 ### z_storage — In-Memory Storage (Future)
 
 Combines subscriber + queryable into an in-memory key-value store.
@@ -669,6 +664,69 @@ receives bytes transparently (SHM or heap) and echoes them back.
 
 ---
 
+### z_pub_thr / z_sub_thr / z_pub_shm_thr — Throughput Benchmarks
+
+**Composition examples.** Zero new C shim functions, zero new Dart API.
+Compose from `Publisher` with `CongestionControl.block`, `Session.declareBackgroundSubscriber()`,
+`ShmProvider`, `ShmMutBuffer`, and `ZBytes.clone()`.
+
+**The pattern they demonstrate**
+
+```
+z_pub_thr:     open → declarePublisher(test/thr, block) → [putBytes(clone)] tight loop
+z_sub_thr:     open → bgSubscriber(test/thr) → count msgs per round → print throughput
+z_pub_shm_thr: open → declarePublisher(test/thr, block) → alloc once → [putBytes(clone)] tight loop
+                                                                         ^^^^^^^^^^^^^^^^
+                                                                         clone in loop (near-zero cost)
+```
+
+`z_pub_thr` builds a heap `ZBytes` once and clones it each iteration —
+same clone-in-loop pattern as `z_ping_shm`, applied to bulk throughput.
+`z_sub_thr` uses a background subscriber to count messages asynchronously;
+after each round of `--number` messages it prints the throughput in msg/s
+and prints a summary on exit. `z_pub_shm_thr` is the SHM variant: allocates
+a single `ShmMutBuffer` once, converts to `ZBytes`, then clones per
+iteration for zero-copy publish.
+
+**Dart-specific note**
+
+`z_sub_thr` enables `transport/shared_memory/enabled` in config so it can
+receive SHM-backed payloads from `z_pub_shm_thr` transparently in the same
+process. The `Stopwatch`-based measurement follows the zenoh-c reference
+implementation's round structure.
+
+```
+z_pub_thr.dart     8192 --express
+z_sub_thr.dart     -s 10 -n 100000
+z_pub_shm_thr.dart 8192 -s 32
+```
+
+| Flag (z_pub_thr) | Default | Description |
+|------|---------|-------------|
+| `<PAYLOAD_SIZE>` | (required) | Payload size in bytes |
+| `-p, --priority` | `5` | Priority (1–7, Z_PRIORITY_DATA = 5) |
+| `--express` | false | Enable express mode (disable batching) |
+| `-e, --connect` | -- | Connect endpoint(s) |
+| `-l, --listen` | -- | Listen endpoint(s) |
+
+| Flag (z_sub_thr) | Default | Description |
+|------|---------|-------------|
+| `-s, --samples` | `10` | Number of measurement rounds |
+| `-n, --number` | `100000` | Messages per round |
+| `-e, --connect` | -- | Connect endpoint(s) |
+| `-l, --listen` | -- | Listen endpoint(s) |
+
+**Output format (z_sub_thr):** `<throughput> msg/s` per round, then `sent <N> messages over <t> seconds (<overall> msg/s)` on exit.
+
+| Flag (z_pub_shm_thr) | Default | Description |
+|------|---------|-------------|
+| `<PAYLOAD_SIZE>` | (required) | SHM payload size in bytes |
+| `-s, --shared-memory` | `32` | SHM pool size in MB |
+| `-e, --connect` | -- | Connect endpoint(s) |
+| `-l, --listen` | -- | Listen endpoint(s) |
+
+---
+
 ## Coverage Map
 
 Which zenoh-c examples does this binding implement, and which are absent?
@@ -700,12 +758,12 @@ Which zenoh-c examples does this binding implement, and which are absent?
 | `z_non_blocking_get.c` | -- | Absent (Dart Streams) |
 | `z_advanced_pub.c` | -- | Future |
 | `z_advanced_sub.c` | -- | Future |
-| `z_pub_thr.c` | -- | Future |
-| `z_sub_thr.c` | -- | Future |
-| `z_pub_shm_thr.c` | -- | Future |
+| `z_pub_thr.c` | `z_pub_thr.dart` | Implemented |
+| `z_sub_thr.c` | `z_sub_thr.dart` | Implemented |
+| `z_pub_shm_thr.c` | `z_pub_shm_thr.dart` | Implemented |
 | `z_storage.c` | -- | Future |
 
-**Current:** 19 implemented, 4 permanently absent, 6 future.
+**Current:** 22 implemented, 4 permanently absent, 3 future.
 
 ---
 
