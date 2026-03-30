@@ -1,4 +1,14 @@
 # Changelog
+## 0.17.0
+
+### Added
+- `KeyExpr.intersects(other)` — returns true if this key expression intersects with another
+- `KeyExpr.includes(other)` — returns true if this key expression includes (is a superset of) another
+- `KeyExpr.equals(other)` — returns true if two key expressions are semantically equal
+- CLI example: `z_storage.dart` — in-memory storage combining a subscriber (stores PUT/DELETE samples in a `Map`) and a queryable (replies with matching entries using `KeyExpr.intersects`)
+- 3 new C shim functions (141 → 144 total): `zd_keyexpr_intersects`, `zd_keyexpr_includes`, `zd_keyexpr_equals`
+- 18 new integration tests (455 → 473 total)
+
 ## 0.16.0
 
 ### Added
