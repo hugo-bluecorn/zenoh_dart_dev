@@ -1,0 +1,93 @@
+import 'dart:ffi';
+
+import 'package:ffi/ffi.dart';
+
+import 'exceptions.dart';
+import 'native_lib.dart';
+
+/// Heartbeat mode for advanced publisher sample miss detection.
+enum HeartbeatMode {
+  /// Disable heartbeat-based last sample miss detection.
+  none(0),
+
+  /// Allow last sample miss detection through periodic heartbeat.
+  periodic(1),
+
+  /// Allow last sample miss detection through sporadic heartbeat.
+  sporadic(2);
+
+  const HeartbeatMode(this.value);
+
+  /// The integer value matching the zenoh-c enum.
+  final int value;
+}
+
+/// A zenoh advanced publisher with cache, publisher detection,
+/// and sample miss detection capabilities.
+///
+/// Wraps `ze_owned_advanced_publisher_t`. Call [close] when done to
+/// undeclare the publisher and release native resources.
+class AdvancedPublisher {
+  final Pointer<Void> _ptr;
+  final String _keyExpr;
+  bool _closed = false;
+
+  AdvancedPublisher._(this._ptr, this._keyExpr);
+
+  /// Creates an advanced publisher on the given session and key expression.
+  ///
+  /// This is called internally by [Session.declareAdvancedPublisher].
+  static AdvancedPublisher declare(
+    Pointer<Void> loanedSession,
+    Pointer<Void> loanedKe,
+    String keyExpr, {
+    bool enableCache = false,
+    int cacheMaxSamples = 0,
+    bool publisherDetection = false,
+    bool sampleMissDetection = false,
+    HeartbeatMode heartbeatMode = HeartbeatMode.none,
+    int heartbeatPeriodMs = 0,
+  }) {
+    final size = bindings.zd_advanced_publisher_sizeof();
+    final Pointer<Void> ptr = calloc.allocate(size);
+
+    final rc = bindings.zd_declare_advanced_publisher(
+      loanedSession.cast(),
+      ptr.cast(),
+      loanedKe.cast(),
+      enableCache,
+      cacheMaxSamples,
+      publisherDetection,
+      sampleMissDetection,
+      heartbeatMode.value,
+      heartbeatPeriodMs,
+    );
+
+    if (rc != 0) {
+      calloc.free(ptr);
+      throw ZenohException('Failed to declare advanced publisher', rc);
+    }
+
+    return AdvancedPublisher._(ptr, keyExpr);
+  }
+
+  void _ensureOpen() {
+    if (_closed) throw StateError('AdvancedPublisher has been closed');
+  }
+
+  /// The key expression this advanced publisher is declared on.
+  String get keyExpr {
+    _ensureOpen();
+    return _keyExpr;
+  }
+
+  /// Undeclares the advanced publisher and releases native resources.
+  ///
+  /// Safe to call multiple times -- subsequent calls are no-ops.
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    bindings.zd_advanced_publisher_drop(_ptr.cast());
+    calloc.free(_ptr);
+  }
+}

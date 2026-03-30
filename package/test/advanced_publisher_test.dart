@@ -75,5 +75,5 @@ void main() {
       expect(publisher, isA<AdvancedPublisher>());
       publisher.close();
     });
-  });
+  }); // AdvancedPublisher
 }

@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
+import 'advanced_publisher.dart';
 import 'bytes.dart';
 import 'config.dart';
 import 'congestion_control.dart';
@@ -246,6 +247,46 @@ class Session {
         priority: priority,
         isExpress: isExpress,
         enableMatchingListener: enableMatchingListener,
+      );
+    } finally {
+      ke.dispose();
+    }
+  }
+
+  /// Declares an advanced publisher on the given [keyExpr].
+  ///
+  /// Returns an [AdvancedPublisher] with optional cache, publisher detection,
+  /// and sample miss detection capabilities. Call [AdvancedPublisher.close]
+  /// when done.
+  ///
+  /// Throws [ZenohException] if the key expression is invalid.
+  /// Throws [StateError] if the session has been closed.
+  AdvancedPublisher declareAdvancedPublisher(
+    String keyExpr, {
+    bool enableCache = false,
+    int cacheMaxSamples = 0,
+    bool publisherDetection = false,
+    bool sampleMissDetection = false,
+    HeartbeatMode heartbeatMode = HeartbeatMode.none,
+    int heartbeatPeriodMs = 0,
+  }) {
+    _ensureOpen();
+    final ke = KeyExpr(keyExpr);
+    try {
+      final loanedSession =
+          bindings.zd_session_loan(_ptr.cast()) as Pointer<Void>;
+      final loanedKe =
+          bindings.zd_view_keyexpr_loan(ke.nativePtr.cast()) as Pointer<Void>;
+      return AdvancedPublisher.declare(
+        loanedSession,
+        loanedKe,
+        keyExpr,
+        enableCache: enableCache,
+        cacheMaxSamples: cacheMaxSamples,
+        publisherDetection: publisherDetection,
+        sampleMissDetection: sampleMissDetection,
+        heartbeatMode: heartbeatMode,
+        heartbeatPeriodMs: heartbeatPeriodMs,
       );
     } finally {
       ke.dispose();
