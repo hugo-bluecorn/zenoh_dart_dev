@@ -125,6 +125,7 @@ void main() {
       expect(() => publisher.deleteResource(), throwsA(isA<StateError>()));
       expect(() => publisher.keyExpr, throwsA(isA<StateError>()));
     });
+    // --- Options tests ---
     test('declareAdvancedPublisher with cache enabled succeeds', () {
       final publisher = session.declareAdvancedPublisher(
         'demo/example/adv-pub-cache',

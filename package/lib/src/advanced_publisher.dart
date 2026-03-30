@@ -23,6 +23,37 @@ enum HeartbeatMode {
   final int value;
 }
 
+/// Options for configuring an advanced publisher.
+///
+/// All fields are optional. When [cacheMaxSamples] is non-null, caching is
+/// enabled with the given maximum sample count (0 means unlimited).
+class AdvancedPublisherOptions {
+  /// Maximum number of samples to cache. If non-null, caching is enabled.
+  /// A value of 0 means unlimited cache.
+  final int? cacheMaxSamples;
+
+  /// Whether to enable publisher detection.
+  final bool publisherDetection;
+
+  /// Whether to enable sample miss detection.
+  final bool sampleMissDetection;
+
+  /// The heartbeat mode for sample miss detection.
+  final HeartbeatMode heartbeatMode;
+
+  /// The heartbeat period in milliseconds (used with periodic/sporadic modes).
+  final int heartbeatPeriodMs;
+
+  /// Creates advanced publisher options.
+  const AdvancedPublisherOptions({
+    this.cacheMaxSamples,
+    this.publisherDetection = false,
+    this.sampleMissDetection = false,
+    this.heartbeatMode = HeartbeatMode.none,
+    this.heartbeatPeriodMs = 0,
+  });
+}
+
 /// A zenoh advanced publisher with cache, publisher detection,
 /// and sample miss detection capabilities.
 ///

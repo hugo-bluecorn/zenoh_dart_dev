@@ -263,14 +263,10 @@ class Session {
   /// Throws [StateError] if the session has been closed.
   AdvancedPublisher declareAdvancedPublisher(
     String keyExpr, {
-    bool enableCache = false,
-    int cacheMaxSamples = 0,
-    bool publisherDetection = false,
-    bool sampleMissDetection = false,
-    HeartbeatMode heartbeatMode = HeartbeatMode.none,
-    int heartbeatPeriodMs = 0,
+    AdvancedPublisherOptions? options,
   }) {
     _ensureOpen();
+    final opts = options ?? const AdvancedPublisherOptions();
     final ke = KeyExpr(keyExpr);
     try {
       final loanedSession =
@@ -281,12 +277,12 @@ class Session {
         loanedSession,
         loanedKe,
         keyExpr,
-        enableCache: enableCache,
-        cacheMaxSamples: cacheMaxSamples,
-        publisherDetection: publisherDetection,
-        sampleMissDetection: sampleMissDetection,
-        heartbeatMode: heartbeatMode,
-        heartbeatPeriodMs: heartbeatPeriodMs,
+        enableCache: opts.cacheMaxSamples != null,
+        cacheMaxSamples: opts.cacheMaxSamples ?? 0,
+        publisherDetection: opts.publisherDetection,
+        sampleMissDetection: opts.sampleMissDetection,
+        heartbeatMode: opts.heartbeatMode,
+        heartbeatPeriodMs: opts.heartbeatPeriodMs,
       );
     } finally {
       ke.dispose();
