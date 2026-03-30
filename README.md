@@ -55,7 +55,7 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 
 ## Current Status
 
-**92 C shim functions, 27 Dart API classes, 372 integration tests, 18 CLI examples.**
+**92 C shim functions, 27 Dart API classes, 394 integration tests, 22 CLI examples.**
 
 | Phase | What it added | Tests |
 |-------|---------------|-------|
@@ -71,8 +71,10 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 | 10 — Declared Querier | `Querier` with `get()` → `Stream<Reply>`, `keyExpr`, `close()`, `hasMatchingQueryables()`, `matchingStatus` stream; `Session.declareQuerier()`; 6 new C shim functions; `z_querier.dart` | 310 |
 | 11 — Liveliness | `LivelinessToken` with `keyExpr`, `close()`; `Session.declareLivelinessToken()`, `declareLivelinessSubscriber(history:)`, `livelinessGet(timeout:)`; 5 new C shim functions; `z_liveliness.dart`, `z_sub_liveliness.dart`, `z_get_liveliness.dart` | 340 |
 | 12 — Ping/Pong | `Session.declareBackgroundSubscriber()` → `Stream<Sample>` (fire-and-forget); `Publisher.isExpress` for low-latency; `ZBytes.clone()`, `ZBytes.toBytes()`; 4 new + 1 modified C shim functions; `z_ping.dart`, `z_pong.dart` | 372 |
+| 13 — SHM Ping | Composition phase (0 new C shim functions, 0 new Dart API classes); `z_ping_shm.dart` (allocate-once, clone-in-loop SHM zero-copy benchmark; reuses `z_pong.dart` unchanged) | 382 |
+| 14 — Throughput | Composition phase (0 new C shim functions, 0 new Dart API classes); `z_pub_thr.dart` (heap tight-loop), `z_sub_thr.dart` (background subscriber counting msg/s), `z_pub_shm_thr.dart` (SHM zero-copy tight-loop) | 394 |
 
-Phases 13-18 (SHM-ping, throughput, storage, advanced) are [specified](development/phases/) but not yet implemented.
+Phases 15–18 (SHM throughput/storage/advanced) are [specified](development/phases/) but not yet implemented.
 
 ### Patches
 
@@ -226,6 +228,18 @@ fvm dart run example/z_pong.dart
 
 # Measure round-trip latency (requires z_pong running; PAYLOAD_SIZE in bytes)
 fvm dart run example/z_ping.dart 64 -n 100 -w 1000
+
+# Measure round-trip latency with SHM zero-copy (requires z_pong running)
+fvm dart run example/z_ping_shm.dart 64 -n 100 -w 1000
+
+# Tight-loop throughput publisher on test/thr (requires z_sub_thr in another terminal)
+fvm dart run example/z_pub_thr.dart 8192 --express
+
+# Background subscriber counting throughput rounds on test/thr (reports msg/s per round)
+fvm dart run example/z_sub_thr.dart -s 10 -n 100000
+
+# SHM zero-copy tight-loop throughput publisher on test/thr (requires z_sub_thr in another terminal)
+fvm dart run example/z_pub_shm_thr.dart 8192
 ```
 
 CLI flags match zenoh-c's examples exactly (`-k`/`--key`, `-p`/`--payload`, `-e`/`--connect`, `-l`/`--listen`).
@@ -320,8 +334,8 @@ cd package && fvm dart run ffigen --config ffigen.yaml
 | 10 | [Querier](development/phases/phase-10-querier.md) | — **COMPLETE** |
 | 11 | [Liveliness](development/phases/phase-11-liveliness.md) | — **COMPLETE** |
 | 12 | [Ping/Pong](development/phases/phase-12-ping-pong.md) | — **COMPLETE** |
-| 13 | [SHM Ping](development/phases/phase-13-shm-ping.md) | |
-| 14 | [Throughput](development/phases/phase-14-throughput.md) | |
+| 13 | [SHM Ping](development/phases/phase-13-shm-ping.md) | — **COMPLETE** |
+| 14 | [Throughput](development/phases/phase-14-throughput.md) | — **COMPLETE** |
 | 15 | [SHM Throughput](development/phases/phase-15-shm-throughput.md) | |
 | 16 | [Bytes](development/phases/phase-16-bytes.md) | |
 | 17 | [Storage](development/phases/phase-17-storage.md) | |

@@ -47,6 +47,7 @@ zenoh_dart_dev/                 # git repo root (development workshop)
 **Phase 11 Liveliness: COMPLETE** — 88 C shim functions, 340 integration tests. `Session.declareLivelinessToken()` returns `LivelinessToken`; `Session.declareLivelinessSubscriber()` returns `Subscriber` (with `history` option for existing tokens); `Session.livelinessGet()` returns `Stream<Reply>` for querying alive tokens; CLI examples `z_liveliness.dart`, `z_sub_liveliness.dart`, `z_get_liveliness.dart`.
 **Phase 12 Ping/Pong Benchmark: COMPLETE** — 92 C shim functions, 372 integration tests. `Session.declareBackgroundSubscriber()` returns `Stream<Sample>` (fire-and-forget, lives until session closes); `Publisher.isExpress` parameter for low-latency batching control; `ZBytes.clone()` (shallow ref-counted) and `ZBytes.toBytes()` (read content as `Uint8List`); CLI examples `z_ping.dart` and `z_pong.dart`.
 **Phase 13 SHM Ping: COMPLETE** — 92 C shim functions, 382 integration tests. Composition phase (no new C shim functions or Dart API classes). `z_ping_shm.dart` CLI demonstrates allocate-once, clone-in-loop SHM zero-copy pattern using `ShmProvider.allocGcDefragBlocking()`, `ShmMutBuffer.toBytes()`, and `ZBytes.clone()`. Reuses `z_pong.dart` unchanged (SHM-transparent). SHM pool minimum size enforced at 65536 bytes for Talc allocator compatibility.
+**Phase 14 Throughput Benchmarks: COMPLETE** — 92 C shim functions, 394 integration tests. Composition phase (no new C shim functions or Dart API classes). `z_pub_thr.dart` (heap-based tight-loop publisher with `CongestionControl.block` and clone-in-loop), `z_sub_thr.dart` (background subscriber counting messages per round, reports throughput in msg/s with summary on exit), `z_pub_shm_thr.dart` (SHM zero-copy tight-loop using allocate-once-clone-in-loop pattern).
 
 Available Dart API classes:
 - `Zenoh` — Static utilities: `initLog(fallback)` for runtime logger initialization (call before `Session.open()`); `scout(config)` discovers zenoh entities on the network
@@ -77,7 +78,7 @@ Available Dart API classes:
 - `Hello` — Scouting result with `zid` (`ZenohId`), `whatami` (`WhatAmI`), and `locators` (list of strings) fields
 - `ZenohException` — Error type for zenoh operations
 
-Phases 14–18 (throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
+Phases 15–18 (SHM throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
 
 ## FVM Requirement
 
@@ -215,6 +216,15 @@ cd package && fvm dart run example/z_ping.dart 64 -n 100 -w 1000
 
 # Measure round-trip latency with SHM zero-copy (requires z_pong running)
 cd package && fvm dart run example/z_ping_shm.dart 64 -n 100 -w 1000
+
+# Tight-loop throughput publisher on test/thr (heap; requires z_sub_thr in another terminal)
+cd package && fvm dart run example/z_pub_thr.dart 8192 --express
+
+# Background subscriber counting throughput rounds on test/thr (reports msg/s per round)
+cd package && fvm dart run example/z_sub_thr.dart -s 10 -n 100000
+
+# Tight-loop SHM throughput publisher on test/thr (zero-copy; requires z_sub_thr in another terminal)
+cd package && fvm dart run example/z_pub_shm_thr.dart 8192
 ```
 
 CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When adding a new CLI example in any phase:
