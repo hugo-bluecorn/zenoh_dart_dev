@@ -20,6 +20,6 @@ void main() {
           reason: 'stderr: ${result.stderr}');
       expect(result.stdout.toString(), contains('PASS'));
       expect(result.stdout.toString(), isNot(contains('FAIL')));
-    });
+    }, timeout: Timeout(Duration(seconds: 30)));
   });
 }
