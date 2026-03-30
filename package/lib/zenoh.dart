@@ -2,6 +2,7 @@
 library;
 
 export 'src/advanced_publisher.dart';
+export 'src/advanced_subscriber.dart';
 export 'src/bytes.dart';
 export 'src/bytes_writer.dart';
 export 'src/config.dart';
