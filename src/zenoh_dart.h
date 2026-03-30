@@ -847,4 +847,40 @@ FFI_PLUGIN_EXPORT int8_t zd_liveliness_get(
     const uint8_t* session, const char* key_expr,
     int64_t port, uint64_t timeout_ms);
 
+// ---------------------------------------------------------------------------
+// Serializer
+// ---------------------------------------------------------------------------
+
+/// Returns the size of ze_owned_serializer_t in bytes.
+FFI_PLUGIN_EXPORT size_t zd_serializer_sizeof(void);
+
+/// Initializes an empty serializer.
+///
+/// @param ser  Pointer to an uninitialized ze_owned_serializer_t.
+/// @return 0 on success.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_empty(ze_owned_serializer_t* ser);
+
+/// Obtains a mutable loaned reference to the owned serializer.
+///
+/// @param ser  Pointer to a valid ze_owned_serializer_t.
+/// @param out  Receives the mutable loaned pointer.
+FFI_PLUGIN_EXPORT void zd_serializer_loan_mut(
+    ze_owned_serializer_t* ser, ze_loaned_serializer_t** out);
+
+/// Finishes the serializer and produces a z_owned_bytes_t.
+///
+/// The serializer is consumed (moved) by this call.
+///
+/// @param ser  Pointer to a valid ze_owned_serializer_t (consumed).
+/// @param out  Receives the produced z_owned_bytes_t.
+FFI_PLUGIN_EXPORT void zd_serializer_finish(
+    ze_owned_serializer_t* ser, z_owned_bytes_t* out);
+
+/// Drops (frees) an owned serializer.
+///
+/// After this call the owned serializer is in gravestone state.
+///
+/// @param ser  Pointer to a ze_owned_serializer_t to drop.
+FFI_PLUGIN_EXPORT void zd_serializer_drop(ze_owned_serializer_t* ser);
+
 #endif // ZENOH_DART_H

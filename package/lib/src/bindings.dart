@@ -2100,6 +2100,109 @@ class ZenohDartBindings {
       .asFunction<
         int Function(ffi.Pointer<ffi.Uint8>, ffi.Pointer<ffi.Char>, int, int)
       >();
+
+  /// Returns the size of ze_owned_serializer_t in bytes.
+  int zd_serializer_sizeof() {
+    return _zd_serializer_sizeof();
+  }
+
+  late final _zd_serializer_sizeofPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function()>>('zd_serializer_sizeof');
+  late final _zd_serializer_sizeof = _zd_serializer_sizeofPtr
+      .asFunction<int Function()>();
+
+  /// Initializes an empty serializer.
+  ///
+  /// @param ser  Pointer to an uninitialized ze_owned_serializer_t.
+  /// @return 0 on success.
+  int zd_serializer_empty(ffi.Pointer<ze_owned_serializer_t> ser) {
+    return _zd_serializer_empty(ser);
+  }
+
+  late final _zd_serializer_emptyPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_owned_serializer_t>)
+        >
+      >('zd_serializer_empty');
+  late final _zd_serializer_empty = _zd_serializer_emptyPtr
+      .asFunction<int Function(ffi.Pointer<ze_owned_serializer_t>)>();
+
+  /// Obtains a mutable loaned reference to the owned serializer.
+  ///
+  /// @param ser  Pointer to a valid ze_owned_serializer_t.
+  /// @param out  Receives the mutable loaned pointer.
+  void zd_serializer_loan_mut(
+    ffi.Pointer<ze_owned_serializer_t> ser,
+    ffi.Pointer<ffi.Pointer<ze_loaned_serializer_t>> out,
+  ) {
+    return _zd_serializer_loan_mut(ser, out);
+  }
+
+  late final _zd_serializer_loan_mutPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<ze_owned_serializer_t>,
+            ffi.Pointer<ffi.Pointer<ze_loaned_serializer_t>>,
+          )
+        >
+      >('zd_serializer_loan_mut');
+  late final _zd_serializer_loan_mut = _zd_serializer_loan_mutPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<ze_owned_serializer_t>,
+          ffi.Pointer<ffi.Pointer<ze_loaned_serializer_t>>,
+        )
+      >();
+
+  /// Finishes the serializer and produces a z_owned_bytes_t.
+  ///
+  /// The serializer is consumed (moved) by this call.
+  ///
+  /// @param ser  Pointer to a valid ze_owned_serializer_t (consumed).
+  /// @param out  Receives the produced z_owned_bytes_t.
+  void zd_serializer_finish(
+    ffi.Pointer<ze_owned_serializer_t> ser,
+    ffi.Pointer<ffi.Opaque> out,
+  ) {
+    return _zd_serializer_finish(ser, out);
+  }
+
+  late final _zd_serializer_finishPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<ze_owned_serializer_t>,
+            ffi.Pointer<ffi.Opaque>,
+          )
+        >
+      >('zd_serializer_finish');
+  late final _zd_serializer_finish = _zd_serializer_finishPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<ze_owned_serializer_t>,
+          ffi.Pointer<ffi.Opaque>,
+        )
+      >();
+
+  /// Drops (frees) an owned serializer.
+  ///
+  /// After this call the owned serializer is in gravestone state.
+  ///
+  /// @param ser  Pointer to a ze_owned_serializer_t to drop.
+  void zd_serializer_drop(ffi.Pointer<ze_owned_serializer_t> ser) {
+    return _zd_serializer_drop(ser);
+  }
+
+  late final _zd_serializer_dropPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<ze_owned_serializer_t>)
+        >
+      >('zd_serializer_drop');
+  late final _zd_serializer_drop = _zd_serializer_dropPtr
+      .asFunction<void Function(ffi.Pointer<ze_owned_serializer_t>)>();
 }
 
 final class UnnamedStruct extends ffi.Struct {
@@ -2900,6 +3003,18 @@ final class z_loaned_subscriber_t extends ffi.Struct {
 /// A user allocated string, viewed as a key expression.
 final class z_view_keyexpr_t extends ffi.Struct {
   @ffi.Array.multi([32])
+  external ffi.Array<ffi.Uint8> _0;
+}
+
+/// @brief An owned Zenoh serializer.
+final class ze_owned_serializer_t extends ffi.Struct {
+  @ffi.Array.multi([64])
+  external ffi.Array<ffi.Uint8> _0;
+}
+
+/// @brief A loaned Zenoh serializer.
+final class ze_loaned_serializer_t extends ffi.Struct {
+  @ffi.Array.multi([64])
   external ffi.Array<ffi.Uint8> _0;
 }
 

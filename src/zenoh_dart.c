@@ -1607,3 +1607,29 @@ FFI_PLUGIN_EXPORT int8_t zd_liveliness_get(
 
   return (int8_t)rc;
 }
+
+// ---------------------------------------------------------------------------
+// Serializer
+// ---------------------------------------------------------------------------
+
+size_t zd_serializer_sizeof(void) {
+  return sizeof(ze_owned_serializer_t);
+}
+
+int8_t zd_serializer_empty(ze_owned_serializer_t* ser) {
+  return (int8_t)ze_serializer_empty(ser);
+}
+
+void zd_serializer_loan_mut(
+    ze_owned_serializer_t* ser, ze_loaned_serializer_t** out) {
+  *out = ze_serializer_loan_mut(ser);
+}
+
+void zd_serializer_finish(
+    ze_owned_serializer_t* ser, z_owned_bytes_t* out) {
+  ze_serializer_finish(ze_serializer_move(ser), out);
+}
+
+void zd_serializer_drop(ze_owned_serializer_t* ser) {
+  ze_serializer_drop(ze_serializer_move(ser));
+}
