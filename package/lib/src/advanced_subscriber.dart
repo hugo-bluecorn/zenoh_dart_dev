@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
@@ -111,14 +112,46 @@ class AdvancedSubscriber {
       throw ZenohException('Failed to declare advanced subscriber', rc);
     }
 
-    // Miss listener is set up in a separate slice when enableMissListener
-    // is true. For now, leave as null.
+    ReceivePort? missPort;
+    StreamController<MissEvent>? missController;
+
+    if (options.enableMissListener) {
+      missPort = ReceivePort();
+      missController = StreamController<MissEvent>();
+
+      missPort.listen((dynamic message) {
+        if (message is List) {
+          final zidBytes = message[0] as Uint8List;
+          final count = message[1] as int;
+          final sourceId = ZenohId(zidBytes);
+          missController!.add(MissEvent(sourceId: sourceId, count: count));
+        }
+      });
+
+      final loaned = bindings.zd_advanced_subscriber_loan(ptr.cast());
+      final missRc =
+          bindings.zd_advanced_subscriber_declare_background_sample_miss_listener(
+        loaned,
+        missPort.sendPort.nativePort,
+      );
+
+      if (missRc != 0) {
+        missPort.close();
+        missController.close();
+        samplePort.close();
+        sampleController.close();
+        bindings.zd_advanced_subscriber_drop(ptr.cast());
+        calloc.free(ptr);
+        throw ZenohException('Failed to declare miss listener', missRc);
+      }
+    }
+
     return AdvancedSubscriber._(
       ptr,
       samplePort,
       sampleController,
-      null,
-      null,
+      missPort,
+      missController,
     );
   }
 
