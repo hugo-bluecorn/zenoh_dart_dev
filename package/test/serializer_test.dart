@@ -496,4 +496,45 @@ void main() {
       expect(deser.isDone, isTrue);
     });
   });
+
+  group('Deserializer error handling', () {
+    test('deserialize wrong type produces error', () {
+      final ser = ZSerializer();
+      ser.serializeUint32(42);
+      final bytes = ser.finish();
+      addTearDown(bytes.dispose);
+
+      final deser = ZDeserializer(bytes);
+      addTearDown(deser.dispose);
+      expect(() => deser.deserializeString(), throwsA(isA<ZenohException>()));
+    });
+
+    test('deserialize past end produces error', () {
+      final ser = ZSerializer();
+      ser.serializeUint32(42);
+      final bytes = ser.finish();
+      addTearDown(bytes.dispose);
+
+      final deser = ZDeserializer(bytes);
+      addTearDown(deser.dispose);
+      // First deserialize succeeds
+      expect(deser.deserializeUint32(), equals(42));
+      expect(deser.isDone, isTrue);
+      // Second deserialize should fail -- no more data
+      expect(
+          () => deser.deserializeUint32(), throwsA(isA<ZenohException>()));
+    });
+
+    test('deserializer on disposed ZBytes throws StateError', () {
+      final ser = ZSerializer();
+      ser.serializeUint32(42);
+      final bytes = ser.finish();
+
+      // Dispose the ZBytes before creating the deserializer
+      bytes.dispose();
+
+      // Creating a deserializer from disposed ZBytes should throw
+      expect(() => ZDeserializer(bytes), throwsStateError);
+    });
+  });
 }
