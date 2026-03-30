@@ -41,4 +41,68 @@ void main() {
       expect(() => serializer.finish(), throwsStateError);
     });
   });
+
+  group('ZSerializer arithmetic types', () {
+    test('uint8 round-trip via serialize then finish', () {
+      final serializer = ZSerializer();
+      serializer.serializeUint8(42);
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+
+    test('all integer types serialize without error', () {
+      final serializer = ZSerializer();
+      serializer.serializeUint8(255);
+      serializer.serializeUint16(1000);
+      serializer.serializeUint32(51000000);
+      serializer.serializeUint64(1000000000005);
+      serializer.serializeInt8(-5);
+      serializer.serializeInt16(-1000);
+      serializer.serializeInt32(51000000);
+      serializer.serializeInt64(-1000000000005);
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+
+    test('float and double serialize without error', () {
+      final serializer = ZSerializer();
+      serializer.serializeFloat(10.1);
+      serializer.serializeDouble(-105.001);
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+
+    test('bool serialize without error', () {
+      final serializer = ZSerializer();
+      serializer.serializeBool(true);
+      serializer.serializeBool(false);
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+
+    test('zero values serialize without error', () {
+      final serializer = ZSerializer();
+      serializer.serializeUint8(0);
+      serializer.serializeInt64(0);
+      serializer.serializeDouble(0.0);
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+
+    test('boundary values serialize without error', () {
+      final serializer = ZSerializer();
+      serializer.serializeUint8(255);
+      serializer.serializeInt8(-128);
+      serializer.serializeInt8(127);
+      serializer.serializeInt64(0x7FFFFFFFFFFFFFFF);
+      final bytes = serializer.finish();
+      addTearDown(bytes.dispose);
+      expect(bytes, isNotNull);
+    });
+  });
 }
