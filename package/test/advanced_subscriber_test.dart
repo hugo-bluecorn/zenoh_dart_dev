@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
 
@@ -338,4 +340,95 @@ void main() {
       }
     });
   }); // AdvancedSubscriber Integration group
+
+  group('Miss Listener', () {
+    late Session session;
+
+    setUpAll(() {
+      final config = Config();
+      config.insertJson5('timestamping/enabled', 'true');
+      session = Session.open(config: config);
+    });
+
+    tearDownAll(() {
+      session.close();
+    });
+
+    test(
+        'AdvancedSubscriber with enableMissListener has non-null missEvents stream',
+        () {
+      final subscriber = session.declareAdvancedSubscriber(
+        'demo/example/adv-miss',
+        options: AdvancedSubscriberOptions(
+          enableMissListener: true,
+          recovery: true,
+          lastSampleMissDetection: true,
+        ),
+      );
+      addTearDown(subscriber.close);
+
+      expect(subscriber.missEvents, isNotNull);
+      expect(subscriber.missEvents, isA<Stream<MissEvent>>());
+    });
+
+    test('MissEvent has sourceId and count fields', () {
+      final zid = ZenohId(Uint8List(16));
+      final event = MissEvent(sourceId: zid, count: 3);
+
+      expect(event.sourceId, equals(zid));
+      expect(event.count, equals(3));
+    });
+
+    test(
+        'AdvancedSubscriber with all options including miss listener declares successfully',
+        () async {
+      final config1 = Config();
+      config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17524"]');
+      config1.insertJson5('timestamping/enabled', 'true');
+      final session1 = Session.open(config: config1);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      final config2 = Config();
+      config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17524"]');
+      final session2 = Session.open(config: config2);
+
+      await Future<void>.delayed(const Duration(seconds: 1));
+
+      try {
+        final subscriber = session2.declareAdvancedSubscriber(
+          'demo/example/adv-miss-all',
+          options: AdvancedSubscriberOptions(
+            history: true,
+            detectLatePublishers: true,
+            recovery: true,
+            lastSampleMissDetection: true,
+            periodicQueriesPeriodMs: 1000,
+            subscriberDetection: true,
+            enableMissListener: true,
+          ),
+        );
+
+        expect(subscriber.stream, isNotNull);
+        expect(subscriber.missEvents, isNotNull);
+
+        subscriber.close();
+      } finally {
+        session1.close();
+        session2.close();
+      }
+    });
+
+    test('AdvancedSubscriber close cleans up miss listener resources', () {
+      final subscriber = session.declareAdvancedSubscriber(
+        'demo/example/adv-miss-close',
+        options: AdvancedSubscriberOptions(
+          enableMissListener: true,
+          recovery: true,
+          lastSampleMissDetection: true,
+        ),
+      );
+      expect(() => subscriber.close(), returnsNormally);
+    });
+  }); // Miss Listener group
 }
