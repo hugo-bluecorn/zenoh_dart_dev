@@ -125,5 +125,5 @@ void main() {
       expect(() => publisher.deleteResource(), throwsA(isA<StateError>()));
       expect(() => publisher.keyExpr, throwsA(isA<StateError>()));
     });
-  }); // AdvancedPublisher
+  }); // AdvancedPublisher group
 }

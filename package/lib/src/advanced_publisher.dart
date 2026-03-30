@@ -2,6 +2,7 @@ import 'dart:ffi';
 
 import 'package:ffi/ffi.dart';
 
+import 'bytes.dart';
 import 'exceptions.dart';
 import 'native_lib.dart';
 
@@ -79,6 +80,43 @@ class AdvancedPublisher {
   String get keyExpr {
     _ensureOpen();
     return _keyExpr;
+  }
+
+  /// Publishes a string [value] through this advanced publisher.
+  void put(String value) {
+    _ensureOpen();
+    final loaned = bindings.zd_advanced_publisher_loan(_ptr.cast());
+    final payload = ZBytes.fromString(value);
+    final rc =
+        bindings.zd_advanced_publisher_put(loaned, payload.nativePtr.cast());
+    payload.markConsumed();
+    if (rc != 0) {
+      throw ZenohException('AdvancedPublisher put failed', rc);
+    }
+  }
+
+  /// Publishes [ZBytes] [payload] through this advanced publisher.
+  ///
+  /// The payload is consumed by this call and must not be reused.
+  void putBytes(ZBytes payload) {
+    _ensureOpen();
+    final loaned = bindings.zd_advanced_publisher_loan(_ptr.cast());
+    final rc =
+        bindings.zd_advanced_publisher_put(loaned, payload.nativePtr.cast());
+    payload.markConsumed();
+    if (rc != 0) {
+      throw ZenohException('AdvancedPublisher put failed', rc);
+    }
+  }
+
+  /// Sends a DELETE through this advanced publisher.
+  void deleteResource() {
+    _ensureOpen();
+    final loaned = bindings.zd_advanced_publisher_loan(_ptr.cast());
+    final rc = bindings.zd_advanced_publisher_delete(loaned);
+    if (rc != 0) {
+      throw ZenohException('AdvancedPublisher delete failed', rc);
+    }
   }
 
   /// Undeclares the advanced publisher and releases native resources.
