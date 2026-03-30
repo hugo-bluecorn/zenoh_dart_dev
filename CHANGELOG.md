@@ -1,4 +1,16 @@
 # Changelog
+## 0.14.0
+
+### Added
+- CLI example: `z_pub_thr.dart` — heap-based tight-loop throughput
+  publisher with CongestionControl.block and clone-in-loop pattern
+- CLI example: `z_sub_thr.dart` — background subscriber counting
+  messages per round, reports throughput in msg/s with summary on exit
+- CLI example: `z_pub_shm_thr.dart` — SHM zero-copy tight-loop
+  throughput publisher using allocate-once-clone-in-loop pattern
+- 12 new integration tests (382 → 394 total): CLI argument validation,
+  throughput reporting, SHM startup, cross-example integration
+
 ## 0.13.0
 
 ### Added
