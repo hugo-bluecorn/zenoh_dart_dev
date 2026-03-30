@@ -9,8 +9,11 @@ const defaultSharedMemorySize = 32; // MB
 
 void main(List<String> arguments) {
   final parser = ArgParser()
-    ..addOption('shared-memory', abbr: 's',
-        defaultsTo: '$defaultSharedMemorySize')
+    ..addOption(
+      'shared-memory',
+      abbr: 's',
+      defaultsTo: '$defaultSharedMemorySize',
+    )
     ..addMultiOption('connect', abbr: 'e')
     ..addMultiOption('listen', abbr: 'l');
 

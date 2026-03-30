@@ -26,10 +26,16 @@ void main() {
     setUpAll(() {
       final subThrScript = File('$packageRoot/example/z_sub_thr.dart');
       final pubThrScript = File('$packageRoot/example/z_pub_thr.dart');
-      expect(subThrScript.existsSync(), isTrue,
-          reason: 'example/z_sub_thr.dart must exist');
-      expect(pubThrScript.existsSync(), isTrue,
-          reason: 'example/z_pub_thr.dart must exist');
+      expect(
+        subThrScript.existsSync(),
+        isTrue,
+        reason: 'example/z_sub_thr.dart must exist',
+      );
+      expect(
+        pubThrScript.existsSync(),
+        isTrue,
+        reason: 'example/z_pub_thr.dart must exist',
+      );
     });
 
     test(
@@ -63,8 +69,9 @@ void main() {
 
         try {
           // Wait for z_sub_thr to complete
-          final exitCode = await subThrProcess.exitCode
-              .timeout(const Duration(seconds: 45));
+          final exitCode = await subThrProcess.exitCode.timeout(
+            const Duration(seconds: 45),
+          );
 
           final stdout = await subThrProcess.stdout
               .transform(const SystemEncoding().decoder)
@@ -113,24 +120,31 @@ void main() {
 
         try {
           // Wait for z_sub_thr to complete
-          final exitCode = await subThrProcess.exitCode
-              .timeout(const Duration(seconds: 45));
+          final exitCode = await subThrProcess.exitCode.timeout(
+            const Duration(seconds: 45),
+          );
 
           final stdout = await subThrProcess.stdout
               .transform(const SystemEncoding().decoder)
               .join();
 
           // Parse throughput value and verify it's > 0
-          final throughputMatch =
-              RegExp(r'([\d,]+(?:\.\d+)?)\s+msg/s').firstMatch(stdout);
-          expect(throughputMatch, isNotNull,
-              reason: 'Expected throughput output containing msg/s');
+          final throughputMatch = RegExp(
+            r'([\d,]+(?:\.\d+)?)\s+msg/s',
+          ).firstMatch(stdout);
+          expect(
+            throughputMatch,
+            isNotNull,
+            reason: 'Expected throughput output containing msg/s',
+          );
 
-          final throughputStr =
-              throughputMatch!.group(1)!.replaceAll(',', '');
+          final throughputStr = throughputMatch!.group(1)!.replaceAll(',', '');
           final throughput = double.parse(throughputStr);
-          expect(throughput, greaterThan(0),
-              reason: 'Throughput must be > 0 msg/s');
+          expect(
+            throughput,
+            greaterThan(0),
+            reason: 'Throughput must be > 0 msg/s',
+          );
 
           expect(exitCode, equals(0));
         } finally {

@@ -80,7 +80,8 @@ Future<void> main(List<String> arguments) async {
   final elapsedSeconds = totalStopwatch.elapsedMicroseconds / 1000000.0;
   final overallThroughput = totalMessages / elapsedSeconds;
   print(
-      'sent $totalMessages messages over ${elapsedSeconds.toStringAsFixed(6)} seconds (${overallThroughput.toStringAsFixed(6)} msg/s)');
+    'sent $totalMessages messages over ${elapsedSeconds.toStringAsFixed(6)} seconds (${overallThroughput.toStringAsFixed(6)} msg/s)',
+  );
 
   session.close();
   exit(0);
