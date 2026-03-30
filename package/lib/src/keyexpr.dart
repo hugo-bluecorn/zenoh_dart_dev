@@ -97,7 +97,7 @@ class KeyExpr {
     return bindings.zd_keyexpr_equals(_kePtr.cast(), other._kePtr.cast());
   }
 
-    void _ensureNotDisposed() {
+  void _ensureNotDisposed() {
     if (_disposed) throw StateError('KeyExpr has been disposed');
   }
 }
