@@ -2848,6 +2848,149 @@ class ZenohDartBindings {
           .asFunction<
             int Function(ffi.Pointer<ze_deserializer_t>, ffi.Pointer<ffi.Size>)
           >();
+
+  /// Returns the size of z_owned_bytes_writer_t in bytes.
+  int zd_bytes_writer_sizeof() {
+    return _zd_bytes_writer_sizeof();
+  }
+
+  late final _zd_bytes_writer_sizeofPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function()>>(
+        'zd_bytes_writer_sizeof',
+      );
+  late final _zd_bytes_writer_sizeof = _zd_bytes_writer_sizeofPtr
+      .asFunction<int Function()>();
+
+  /// Creates an empty bytes writer.
+  int zd_bytes_writer_empty(ffi.Pointer<z_owned_bytes_writer_t> writer) {
+    return _zd_bytes_writer_empty(writer);
+  }
+
+  late final _zd_bytes_writer_emptyPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<z_owned_bytes_writer_t>)
+        >
+      >('zd_bytes_writer_empty');
+  late final _zd_bytes_writer_empty = _zd_bytes_writer_emptyPtr
+      .asFunction<int Function(ffi.Pointer<z_owned_bytes_writer_t>)>();
+
+  /// Obtains a mutable loan of the writer.
+  void zd_bytes_writer_loan_mut(
+    ffi.Pointer<z_owned_bytes_writer_t> writer,
+    ffi.Pointer<ffi.Pointer<z_loaned_bytes_writer_t>> out,
+  ) {
+    return _zd_bytes_writer_loan_mut(writer, out);
+  }
+
+  late final _zd_bytes_writer_loan_mutPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<z_owned_bytes_writer_t>,
+            ffi.Pointer<ffi.Pointer<z_loaned_bytes_writer_t>>,
+          )
+        >
+      >('zd_bytes_writer_loan_mut');
+  late final _zd_bytes_writer_loan_mut = _zd_bytes_writer_loan_mutPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<z_owned_bytes_writer_t>,
+          ffi.Pointer<ffi.Pointer<z_loaned_bytes_writer_t>>,
+        )
+      >();
+
+  /// Writes all bytes from src into the writer.
+  int zd_bytes_writer_write_all(
+    ffi.Pointer<z_loaned_bytes_writer_t> writer,
+    ffi.Pointer<ffi.Uint8> data,
+    int len,
+  ) {
+    return _zd_bytes_writer_write_all(writer, data, len);
+  }
+
+  late final _zd_bytes_writer_write_allPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<z_loaned_bytes_writer_t>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+          )
+        >
+      >('zd_bytes_writer_write_all');
+  late final _zd_bytes_writer_write_all = _zd_bytes_writer_write_allPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<z_loaned_bytes_writer_t>,
+          ffi.Pointer<ffi.Uint8>,
+          int,
+        )
+      >();
+
+  /// Appends owned bytes into the writer. Consumes the bytes.
+  int zd_bytes_writer_append(
+    ffi.Pointer<z_loaned_bytes_writer_t> writer,
+    ffi.Pointer<ffi.Opaque> bytes,
+  ) {
+    return _zd_bytes_writer_append(writer, bytes);
+  }
+
+  late final _zd_bytes_writer_appendPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<z_loaned_bytes_writer_t>,
+            ffi.Pointer<ffi.Opaque>,
+          )
+        >
+      >('zd_bytes_writer_append');
+  late final _zd_bytes_writer_append = _zd_bytes_writer_appendPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<z_loaned_bytes_writer_t>,
+          ffi.Pointer<ffi.Opaque>,
+        )
+      >();
+
+  /// Finishes the writer and produces owned bytes.
+  void zd_bytes_writer_finish(
+    ffi.Pointer<z_owned_bytes_writer_t> writer,
+    ffi.Pointer<ffi.Opaque> out,
+  ) {
+    return _zd_bytes_writer_finish(writer, out);
+  }
+
+  late final _zd_bytes_writer_finishPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<z_owned_bytes_writer_t>,
+            ffi.Pointer<ffi.Opaque>,
+          )
+        >
+      >('zd_bytes_writer_finish');
+  late final _zd_bytes_writer_finish = _zd_bytes_writer_finishPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<z_owned_bytes_writer_t>,
+          ffi.Pointer<ffi.Opaque>,
+        )
+      >();
+
+  /// Drops the writer without finishing.
+  void zd_bytes_writer_drop(ffi.Pointer<z_owned_bytes_writer_t> writer) {
+    return _zd_bytes_writer_drop(writer);
+  }
+
+  late final _zd_bytes_writer_dropPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<z_owned_bytes_writer_t>)
+        >
+      >('zd_bytes_writer_drop');
+  late final _zd_bytes_writer_drop = _zd_bytes_writer_dropPtr
+      .asFunction<void Function(ffi.Pointer<z_owned_bytes_writer_t>)>();
 }
 
 final class UnnamedStruct extends ffi.Struct {

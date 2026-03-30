@@ -2,6 +2,7 @@
 library;
 
 export 'src/bytes.dart';
+export 'src/bytes_writer.dart';
 export 'src/config.dart';
 export 'src/deserializer.dart';
 export 'src/congestion_control.dart';

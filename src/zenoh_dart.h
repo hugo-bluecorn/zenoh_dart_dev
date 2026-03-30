@@ -1015,4 +1015,33 @@ FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_buf(
 FFI_PLUGIN_EXPORT int8_t zd_deserializer_deserialize_sequence_length(
     ze_deserializer_t* deser, size_t* out);
 
+// ---------------------------------------------------------------------------
+// Bytes Writer
+// ---------------------------------------------------------------------------
+
+/// Returns the size of z_owned_bytes_writer_t in bytes.
+FFI_PLUGIN_EXPORT size_t zd_bytes_writer_sizeof(void);
+
+/// Creates an empty bytes writer.
+FFI_PLUGIN_EXPORT int8_t zd_bytes_writer_empty(z_owned_bytes_writer_t* writer);
+
+/// Obtains a mutable loan of the writer.
+FFI_PLUGIN_EXPORT void zd_bytes_writer_loan_mut(
+    z_owned_bytes_writer_t* writer, z_loaned_bytes_writer_t** out);
+
+/// Writes all bytes from src into the writer.
+FFI_PLUGIN_EXPORT int8_t zd_bytes_writer_write_all(
+    z_loaned_bytes_writer_t* writer, const uint8_t* data, size_t len);
+
+/// Appends owned bytes into the writer. Consumes the bytes.
+FFI_PLUGIN_EXPORT int8_t zd_bytes_writer_append(
+    z_loaned_bytes_writer_t* writer, z_owned_bytes_t* bytes);
+
+/// Finishes the writer and produces owned bytes.
+FFI_PLUGIN_EXPORT void zd_bytes_writer_finish(
+    z_owned_bytes_writer_t* writer, z_owned_bytes_t* out);
+
+/// Drops the writer without finishing.
+FFI_PLUGIN_EXPORT void zd_bytes_writer_drop(z_owned_bytes_writer_t* writer);
+
 #endif // ZENOH_DART_H

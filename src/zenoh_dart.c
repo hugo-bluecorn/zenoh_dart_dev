@@ -1808,3 +1808,46 @@ FFI_PLUGIN_EXPORT
 int8_t zd_deserializer_deserialize_sequence_length(ze_deserializer_t* deser, size_t* out) {
   return (int8_t)ze_deserializer_deserialize_sequence_length(deser, out);
 }
+
+// ---------------------------------------------------------------------------
+// Bytes Writer
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT
+size_t zd_bytes_writer_sizeof(void) {
+  return sizeof(z_owned_bytes_writer_t);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_bytes_writer_empty(z_owned_bytes_writer_t* writer) {
+  return (int8_t)z_bytes_writer_empty(writer);
+}
+
+FFI_PLUGIN_EXPORT
+void zd_bytes_writer_loan_mut(
+    z_owned_bytes_writer_t* writer, z_loaned_bytes_writer_t** out) {
+  *out = z_bytes_writer_loan_mut(writer);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_bytes_writer_write_all(
+    z_loaned_bytes_writer_t* writer, const uint8_t* data, size_t len) {
+  return (int8_t)z_bytes_writer_write_all(writer, data, len);
+}
+
+FFI_PLUGIN_EXPORT
+int8_t zd_bytes_writer_append(
+    z_loaned_bytes_writer_t* writer, z_owned_bytes_t* bytes) {
+  return (int8_t)z_bytes_writer_append(writer, z_bytes_move(bytes));
+}
+
+FFI_PLUGIN_EXPORT
+void zd_bytes_writer_finish(
+    z_owned_bytes_writer_t* writer, z_owned_bytes_t* out) {
+  z_bytes_writer_finish(z_bytes_writer_move(writer), out);
+}
+
+FFI_PLUGIN_EXPORT
+void zd_bytes_writer_drop(z_owned_bytes_writer_t* writer) {
+  z_bytes_writer_drop(z_bytes_writer_move(writer));
+}
