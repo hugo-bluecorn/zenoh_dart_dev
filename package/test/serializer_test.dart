@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
+// Slice 4: ZDeserializer round-trip tests
 
 void main() {
   group('ZSerializer lifecycle', () {
@@ -392,6 +393,107 @@ void main() {
 
       final deser = ZDeserializer(bytes);
       expect(() => deser.dispose(), returnsNormally);
+    });
+  });
+
+  group('Composite serialization', () {
+    test('sequence of int32 round-trip', () {
+      final ser = ZSerializer();
+      ser.serializeSequenceLength(4);
+      ser.serializeInt32(1);
+      ser.serializeInt32(2);
+      ser.serializeInt32(3);
+      ser.serializeInt32(4);
+      final bytes = ser.finish();
+      addTearDown(bytes.dispose);
+
+      final deser = ZDeserializer(bytes);
+      addTearDown(deser.dispose);
+      final length = deser.deserializeSequenceLength();
+      expect(length, equals(4));
+      final values = <int>[];
+      for (var i = 0; i < length; i++) {
+        values.add(deser.deserializeInt32());
+      }
+      expect(values, equals([1, 2, 3, 4]));
+      expect(deser.isDone, isTrue);
+    });
+
+    test('sequence of key-value pairs round-trip', () {
+      final ser = ZSerializer();
+      ser.serializeSequenceLength(2);
+      ser.serializeInt32(0);
+      ser.serializeString('abc');
+      ser.serializeInt32(1);
+      ser.serializeString('def');
+      final bytes = ser.finish();
+      addTearDown(bytes.dispose);
+
+      final deser = ZDeserializer(bytes);
+      addTearDown(deser.dispose);
+      final length = deser.deserializeSequenceLength();
+      expect(length, equals(2));
+      final pairs = <(int, String)>[];
+      for (var i = 0; i < length; i++) {
+        final key = deser.deserializeInt32();
+        final value = deser.deserializeString();
+        pairs.add((key, value));
+      }
+      expect(pairs, equals([(0, 'abc'), (1, 'def')]));
+      expect(deser.isDone, isTrue);
+    });
+
+    test('nested sequence (custom struct) round-trip', () {
+      final ser = ZSerializer();
+      ser.serializeFloat(1.0);
+      ser.serializeSequenceLength(2);
+      // Inner sequence 1: [1, 2, 3]
+      ser.serializeSequenceLength(3);
+      ser.serializeUint64(1);
+      ser.serializeUint64(2);
+      ser.serializeUint64(3);
+      // Inner sequence 2: [4, 5, 6]
+      ser.serializeSequenceLength(3);
+      ser.serializeUint64(4);
+      ser.serializeUint64(5);
+      ser.serializeUint64(6);
+      ser.serializeString('test');
+      final bytes = ser.finish();
+      addTearDown(bytes.dispose);
+
+      final deser = ZDeserializer(bytes);
+      addTearDown(deser.dispose);
+      final floatVal = deser.deserializeFloat();
+      expect(floatVal, closeTo(1.0, 0.01));
+      final outerLen = deser.deserializeSequenceLength();
+      expect(outerLen, equals(2));
+      final nested = <List<int>>[];
+      for (var i = 0; i < outerLen; i++) {
+        final innerLen = deser.deserializeSequenceLength();
+        expect(innerLen, equals(3));
+        final inner = <int>[];
+        for (var j = 0; j < innerLen; j++) {
+          inner.add(deser.deserializeUint64());
+        }
+        nested.add(inner);
+      }
+      expect(nested, equals([[1, 2, 3], [4, 5, 6]]));
+      final strVal = deser.deserializeString();
+      expect(strVal, equals('test'));
+      expect(deser.isDone, isTrue);
+    });
+
+    test('empty sequence round-trip', () {
+      final ser = ZSerializer();
+      ser.serializeSequenceLength(0);
+      final bytes = ser.finish();
+      addTearDown(bytes.dispose);
+
+      final deser = ZDeserializer(bytes);
+      addTearDown(deser.dispose);
+      final length = deser.deserializeSequenceLength();
+      expect(length, equals(0));
+      expect(deser.isDone, isTrue);
     });
   });
 }
