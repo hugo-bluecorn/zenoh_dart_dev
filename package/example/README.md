@@ -87,11 +87,6 @@ These use zenoh-c's advanced publication API (`ze_declare_advanced_publisher`,
 recovery. Planned for a future phase when the advanced API surface is
 implemented.
 
-### z_storage — In-Memory Storage (Future)
-
-Combines subscriber + queryable into an in-memory key-value store.
-Planned for a future phase.
-
 ### z_pong_shm — Pong Is SHM-Transparent
 
 No such example exists in zenoh-c. The pong responder echoes whatever
@@ -761,6 +756,54 @@ No flags — runs all sections and prints PASS/FAIL for each.
 
 ---
 
+### z_storage — In-Memory Storage
+
+**Follows canon.**
+
+**What's new**
+
+- 1 CLI example: `z_storage.dart` — in-memory key-value store
+- ~6 tests: CLI startup (3), end-to-end integration (3)
+- 3 new C shim functions: `zd_keyexpr_intersects`, `zd_keyexpr_includes`,
+  `zd_keyexpr_equals`
+- `KeyExpr.intersects()`, `includes()`, `equals()` methods on existing class
+
+**The pattern it demonstrates**
+
+```
+z_storage: open → declareSubscriber(key) + declareQueryable(key)
+                   │                        │
+                   ▼                        ▼
+           stream<Sample> → Map[key]=sample query → intersects(stored) → reply
+                            (PUT stores, DELETE removes)
+```
+
+Combines a subscriber and a queryable into an in-memory storage. The
+subscriber stores incoming PUT samples in a `Map<String, Sample>` and
+removes entries on DELETE. The queryable responds to queries by iterating
+stored entries and replying with those whose key expression intersects
+the query's key expression.
+
+**Dart-specific note**
+
+The key expression matching (`KeyExpr.intersects`) is delegated to the
+C shim, which calls `z_keyexpr_intersects()` on loaned key expressions.
+This ensures matching semantics are identical to zenoh-c's implementation.
+The storage map is pure Dart — no C-side data structures.
+
+```
+z_storage.dart -k 'demo/example/**'
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-k, --key` | `demo/example/**` | Key expression |
+| `--complete` | false | Declare queryable as complete |
+| `-e, --connect` | -- | Connect endpoint(s) |
+| `-l, --listen` | -- | Listen endpoint(s) |
+
+---
+
 ## Coverage Map
 
 Which zenoh-c examples does this binding implement, and which are absent?
@@ -795,9 +838,9 @@ Which zenoh-c examples does this binding implement, and which are absent?
 | `z_pub_thr.c` | `z_pub_thr.dart` | Implemented |
 | `z_sub_thr.c` | `z_sub_thr.dart` | Implemented |
 | `z_pub_shm_thr.c` | `z_pub_shm_thr.dart` | Implemented |
-| `z_storage.c` | -- | Future |
+| `z_storage.c` | `z_storage.dart` | Implemented |
 
-**Current:** 23 implemented, 3 permanently absent, 3 future.
+**Current:** 24 implemented, 3 permanently absent, 2 future.
 
 ---
 

@@ -4,7 +4,7 @@
 >
 > **This is the development workshop repository.** It contains phase specs, design documents, experiments, audits, LaTeX papers, 7 git submodules, and the full archaeological record of building zenoh-dart from scratch. It is a complicated mess by design.
 >
-> **Looking for the package?** Go to **[zenoh_dart](https://github.com/hugo-bluecorn/zenoh_dart)** — the clean product repository with a single submodule, `package/` publish boundary, and 372 passing tests.
+> **Looking for the package?** Go to **[zenoh_dart](https://github.com/hugo-bluecorn/zenoh_dart)** — the clean product repository with a single submodule, `package/` publish boundary, and 473 passing tests.
 
 Pure Dart FFI bindings for [Zenoh](https://zenoh.io/) — a pub/sub/query protocol for real-time, distributed systems. This package wraps [zenoh-c](https://github.com/eclipse-zenoh/zenoh-c) v1.7.2 through a thin C shim layer, giving Dart and Flutter applications access to zenoh's wire protocol without native plugin boilerplate.
 
@@ -20,7 +20,7 @@ It runs anywhere Dart runs: CLI tools, Serverpod backends, Flutter apps on Linux
 │  Generated FFI Bindings          │  bindings.dart — class-based ZenohDartBindings(DynamicLibrary)
 │  (auto-generated, never edited)  │
 ├─────────────────────────────────┤
-│  C Shim (src/zenoh_dart.{h,c})   │  92 zd_* functions
+│  C Shim (src/zenoh_dart.{h,c})   │  144 zd_* functions
 ├─────────────────────────────────┤
 │  libzenohc.so (zenoh-c v1.7.2)   │  Rust-based zenoh — linked via DT_NEEDED
 └─────────────────────────────────┘
@@ -55,7 +55,7 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 
 ## Current Status
 
-**141 C shim functions, 30 Dart API classes, 455 integration tests, 23 CLI examples.**
+**144 C shim functions, 30 Dart API classes, 473 integration tests, 24 CLI examples.**
 
 | Phase | What it added | Tests |
 |-------|---------------|-------|
@@ -74,8 +74,9 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 | 13 — SHM Ping | Composition phase (0 new C shim functions, 0 new Dart API classes); `z_ping_shm.dart` (allocate-once, clone-in-loop SHM zero-copy benchmark; reuses `z_pong.dart` unchanged) | 382 |
 | 14 — Throughput | Composition phase (0 new C shim functions, 0 new Dart API classes); `z_pub_thr.dart` (heap tight-loop), `z_sub_thr.dart` (background subscriber counting msg/s), `z_pub_shm_thr.dart` (SHM zero-copy tight-loop) | 394 |
 | 16 — Bytes | `ZSerializer`, `ZDeserializer`, `ZBytesWriter`; `ZBytes.fromInt()`/`toInt()`, `fromDouble()`/`toDouble()`, `fromBool()`/`toBool()`, `slices`; 49 new C shim functions; `z_bytes.dart` | 455 |
+| 17 — Storage | `KeyExpr.intersects()`, `includes()`, `equals()` for key expression matching; 3 new C shim functions; `z_storage.dart` (in-memory storage: subscriber + queryable + Map) | 473 |
 
-Phases 17–18 (storage/advanced) are [specified](development/phases/) but not yet implemented. Phase 15 (SHM Throughput) was subsumed by Phase 14.
+Phase 18 (advanced) is [specified](development/phases/) but not yet implemented. Phase 15 (SHM Throughput) was subsumed by Phase 14.
 
 ### Patches
 
@@ -244,6 +245,9 @@ fvm dart run example/z_pub_shm_thr.dart 8192
 
 # Serialization round-trip demo (no network; prints PASS/FAIL for each section)
 fvm dart run example/z_bytes.dart
+
+# In-memory storage: subscriber stores PUT/DELETE, queryable replies with matching entries (runs until Ctrl-C)
+fvm dart run example/z_storage.dart -k 'demo/example/**'
 ```
 
 CLI flags match zenoh-c's examples exactly (`-k`/`--key`, `-p`/`--payload`, `-e`/`--connect`, `-l`/`--listen`).
@@ -342,7 +346,7 @@ cd package && fvm dart run ffigen --config ffigen.yaml
 | 14 | [Throughput](development/phases/phase-14-throughput.md) | — **COMPLETE** |
 | 15 | [SHM Throughput](development/phases/phase-15-shm-throughput.md) | — **SUBSUMED** by Phase 14 |
 | 16 | [Bytes](development/phases/phase-16-bytes.md) | — **COMPLETE** |
-| 17 | [Storage](development/phases/phase-17-storage.md) | |
+| 17 | [Storage](development/phases/phase-17-storage.md) | — **COMPLETE** |
 | 18 | [Advanced](development/phases/phase-18-advanced.md) | |
 
 ## License
