@@ -373,6 +373,71 @@ void main() {
     });
   });
 
+  group('ZBytes.slices', () {
+    test('single ZBytes has one slice', () {
+      // Given: ZBytes from string "hello"
+      final zbytes = ZBytes.fromString('hello');
+
+      // When: slices is iterated
+      final result = zbytes.slices.toList();
+
+      // Then: yields exactly 1 element equal to UTF-8 bytes of "hello"
+      expect(result.length, equals(1));
+      expect(
+          result[0], equals(Uint8List.fromList([104, 101, 108, 108, 111])));
+      zbytes.dispose();
+    });
+
+    test('writer-assembled ZBytes has multiple slices', () {
+      // Given: three ZBytes appended via ZBytesWriter
+      final writer = ZBytesWriter();
+      writer.append(ZBytes.fromString('abc'));
+      writer.append(ZBytes.fromString('def'));
+      writer.append(ZBytes.fromString('hij'));
+      final zbytes = writer.finish();
+      writer.dispose();
+
+      // When: slices is iterated on the finished result
+      final result = zbytes.slices.toList();
+
+      // Then: yields >=1 elements whose concatenation equals UTF-8 of "abcdefhij"
+      expect(result.length, greaterThanOrEqualTo(1));
+      final concatenated = result.expand((s) => s).toList();
+      expect(Uint8List.fromList(concatenated),
+          equals(Uint8List.fromList(
+              [97, 98, 99, 100, 101, 102, 104, 105, 106])));
+      zbytes.dispose();
+    });
+
+    test('empty ZBytes has no slices', () {
+      // Given: ZBytes from empty string
+      final zbytes = ZBytes.fromString('');
+
+      // When: slices is iterated
+      final result = zbytes.slices.toList();
+
+      // Then: yields 0 elements
+      expect(result, isEmpty);
+      zbytes.dispose();
+    });
+
+    test('slices can be iterated multiple times', () {
+      // Given: ZBytes from string "reuse"
+      final zbytes = ZBytes.fromString('reuse');
+
+      // When: slices is iterated twice
+      final first = zbytes.slices.toList();
+      final second = zbytes.slices.toList();
+
+      // Then: both iterations yield identical results
+      expect(first.length, equals(second.length));
+      for (var i = 0; i < first.length; i++) {
+        expect(first[i], equals(second[i]));
+      }
+      zbytes.dispose();
+    });
+  });
+
   group('Barrel export', () {
     test('provides all public types', () {
       // Given: the zenoh package is imported via package:zenoh/zenoh.dart
