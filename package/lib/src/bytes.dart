@@ -3,8 +3,10 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
+import 'deserializer.dart';
 import 'exceptions.dart';
 import 'native_lib.dart';
+import 'serializer.dart';
 
 /// A Zenoh byte payload.
 ///
@@ -140,6 +142,87 @@ class ZBytes {
       throw ZenohException('Failed to clone ZBytes', rc);
     }
     return ZBytes._(dst);
+  }
+
+  /// Creates [ZBytes] containing a serialized int64 value.
+  factory ZBytes.fromInt(int value) {
+    final ser = ZSerializer();
+    ser.serializeInt64(value);
+    return ser.finish();
+  }
+
+  /// Creates [ZBytes] containing a serialized double value.
+  factory ZBytes.fromDouble(double value) {
+    final ser = ZSerializer();
+    ser.serializeDouble(value);
+    return ser.finish();
+  }
+
+  /// Creates [ZBytes] containing a serialized bool value.
+  factory ZBytes.fromBool(bool value) {
+    final ser = ZSerializer();
+    ser.serializeBool(value);
+    return ser.finish();
+  }
+
+  /// Deserializes the payload as an int64 value.
+  ///
+  /// Throws [ZenohException] if the payload contains extra data beyond the
+  /// int64 value (e.g., a multi-value payload).
+  /// Throws [StateError] if this [ZBytes] has been disposed or consumed.
+  int toInt() {
+    _ensureNotDisposed();
+    _ensureNotConsumed();
+    final deser = ZDeserializer(this);
+    try {
+      final value = deser.deserializeInt64();
+      if (!deser.isDone) {
+        throw ZenohException('ZBytes contains extra data after int64', -1);
+      }
+      return value;
+    } finally {
+      deser.dispose();
+    }
+  }
+
+  /// Deserializes the payload as a double value.
+  ///
+  /// Throws [ZenohException] if the payload contains extra data beyond the
+  /// double value.
+  /// Throws [StateError] if this [ZBytes] has been disposed or consumed.
+  double toDouble() {
+    _ensureNotDisposed();
+    _ensureNotConsumed();
+    final deser = ZDeserializer(this);
+    try {
+      final value = deser.deserializeDouble();
+      if (!deser.isDone) {
+        throw ZenohException('ZBytes contains extra data after double', -1);
+      }
+      return value;
+    } finally {
+      deser.dispose();
+    }
+  }
+
+  /// Deserializes the payload as a bool value.
+  ///
+  /// Throws [ZenohException] if the payload contains extra data beyond the
+  /// bool value.
+  /// Throws [StateError] if this [ZBytes] has been disposed or consumed.
+  bool toBool() {
+    _ensureNotDisposed();
+    _ensureNotConsumed();
+    final deser = ZDeserializer(this);
+    try {
+      final value = deser.deserializeBool();
+      if (!deser.isDone) {
+        throw ZenohException('ZBytes contains extra data after bool', -1);
+      }
+      return value;
+    } finally {
+      deser.dispose();
+    }
   }
 
   /// Returns whether this payload is backed by shared memory.
