@@ -11,7 +11,8 @@ fi
 
 # Sync code directories (delete stale files in destination)
 rsync -av --delete "$DEV_ROOT/package/" "$PROD_ROOT/package/" \
-  --exclude='README.md' \
+  --exclude='/README.md' \
+  --exclude='/example/README.md' \
   --exclude='CHANGELOG.md' \
   --exclude='LICENSE' \
   --exclude='.claude/'
