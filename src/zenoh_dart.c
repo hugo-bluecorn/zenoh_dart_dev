@@ -1851,3 +1851,41 @@ FFI_PLUGIN_EXPORT
 void zd_bytes_writer_drop(z_owned_bytes_writer_t* writer) {
   z_bytes_writer_drop(z_bytes_writer_move(writer));
 }
+
+// ---------------------------------------------------------------------------
+// Bytes Slice Iterator
+// ---------------------------------------------------------------------------
+
+FFI_PLUGIN_EXPORT
+size_t zd_bytes_slice_iterator_sizeof(void) {
+  return sizeof(z_bytes_slice_iterator_t);
+}
+
+FFI_PLUGIN_EXPORT
+void zd_bytes_get_slice_iterator(
+    const z_loaned_bytes_t* bytes, z_bytes_slice_iterator_t* iter) {
+  *iter = z_bytes_get_slice_iterator(bytes);
+}
+
+FFI_PLUGIN_EXPORT
+bool zd_bytes_slice_iterator_next(
+    z_bytes_slice_iterator_t* iter, z_view_slice_t* out) {
+  return z_bytes_slice_iterator_next(iter, out);
+}
+
+FFI_PLUGIN_EXPORT
+size_t zd_view_slice_sizeof(void) {
+  return sizeof(z_view_slice_t);
+}
+
+FFI_PLUGIN_EXPORT
+const uint8_t* zd_view_slice_data(const z_view_slice_t* slice) {
+  const z_loaned_slice_t* loaned = z_view_slice_loan(slice);
+  return z_slice_data(loaned);
+}
+
+FFI_PLUGIN_EXPORT
+size_t zd_view_slice_len(const z_view_slice_t* slice) {
+  const z_loaned_slice_t* loaned = z_view_slice_loan(slice);
+  return z_slice_len(loaned);
+}

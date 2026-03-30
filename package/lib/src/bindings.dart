@@ -2991,6 +2991,119 @@ class ZenohDartBindings {
       >('zd_bytes_writer_drop');
   late final _zd_bytes_writer_drop = _zd_bytes_writer_dropPtr
       .asFunction<void Function(ffi.Pointer<z_owned_bytes_writer_t>)>();
+
+  /// Returns the size of z_bytes_slice_iterator_t in bytes.
+  int zd_bytes_slice_iterator_sizeof() {
+    return _zd_bytes_slice_iterator_sizeof();
+  }
+
+  late final _zd_bytes_slice_iterator_sizeofPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function()>>(
+        'zd_bytes_slice_iterator_sizeof',
+      );
+  late final _zd_bytes_slice_iterator_sizeof =
+      _zd_bytes_slice_iterator_sizeofPtr.asFunction<int Function()>();
+
+  /// Creates a slice iterator from loaned bytes and copies it to *iter.
+  ///
+  /// @param bytes  Const pointer to loaned bytes.
+  /// @param iter   Pointer to caller-allocated z_bytes_slice_iterator_t.
+  void zd_bytes_get_slice_iterator(
+    ffi.Pointer<ffi.Opaque> bytes,
+    ffi.Pointer<z_bytes_slice_iterator_t> iter,
+  ) {
+    return _zd_bytes_get_slice_iterator(bytes, iter);
+  }
+
+  late final _zd_bytes_get_slice_iteratorPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Pointer<ffi.Opaque>,
+            ffi.Pointer<z_bytes_slice_iterator_t>,
+          )
+        >
+      >('zd_bytes_get_slice_iterator');
+  late final _zd_bytes_get_slice_iterator = _zd_bytes_get_slice_iteratorPtr
+      .asFunction<
+        void Function(
+          ffi.Pointer<ffi.Opaque>,
+          ffi.Pointer<z_bytes_slice_iterator_t>,
+        )
+      >();
+
+  /// Advances the slice iterator.
+  ///
+  /// @param iter  Pointer to a z_bytes_slice_iterator_t.
+  /// @param out   Pointer to a z_view_slice_t to receive the next slice.
+  /// @return true if a slice was written to out, false if iteration is done.
+  bool zd_bytes_slice_iterator_next(
+    ffi.Pointer<z_bytes_slice_iterator_t> iter,
+    ffi.Pointer<z_view_slice_t> out,
+  ) {
+    return _zd_bytes_slice_iterator_next(iter, out);
+  }
+
+  late final _zd_bytes_slice_iterator_nextPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Bool Function(
+            ffi.Pointer<z_bytes_slice_iterator_t>,
+            ffi.Pointer<z_view_slice_t>,
+          )
+        >
+      >('zd_bytes_slice_iterator_next');
+  late final _zd_bytes_slice_iterator_next = _zd_bytes_slice_iterator_nextPtr
+      .asFunction<
+        bool Function(
+          ffi.Pointer<z_bytes_slice_iterator_t>,
+          ffi.Pointer<z_view_slice_t>,
+        )
+      >();
+
+  /// Returns the size of z_view_slice_t in bytes.
+  int zd_view_slice_sizeof() {
+    return _zd_view_slice_sizeof();
+  }
+
+  late final _zd_view_slice_sizeofPtr =
+      _lookup<ffi.NativeFunction<ffi.Size Function()>>('zd_view_slice_sizeof');
+  late final _zd_view_slice_sizeof = _zd_view_slice_sizeofPtr
+      .asFunction<int Function()>();
+
+  /// Returns a pointer to the slice data.
+  ///
+  /// @param slice  Const pointer to a z_view_slice_t.
+  /// @return Pointer to the data bytes.
+  ffi.Pointer<ffi.Uint8> zd_view_slice_data(ffi.Pointer<z_view_slice_t> slice) {
+    return _zd_view_slice_data(slice);
+  }
+
+  late final _zd_view_slice_dataPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ffi.Uint8> Function(ffi.Pointer<z_view_slice_t>)
+        >
+      >('zd_view_slice_data');
+  late final _zd_view_slice_data = _zd_view_slice_dataPtr
+      .asFunction<
+        ffi.Pointer<ffi.Uint8> Function(ffi.Pointer<z_view_slice_t>)
+      >();
+
+  /// Returns the length of the slice data.
+  ///
+  /// @param slice  Const pointer to a z_view_slice_t.
+  /// @return Number of bytes in the slice.
+  int zd_view_slice_len(ffi.Pointer<z_view_slice_t> slice) {
+    return _zd_view_slice_len(slice);
+  }
+
+  late final _zd_view_slice_lenPtr =
+      _lookup<
+        ffi.NativeFunction<ffi.Size Function(ffi.Pointer<z_view_slice_t>)>
+      >('zd_view_slice_len');
+  late final _zd_view_slice_len = _zd_view_slice_lenPtr
+      .asFunction<int Function(ffi.Pointer<z_view_slice_t>)>();
 }
 
 final class UnnamedStruct extends ffi.Struct {
@@ -3834,6 +3947,12 @@ final class z_moved_slice_t extends ffi.Struct {
 
 final class z_moved_string_t extends ffi.Struct {
   external z_owned_string_t _this;
+}
+
+/// An iterator over slices of serialized data.
+final class z_bytes_slice_iterator_t extends ffi.Struct {
+  @ffi.Array.multi([24])
+  external ffi.Array<ffi.Uint8> _0;
 }
 
 final class z_moved_bytes_writer_t extends ffi.Struct {

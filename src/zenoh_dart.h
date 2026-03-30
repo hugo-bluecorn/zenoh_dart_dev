@@ -1044,4 +1044,42 @@ FFI_PLUGIN_EXPORT void zd_bytes_writer_finish(
 /// Drops the writer without finishing.
 FFI_PLUGIN_EXPORT void zd_bytes_writer_drop(z_owned_bytes_writer_t* writer);
 
+// ---------------------------------------------------------------------------
+// Bytes Slice Iterator
+// ---------------------------------------------------------------------------
+
+/// Returns the size of z_bytes_slice_iterator_t in bytes.
+FFI_PLUGIN_EXPORT size_t zd_bytes_slice_iterator_sizeof(void);
+
+/// Creates a slice iterator from loaned bytes and copies it to *iter.
+///
+/// @param bytes  Const pointer to loaned bytes.
+/// @param iter   Pointer to caller-allocated z_bytes_slice_iterator_t.
+FFI_PLUGIN_EXPORT void zd_bytes_get_slice_iterator(
+    const z_loaned_bytes_t* bytes, z_bytes_slice_iterator_t* iter);
+
+/// Advances the slice iterator.
+///
+/// @param iter  Pointer to a z_bytes_slice_iterator_t.
+/// @param out   Pointer to a z_view_slice_t to receive the next slice.
+/// @return true if a slice was written to out, false if iteration is done.
+FFI_PLUGIN_EXPORT bool zd_bytes_slice_iterator_next(
+    z_bytes_slice_iterator_t* iter, z_view_slice_t* out);
+
+/// Returns the size of z_view_slice_t in bytes.
+FFI_PLUGIN_EXPORT size_t zd_view_slice_sizeof(void);
+
+/// Returns a pointer to the slice data.
+///
+/// @param slice  Const pointer to a z_view_slice_t.
+/// @return Pointer to the data bytes.
+FFI_PLUGIN_EXPORT const uint8_t* zd_view_slice_data(
+    const z_view_slice_t* slice);
+
+/// Returns the length of the slice data.
+///
+/// @param slice  Const pointer to a z_view_slice_t.
+/// @return Number of bytes in the slice.
+FFI_PLUGIN_EXPORT size_t zd_view_slice_len(const z_view_slice_t* slice);
+
 #endif // ZENOH_DART_H
