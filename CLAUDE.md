@@ -48,13 +48,17 @@ zenoh_dart_dev/                 # git repo root (development workshop)
 **Phase 12 Ping/Pong Benchmark: COMPLETE** — 92 C shim functions, 372 integration tests. `Session.declareBackgroundSubscriber()` returns `Stream<Sample>` (fire-and-forget, lives until session closes); `Publisher.isExpress` parameter for low-latency batching control; `ZBytes.clone()` (shallow ref-counted) and `ZBytes.toBytes()` (read content as `Uint8List`); CLI examples `z_ping.dart` and `z_pong.dart`.
 **Phase 13 SHM Ping: COMPLETE** — 92 C shim functions, 382 integration tests. Composition phase (no new C shim functions or Dart API classes). `z_ping_shm.dart` CLI demonstrates allocate-once, clone-in-loop SHM zero-copy pattern using `ShmProvider.allocGcDefragBlocking()`, `ShmMutBuffer.toBytes()`, and `ZBytes.clone()`. Reuses `z_pong.dart` unchanged (SHM-transparent). SHM pool minimum size enforced at 65536 bytes for Talc allocator compatibility.
 **Phase 14 Throughput Benchmarks: COMPLETE** — 92 C shim functions, 394 integration tests. Composition phase (no new C shim functions or Dart API classes). `z_pub_thr.dart` (heap-based tight-loop publisher with `CongestionControl.block` and clone-in-loop), `z_sub_thr.dart` (background subscriber counting messages per round, reports throughput in msg/s with summary on exit), `z_pub_shm_thr.dart` (SHM zero-copy tight-loop using allocate-once-clone-in-loop pattern).
+**Phase 16 Bytes Serialization: COMPLETE** — 141 C shim functions, 455 integration tests. `ZSerializer` (streaming multi-value serialization: uint8–int64, float, double, bool, string, bytes, sequence length); `ZDeserializer` (type-safe deserialization with `isDone` state tracking); `ZBytesWriter` (raw byte assembly via `writeAll`/`append`/`finish`); `ZBytes.fromInt()`/`toInt()`, `fromDouble()`/`toDouble()`, `fromBool()`/`toBool()` convenience methods; `ZBytes.slices` lazy iterable for fragmented data; CLI example `z_bytes.dart`. Phase 15 (SHM Throughput) subsumed by Phase 14.
 
 Available Dart API classes:
 - `Zenoh` — Static utilities: `initLog(fallback)` for runtime logger initialization (call before `Session.open()`); `scout(config)` discovers zenoh entities on the network
 - `Config` — Session configuration with JSON5 insertion
 - `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`; `declareBackgroundSubscriber(keyExpr)` returns `Stream<Sample>` (fire-and-forget, lives until session closes); `declarePublisher(keyExpr, isExpress:)` returns a `Publisher`; `get(selector, payload: ZBytes?)` returns `Stream<Reply>` (payload accepts SHM-backed `ZBytes` for zero-copy query payloads); `declareQueryable(keyExpr)` returns a `Queryable`; `declarePullSubscriber(keyExpr, capacity: N)` returns a `PullSubscriber`; `declareQuerier(keyExpr)` returns a `Querier`; `declareLivelinessToken(keyExpr)` returns a `LivelinessToken`; `declareLivelinessSubscriber(keyExpr, history:)` returns a `Subscriber`; `livelinessGet(keyExpr, timeout:)` returns `Stream<Reply>`; `zid` returns own `ZenohId`; `routersZid()` and `peersZid()` return connected router/peer IDs
 - `KeyExpr` — Key expression creation and validation
-- `ZBytes` — Binary payload container with string round-trip; `clone()` (shallow ref-counted copy); `toBytes()` (read content as `Uint8List`); `markConsumed()` for FFI ownership semantics; `isShmBacked` detects whether bytes are backed by shared memory (SHM feature-guarded, returns false on Android)
+- `ZBytes` — Binary payload container with string round-trip; `clone()` (shallow ref-counted copy); `toBytes()` (read content as `Uint8List`); `fromInt()`/`toInt()`, `fromDouble()`/`toDouble()`, `fromBool()`/`toBool()` single-value convenience methods (int64/double/bool); `slices` lazy iterable of internal byte fragments; `markConsumed()` for FFI ownership semantics; `isShmBacked` detects whether bytes are backed by shared memory (SHM feature-guarded, returns false on Android)
+- `ZSerializer` — Streaming serializer for multi-value payloads; `serializeUint8()`–`serializeInt64()`, `serializeFloat()`, `serializeDouble()`, `serializeBool()`, `serializeString()`, `serializeBytes()`, `serializeSequenceLength()`; `finish()` returns `ZBytes`; `dispose()` for error cleanup
+- `ZDeserializer` — Streaming deserializer for multi-value payloads; `deserializeUint8()`–`deserializeInt64()`, `deserializeFloat()`, `deserializeDouble()`, `deserializeBool()`, `deserializeString()`, `deserializeBytes()`, `deserializeSequenceLength()`; `isDone` checks if all data consumed; `dispose()` frees native memory
+- `ZBytesWriter` — Raw byte assembler for multi-part payloads; `writeAll(Uint8List)` writes raw bytes, `append(ZBytes)` appends existing payload (consumed), `finish()` returns assembled `ZBytes`; `dispose()` for error cleanup
 - `LivelinessToken` — Announces entity presence on the network; intersecting liveliness subscribers receive PUT on declaration, DELETE on `close()` or connectivity loss; `keyExpr` and `close()`
 - `Publisher` — Declared publisher with `put()`, `putBytes()`, `deleteResource()`, `keyExpr`, `hasMatchingSubscribers()`, `matchingStatus` stream, `isExpress` mode (disables batching for low latency), and `close()`
 - `PullSubscriber` — Ring-buffer-backed pull subscriber with synchronous `tryRecv()` returning `Sample?`; configurable `capacity` (lossy: drops oldest on overflow); `keyExpr` and `close()`
@@ -78,7 +82,7 @@ Available Dart API classes:
 - `Hello` — Scouting result with `zid` (`ZenohId`), `whatami` (`WhatAmI`), and `locators` (list of strings) fields
 - `ZenohException` — Error type for zenoh operations
 
-Phases 15–18 (SHM throughput/storage/advanced) are specified in `development/phases/` but not yet implemented.
+Phases 17–18 (storage/advanced) are specified in `development/phases/` but not yet implemented.
 
 ## FVM Requirement
 
@@ -225,6 +229,9 @@ cd package && fvm dart run example/z_sub_thr.dart -s 10 -n 100000
 
 # Tight-loop SHM throughput publisher on test/thr (zero-copy; requires z_sub_thr in another terminal)
 cd package && fvm dart run example/z_pub_shm_thr.dart 8192
+
+# Serialization round-trip demo (no network; prints PASS/FAIL for each section)
+cd package && fvm dart run example/z_bytes.dart
 ```
 
 CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When adding a new CLI example in any phase:

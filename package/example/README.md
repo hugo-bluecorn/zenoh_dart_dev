@@ -80,14 +80,6 @@ returns the bytes regardless of backing. The `ZBytes.isShmBacked` property
 lets callers detect SHM when needed, but no separate subscriber example
 is required.
 
-### z_bytes — Serialization Utility Demo
-
-zenoh-c's `z_bytes.c` demonstrates custom struct serialization into
-`z_owned_bytes_t`. This is a codec tutorial, not a networking pattern.
-Dart developers use `dart:convert` for serialization. The `ZBytes` class
-provides `fromString()`, `fromUint8List()`, `toBytes()`, and `clone()` —
-sufficient for all payload operations.
-
 ### z_advanced_pub / z_advanced_sub — Advanced Publication (Future)
 
 These use zenoh-c's advanced publication API (`ze_declare_advanced_publisher`,
@@ -727,6 +719,48 @@ z_pub_shm_thr.dart 8192 -s 32
 
 ---
 
+### z_bytes — Serialization Round-Trip Demo
+
+**Follows canon.**
+
+**What's new**
+
+- 1 CLI example: `z_bytes.dart` — serialization round-trip validation
+  (no network operations)
+- ~61 tests: serializer lifecycle (6), arithmetic types (6), compound
+  types (5), deserializer round-trips (19), composite sequences (4),
+  convenience methods (7), writer (6), slice iterator (4), error
+  handling (3), CLI (1)
+
+**The pattern it demonstrates**
+
+```
+z_bytes: ZSerializer → serialize types → finish → ZDeserializer → deserialize → verify
+         ZBytesWriter → writeAll/append → finish → slices → iterate fragments
+         ZBytes.fromInt(42) → toInt() == 42   (convenience, uses serializer internally)
+```
+
+Pure serialization — no sessions, no network. Validates cross-language
+wire format compatibility: a Dart-serialized uint32 produces the same
+bytes as zenoh-c's `ze_serialize_uint32`, enabling interop between
+language bindings.
+
+**Dart-specific note**
+
+The C example uses `z_bytes_reader_*` for reading back writer output.
+The reader API is deferred in Dart — `toBytes()` reads the full payload
+instead. The C++ `ze_serialize_*` / `ze_deserialize_*` one-shot functions
+are replaced by `ZSerializer` / `ZDeserializer` used internally by
+convenience methods (`fromInt`, `toInt`, etc.).
+
+```
+z_bytes.dart
+```
+
+No flags — runs all sections and prints PASS/FAIL for each.
+
+---
+
 ## Coverage Map
 
 Which zenoh-c examples does this binding implement, and which are absent?
@@ -753,7 +787,7 @@ Which zenoh-c examples does this binding implement, and which are absent?
 | `z_pong.c` | `z_pong.dart` | Implemented |
 | `z_ping_shm.c` | `z_ping_shm.dart` | Implemented |
 | `z_sub_shm.c` | -- | Absent (subscriber is SHM-transparent) |
-| `z_bytes.c` | -- | Absent (Dart has `dart:convert`) |
+| `z_bytes.c` | `z_bytes.dart` | Implemented |
 | `z_queryable_with_channels.c` | -- | Absent (Dart Streams) |
 | `z_non_blocking_get.c` | -- | Absent (Dart Streams) |
 | `z_advanced_pub.c` | -- | Future |
@@ -763,7 +797,7 @@ Which zenoh-c examples does this binding implement, and which are absent?
 | `z_pub_shm_thr.c` | `z_pub_shm_thr.dart` | Implemented |
 | `z_storage.c` | -- | Future |
 
-**Current:** 22 implemented, 4 permanently absent, 3 future.
+**Current:** 23 implemented, 3 permanently absent, 3 future.
 
 ---
 

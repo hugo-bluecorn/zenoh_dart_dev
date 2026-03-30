@@ -55,7 +55,7 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 
 ## Current Status
 
-**92 C shim functions, 27 Dart API classes, 394 integration tests, 22 CLI examples.**
+**141 C shim functions, 30 Dart API classes, 455 integration tests, 23 CLI examples.**
 
 | Phase | What it added | Tests |
 |-------|---------------|-------|
@@ -73,8 +73,9 @@ Build hooks (`hook/build.dart`) register both `.so` files as `CodeAsset` entries
 | 12 — Ping/Pong | `Session.declareBackgroundSubscriber()` → `Stream<Sample>` (fire-and-forget); `Publisher.isExpress` for low-latency; `ZBytes.clone()`, `ZBytes.toBytes()`; 4 new + 1 modified C shim functions; `z_ping.dart`, `z_pong.dart` | 372 |
 | 13 — SHM Ping | Composition phase (0 new C shim functions, 0 new Dart API classes); `z_ping_shm.dart` (allocate-once, clone-in-loop SHM zero-copy benchmark; reuses `z_pong.dart` unchanged) | 382 |
 | 14 — Throughput | Composition phase (0 new C shim functions, 0 new Dart API classes); `z_pub_thr.dart` (heap tight-loop), `z_sub_thr.dart` (background subscriber counting msg/s), `z_pub_shm_thr.dart` (SHM zero-copy tight-loop) | 394 |
+| 16 — Bytes | `ZSerializer`, `ZDeserializer`, `ZBytesWriter`; `ZBytes.fromInt()`/`toInt()`, `fromDouble()`/`toDouble()`, `fromBool()`/`toBool()`, `slices`; 49 new C shim functions; `z_bytes.dart` | 455 |
 
-Phases 15–18 (SHM throughput/storage/advanced) are [specified](development/phases/) but not yet implemented.
+Phases 17–18 (storage/advanced) are [specified](development/phases/) but not yet implemented. Phase 15 (SHM Throughput) was subsumed by Phase 14.
 
 ### Patches
 
@@ -240,6 +241,9 @@ fvm dart run example/z_sub_thr.dart -s 10 -n 100000
 
 # SHM zero-copy tight-loop throughput publisher on test/thr (requires z_sub_thr in another terminal)
 fvm dart run example/z_pub_shm_thr.dart 8192
+
+# Serialization round-trip demo (no network; prints PASS/FAIL for each section)
+fvm dart run example/z_bytes.dart
 ```
 
 CLI flags match zenoh-c's examples exactly (`-k`/`--key`, `-p`/`--payload`, `-e`/`--connect`, `-l`/`--listen`).
@@ -336,8 +340,8 @@ cd package && fvm dart run ffigen --config ffigen.yaml
 | 12 | [Ping/Pong](development/phases/phase-12-ping-pong.md) | — **COMPLETE** |
 | 13 | [SHM Ping](development/phases/phase-13-shm-ping.md) | — **COMPLETE** |
 | 14 | [Throughput](development/phases/phase-14-throughput.md) | — **COMPLETE** |
-| 15 | [SHM Throughput](development/phases/phase-15-shm-throughput.md) | |
-| 16 | [Bytes](development/phases/phase-16-bytes.md) | |
+| 15 | [SHM Throughput](development/phases/phase-15-shm-throughput.md) | — **SUBSUMED** by Phase 14 |
+| 16 | [Bytes](development/phases/phase-16-bytes.md) | — **COMPLETE** |
 | 17 | [Storage](development/phases/phase-17-storage.md) | |
 | 18 | [Advanced](development/phases/phase-18-advanced.md) | |
 
