@@ -51,7 +51,10 @@ class ZBytesWriter {
         nativeBuf[i] = data[i];
       }
       final rc = bindings.zd_bytes_writer_write_all(
-          _loanMut().cast(), nativeBuf, data.length);
+        _loanMut().cast(),
+        nativeBuf,
+        data.length,
+      );
       if (rc != 0) throw ZenohException('Failed to write bytes', rc);
     } finally {
       calloc.free(nativeBuf);
@@ -66,8 +69,10 @@ class ZBytesWriter {
   /// Throws [ZenohException] if the native append fails.
   void append(ZBytes bytes) {
     _checkState();
-    final rc =
-        bindings.zd_bytes_writer_append(_loanMut().cast(), bytes.nativePtr.cast());
+    final rc = bindings.zd_bytes_writer_append(
+      _loanMut().cast(),
+      bytes.nativePtr.cast(),
+    );
     if (rc != 0) throw ZenohException('Failed to append bytes', rc);
     bytes.markConsumed();
   }
@@ -81,8 +86,7 @@ class ZBytesWriter {
   ZBytes finish() {
     _checkState();
     _finished = true;
-    final Pointer<Void> bytesPtr =
-        calloc.allocate(bindings.zd_bytes_sizeof());
+    final Pointer<Void> bytesPtr = calloc.allocate(bindings.zd_bytes_sizeof());
     bindings.zd_bytes_writer_finish(_ptr.cast(), bytesPtr.cast());
     calloc.free(_ptr);
     return ZBytes.fromNative(bytesPtr);

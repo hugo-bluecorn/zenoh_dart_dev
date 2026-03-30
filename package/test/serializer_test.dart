@@ -477,7 +477,13 @@ void main() {
         }
         nested.add(inner);
       }
-      expect(nested, equals([[1, 2, 3], [4, 5, 6]]));
+      expect(
+        nested,
+        equals([
+          [1, 2, 3],
+          [4, 5, 6],
+        ]),
+      );
       final strVal = deser.deserializeString();
       expect(strVal, equals('test'));
       expect(deser.isDone, isTrue);
@@ -521,8 +527,7 @@ void main() {
       expect(deser.deserializeUint32(), equals(42));
       expect(deser.isDone, isTrue);
       // Second deserialize should fail -- no more data
-      expect(
-          () => deser.deserializeUint32(), throwsA(isA<ZenohException>()));
+      expect(() => deser.deserializeUint32(), throwsA(isA<ZenohException>()));
     });
 
     test('deserializer on disposed ZBytes throws StateError', () {

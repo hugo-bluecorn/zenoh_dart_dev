@@ -70,7 +70,8 @@ void main() {
     deser.dispose();
     payload.dispose();
 
-    final pass = u32 == 42 &&
+    final pass =
+        u32 == 42 &&
         d == 2.718 &&
         s == 'hello' &&
         _listEquals(b, Uint8List.fromList([10, 20, 30]));
@@ -79,10 +80,7 @@ void main() {
 
   // Section 4: Composite -- sequence of key-value pairs
   {
-    final kvs = [
-      (0, 'abc'),
-      (1, 'def'),
-    ];
+    final kvs = [(0, 'abc'), (1, 'def')];
 
     final ser = ZSerializer();
     ser.serializeSequenceLength(kvs.length);
@@ -127,12 +125,15 @@ void main() {
     print('  ${pass ? "PASS" : "FAIL"}: writer writeAll');
   }
   {
-    final b1 =
-        ZBytes.fromUint8List(Uint8List.fromList([0x61, 0x62, 0x63])); // "abc"
-    final b2 =
-        ZBytes.fromUint8List(Uint8List.fromList([0x64, 0x65, 0x66])); // "def"
-    final b3 =
-        ZBytes.fromUint8List(Uint8List.fromList([0x68, 0x69, 0x6a])); // "hij"
+    final b1 = ZBytes.fromUint8List(
+      Uint8List.fromList([0x61, 0x62, 0x63]),
+    ); // "abc"
+    final b2 = ZBytes.fromUint8List(
+      Uint8List.fromList([0x64, 0x65, 0x66]),
+    ); // "def"
+    final b3 = ZBytes.fromUint8List(
+      Uint8List.fromList([0x68, 0x69, 0x6a]),
+    ); // "hij"
 
     final writer = ZBytesWriter();
     writer.append(b1);
@@ -144,8 +145,17 @@ void main() {
     final output = payload.toBytes();
     payload.dispose();
 
-    final expected = Uint8List.fromList(
-        [0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x68, 0x69, 0x6a]);
+    final expected = Uint8List.fromList([
+      0x61,
+      0x62,
+      0x63,
+      0x64,
+      0x65,
+      0x66,
+      0x68,
+      0x69,
+      0x6a,
+    ]);
     final pass = _listEquals(output, expected);
     print('  ${pass ? "PASS" : "FAIL"}: writer append');
   }
@@ -167,12 +177,14 @@ void main() {
     payload.dispose();
 
     // Verify we got at least one slice and the total content is correct
-    final totalContent =
-        slices.fold<List<int>>([], (acc, s) => acc..addAll(s));
+    final totalContent = slices.fold<List<int>>([], (acc, s) => acc..addAll(s));
     final expected = [0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x68, 0x69, 0x6a];
-    final pass = slices.isNotEmpty &&
+    final pass =
+        slices.isNotEmpty &&
         _listEquals(
-            Uint8List.fromList(totalContent), Uint8List.fromList(expected));
+          Uint8List.fromList(totalContent),
+          Uint8List.fromList(expected),
+        );
     print('  ${pass ? "PASS" : "FAIL"}: slice iterator');
   }
 }

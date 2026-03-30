@@ -42,88 +42,89 @@ class ZSerializer {
   /// Serializes a uint8 value.
   void serializeUint8(int value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_uint8(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_uint8(_loanMut().cast(), value);
     if (rc != 0) throw ZenohException('Failed to serialize uint8', rc);
   }
 
   /// Serializes a uint16 value.
   void serializeUint16(int value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_uint16(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_uint16(
+      _loanMut().cast(),
+      value,
+    );
     if (rc != 0) throw ZenohException('Failed to serialize uint16', rc);
   }
 
   /// Serializes a uint32 value.
   void serializeUint32(int value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_uint32(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_uint32(
+      _loanMut().cast(),
+      value,
+    );
     if (rc != 0) throw ZenohException('Failed to serialize uint32', rc);
   }
 
   /// Serializes a uint64 value.
   void serializeUint64(int value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_uint64(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_uint64(
+      _loanMut().cast(),
+      value,
+    );
     if (rc != 0) throw ZenohException('Failed to serialize uint64', rc);
   }
 
   /// Serializes an int8 value.
   void serializeInt8(int value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_int8(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_int8(_loanMut().cast(), value);
     if (rc != 0) throw ZenohException('Failed to serialize int8', rc);
   }
 
   /// Serializes an int16 value.
   void serializeInt16(int value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_int16(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_int16(_loanMut().cast(), value);
     if (rc != 0) throw ZenohException('Failed to serialize int16', rc);
   }
 
   /// Serializes an int32 value.
   void serializeInt32(int value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_int32(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_int32(_loanMut().cast(), value);
     if (rc != 0) throw ZenohException('Failed to serialize int32', rc);
   }
 
   /// Serializes an int64 value.
   void serializeInt64(int value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_int64(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_int64(_loanMut().cast(), value);
     if (rc != 0) throw ZenohException('Failed to serialize int64', rc);
   }
 
   /// Serializes a float value.
   void serializeFloat(double value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_float(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_float(_loanMut().cast(), value);
     if (rc != 0) throw ZenohException('Failed to serialize float', rc);
   }
 
   /// Serializes a double value.
   void serializeDouble(double value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_double(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_double(
+      _loanMut().cast(),
+      value,
+    );
     if (rc != 0) throw ZenohException('Failed to serialize double', rc);
   }
 
   /// Serializes a bool value.
   void serializeBool(bool value) {
     _checkState();
-    final rc =
-        bindings.zd_serializer_serialize_bool(_loanMut().cast(), value);
+    final rc = bindings.zd_serializer_serialize_bool(_loanMut().cast(), value);
     if (rc != 0) throw ZenohException('Failed to serialize bool', rc);
   }
 
@@ -133,7 +134,9 @@ class ZSerializer {
     final nativeStr = value.toNativeUtf8();
     try {
       final rc = bindings.zd_serializer_serialize_string(
-          _loanMut().cast(), nativeStr.cast());
+        _loanMut().cast(),
+        nativeStr.cast(),
+      );
       if (rc != 0) throw ZenohException('Failed to serialize string', rc);
     } finally {
       calloc.free(nativeStr);
@@ -147,7 +150,10 @@ class ZSerializer {
     try {
       nativeBuf.asTypedList(value.length).setAll(0, value);
       final rc = bindings.zd_serializer_serialize_buf(
-          _loanMut().cast(), nativeBuf, value.length);
+        _loanMut().cast(),
+        nativeBuf,
+        value.length,
+      );
       if (rc != 0) throw ZenohException('Failed to serialize bytes', rc);
     } finally {
       calloc.free(nativeBuf);
@@ -161,7 +167,9 @@ class ZSerializer {
   void serializeSequenceLength(int length) {
     _checkState();
     final rc = bindings.zd_serializer_serialize_sequence_length(
-        _loanMut().cast(), length);
+      _loanMut().cast(),
+      length,
+    );
     if (rc != 0) {
       throw ZenohException('Failed to serialize sequence length', rc);
     }
@@ -176,8 +184,7 @@ class ZSerializer {
   ZBytes finish() {
     _checkState();
     _finished = true;
-    final Pointer<Void> bytesPtr =
-        calloc.allocate(bindings.zd_bytes_sizeof());
+    final Pointer<Void> bytesPtr = calloc.allocate(bindings.zd_bytes_sizeof());
     bindings.zd_serializer_finish(_ptr.cast(), bytesPtr.cast());
     calloc.free(_ptr);
     return ZBytes.fromNative(bytesPtr);

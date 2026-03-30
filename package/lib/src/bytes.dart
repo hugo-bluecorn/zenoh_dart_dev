@@ -237,12 +237,14 @@ class ZBytes {
     _ensureNotDisposed();
     _ensureNotConsumed();
     final loaned = bindings.zd_bytes_loan(_ptr.cast());
-    final Pointer<z_bytes_slice_iterator_t> iterPtr =
-        calloc.allocate<z_bytes_slice_iterator_t>(
-            bindings.zd_bytes_slice_iterator_sizeof());
+    final Pointer<z_bytes_slice_iterator_t> iterPtr = calloc
+        .allocate<z_bytes_slice_iterator_t>(
+          bindings.zd_bytes_slice_iterator_sizeof(),
+        );
     bindings.zd_bytes_get_slice_iterator(loaned, iterPtr);
-    final Pointer<z_view_slice_t> slicePtr =
-        calloc.allocate<z_view_slice_t>(bindings.zd_view_slice_sizeof());
+    final Pointer<z_view_slice_t> slicePtr = calloc.allocate<z_view_slice_t>(
+      bindings.zd_view_slice_sizeof(),
+    );
     try {
       while (bindings.zd_bytes_slice_iterator_next(iterPtr, slicePtr)) {
         final data = bindings.zd_view_slice_data(slicePtr);

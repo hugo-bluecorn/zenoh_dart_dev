@@ -382,8 +382,7 @@ void main() {
 
       // Then: yields exactly 1 element equal to UTF-8 bytes of "hello"
       expect(result.length, equals(1));
-      expect(
-          result[0], equals(Uint8List.fromList([104, 101, 108, 108, 111])));
+      expect(result[0], equals(Uint8List.fromList([104, 101, 108, 108, 111])));
       zbytes.dispose();
     });
 
@@ -402,9 +401,10 @@ void main() {
       // Then: yields >=1 elements whose concatenation equals UTF-8 of "abcdefhij"
       expect(result.length, greaterThanOrEqualTo(1));
       final concatenated = result.expand((s) => s).toList();
-      expect(Uint8List.fromList(concatenated),
-          equals(Uint8List.fromList(
-              [97, 98, 99, 100, 101, 102, 104, 105, 106])));
+      expect(
+        Uint8List.fromList(concatenated),
+        equals(Uint8List.fromList([97, 98, 99, 100, 101, 102, 104, 105, 106])),
+      );
       zbytes.dispose();
     });
 

@@ -23,8 +23,9 @@ class ZDeserializer {
 
   static Pointer<ze_deserializer_t> _create(ZBytes bytes) {
     final size = bindings.zd_deserializer_sizeof();
-    final Pointer<ze_deserializer_t> ptr =
-        calloc.allocate<ze_deserializer_t>(size);
+    final Pointer<ze_deserializer_t> ptr = calloc.allocate<ze_deserializer_t>(
+      size,
+    );
     final loaned = bindings.zd_bytes_loan(bytes.nativePtr.cast());
     bindings.zd_deserializer_from_bytes(loaned, ptr);
     return ptr;
@@ -186,11 +187,12 @@ class ZDeserializer {
   /// Deserializes a UTF-8 string value.
   String deserializeString() {
     _checkState();
-    final Pointer<Void> ownedStr =
-        calloc.allocate(bindings.zd_string_sizeof());
+    final Pointer<Void> ownedStr = calloc.allocate(bindings.zd_string_sizeof());
     try {
-      final rc =
-          bindings.zd_deserializer_deserialize_string(_ptr, ownedStr.cast());
+      final rc = bindings.zd_deserializer_deserialize_string(
+        _ptr,
+        ownedStr.cast(),
+      );
       if (rc != 0) throw ZenohException('Failed to deserialize string', rc);
       final loanedStr = bindings.zd_string_loan(ownedStr.cast());
       final data = bindings.zd_string_data(loanedStr);
@@ -206,11 +208,14 @@ class ZDeserializer {
   /// Deserializes a byte buffer.
   Uint8List deserializeBytes() {
     _checkState();
-    final Pointer<Void> ownedBytes =
-        calloc.allocate(bindings.zd_bytes_sizeof());
+    final Pointer<Void> ownedBytes = calloc.allocate(
+      bindings.zd_bytes_sizeof(),
+    );
     try {
-      final rc =
-          bindings.zd_deserializer_deserialize_buf(_ptr, ownedBytes.cast());
+      final rc = bindings.zd_deserializer_deserialize_buf(
+        _ptr,
+        ownedBytes.cast(),
+      );
       if (rc != 0) throw ZenohException('Failed to deserialize bytes', rc);
       final len = bindings.zd_bytes_len(ownedBytes.cast());
       if (len == 0) return Uint8List(0);
@@ -232,8 +237,10 @@ class ZDeserializer {
     _checkState();
     final out = calloc<Size>();
     try {
-      final rc =
-          bindings.zd_deserializer_deserialize_sequence_length(_ptr, out);
+      final rc = bindings.zd_deserializer_deserialize_sequence_length(
+        _ptr,
+        out,
+      );
       if (rc != 0) {
         throw ZenohException('Failed to deserialize sequence length', rc);
       }
