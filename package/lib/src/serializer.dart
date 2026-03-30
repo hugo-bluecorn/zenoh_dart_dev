@@ -1,4 +1,5 @@
 import 'dart:ffi';
+import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
@@ -124,6 +125,46 @@ class ZSerializer {
     final rc =
         bindings.zd_serializer_serialize_bool(_loanMut().cast(), value);
     if (rc != 0) throw ZenohException('Failed to serialize bool', rc);
+  }
+
+  /// Serializes a UTF-8 string value.
+  void serializeString(String value) {
+    _checkState();
+    final nativeStr = value.toNativeUtf8();
+    try {
+      final rc = bindings.zd_serializer_serialize_string(
+          _loanMut().cast(), nativeStr.cast());
+      if (rc != 0) throw ZenohException('Failed to serialize string', rc);
+    } finally {
+      calloc.free(nativeStr);
+    }
+  }
+
+  /// Serializes a byte buffer.
+  void serializeBytes(Uint8List value) {
+    _checkState();
+    final Pointer<Uint8> nativeBuf = calloc.allocate(value.length);
+    try {
+      nativeBuf.asTypedList(value.length).setAll(0, value);
+      final rc = bindings.zd_serializer_serialize_buf(
+          _loanMut().cast(), nativeBuf, value.length);
+      if (rc != 0) throw ZenohException('Failed to serialize bytes', rc);
+    } finally {
+      calloc.free(nativeBuf);
+    }
+  }
+
+  /// Serializes a sequence length header.
+  ///
+  /// Must be followed by exactly [length] serialized elements of the
+  /// same type to form a valid sequence.
+  void serializeSequenceLength(int length) {
+    _checkState();
+    final rc = bindings.zd_serializer_serialize_sequence_length(
+        _loanMut().cast(), length);
+    if (rc != 0) {
+      throw ZenohException('Failed to serialize sequence length', rc);
+    }
   }
 
   /// Finishes the serializer and returns the produced [ZBytes].

@@ -931,4 +931,20 @@ FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_double(
 FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_bool(
     ze_loaned_serializer_t* ser, bool val);
 
+// ---------------------------------------------------------------------------
+// Serializer — compound type serialization
+// ---------------------------------------------------------------------------
+
+/// Serializes a null-terminated UTF-8 string.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_string(
+    ze_loaned_serializer_t* ser, const char* val);
+
+/// Serializes a byte buffer of the given length.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_buf(
+    ze_loaned_serializer_t* ser, const uint8_t* data, size_t len);
+
+/// Serializes a sequence length header for a subsequent sequence of elements.
+FFI_PLUGIN_EXPORT int8_t zd_serializer_serialize_sequence_length(
+    ze_loaned_serializer_t* ser, size_t len);
+
 #endif // ZENOH_DART_H

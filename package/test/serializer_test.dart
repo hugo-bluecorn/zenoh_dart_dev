@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:zenoh/zenoh.dart';
 // Slice 2: arithmetic type serialize tests
-// Slice 3: compound type serialize tests
+// Slice 3: compound type serialize tests (string, bytes, sequence_length)
 
 void main() {
   group('ZSerializer lifecycle', () {

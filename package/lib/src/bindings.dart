@@ -2396,6 +2396,78 @@ class ZenohDartBindings {
       >('zd_serializer_serialize_bool');
   late final _zd_serializer_serialize_bool = _zd_serializer_serialize_boolPtr
       .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, bool)>();
+
+  /// Serializes a null-terminated UTF-8 string.
+  int zd_serializer_serialize_string(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    ffi.Pointer<ffi.Char> val,
+  ) {
+    return _zd_serializer_serialize_string(ser, val);
+  }
+
+  late final _zd_serializer_serialize_stringPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_loaned_serializer_t>,
+            ffi.Pointer<ffi.Char>,
+          )
+        >
+      >('zd_serializer_serialize_string');
+  late final _zd_serializer_serialize_string =
+      _zd_serializer_serialize_stringPtr
+          .asFunction<
+            int Function(
+              ffi.Pointer<ze_loaned_serializer_t>,
+              ffi.Pointer<ffi.Char>,
+            )
+          >();
+
+  /// Serializes a byte buffer of the given length.
+  int zd_serializer_serialize_buf(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    ffi.Pointer<ffi.Uint8> data,
+    int len,
+  ) {
+    return _zd_serializer_serialize_buf(ser, data, len);
+  }
+
+  late final _zd_serializer_serialize_bufPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(
+            ffi.Pointer<ze_loaned_serializer_t>,
+            ffi.Pointer<ffi.Uint8>,
+            ffi.Size,
+          )
+        >
+      >('zd_serializer_serialize_buf');
+  late final _zd_serializer_serialize_buf = _zd_serializer_serialize_bufPtr
+      .asFunction<
+        int Function(
+          ffi.Pointer<ze_loaned_serializer_t>,
+          ffi.Pointer<ffi.Uint8>,
+          int,
+        )
+      >();
+
+  /// Serializes a sequence length header for a subsequent sequence of elements.
+  int zd_serializer_serialize_sequence_length(
+    ffi.Pointer<ze_loaned_serializer_t> ser,
+    int len,
+  ) {
+    return _zd_serializer_serialize_sequence_length(ser, len);
+  }
+
+  late final _zd_serializer_serialize_sequence_lengthPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Int8 Function(ffi.Pointer<ze_loaned_serializer_t>, ffi.Size)
+        >
+      >('zd_serializer_serialize_sequence_length');
+  late final _zd_serializer_serialize_sequence_length =
+      _zd_serializer_serialize_sequence_lengthPtr
+          .asFunction<int Function(ffi.Pointer<ze_loaned_serializer_t>, int)>();
 }
 
 final class UnnamedStruct extends ffi.Struct {
