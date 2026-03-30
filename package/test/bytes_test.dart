@@ -284,6 +284,94 @@ void main() {
     });
   });
 
+  group('ZBytes convenience methods', () {
+    test('fromInt / toInt round-trip', () {
+      // Given: no preconditions
+      // When: ZBytes.fromInt(42) is created, then toInt() is called
+      final zbytes = ZBytes.fromInt(42);
+      final result = zbytes.toInt();
+
+      // Then: returns 42
+      expect(result, equals(42));
+      zbytes.dispose();
+    });
+
+    test('fromDouble / toDouble round-trip', () {
+      // Given: no preconditions
+      // When: ZBytes.fromDouble(-3.14) is created, then toDouble() is called
+      final zbytes = ZBytes.fromDouble(-3.14);
+      final result = zbytes.toDouble();
+
+      // Then: returns -3.14
+      expect(result, equals(-3.14));
+      zbytes.dispose();
+    });
+
+    test('fromBool / toBool round-trip true', () {
+      // Given: no preconditions
+      // When: ZBytes.fromBool(true) is created, then toBool() is called
+      final zbytes = ZBytes.fromBool(true);
+      final result = zbytes.toBool();
+
+      // Then: returns true
+      expect(result, isTrue);
+      zbytes.dispose();
+    });
+
+    test('fromBool / toBool round-trip false', () {
+      // Given: no preconditions
+      // When: ZBytes.fromBool(false) is created, then toBool() is called
+      final zbytes = ZBytes.fromBool(false);
+      final result = zbytes.toBool();
+
+      // Then: returns false
+      expect(result, isFalse);
+      zbytes.dispose();
+    });
+
+    test('fromInt interop with ZDeserializer', () {
+      // Given: ZBytes.fromInt(42) is created
+      final zbytes = ZBytes.fromInt(42);
+
+      // When: ZDeserializer(bytes) is created, deserializeInt64() is called
+      final deser = ZDeserializer(zbytes);
+      final result = deser.deserializeInt64();
+
+      // Then: returns 42, isDone is true
+      expect(result, equals(42));
+      expect(deser.isDone, isTrue);
+
+      deser.dispose();
+      zbytes.dispose();
+    });
+
+    test('toInt on multi-value payload throws ZenohException', () {
+      // Given: ZSerializer serializes uint32(42) then string("extra"), finishes to ZBytes
+      final ser = ZSerializer();
+      ser.serializeUint32(42);
+      ser.serializeString('extra');
+      final zbytes = ser.finish();
+      ser.dispose();
+
+      // When: toInt() is called on the resulting ZBytes
+      // Then: throws ZenohException (extra data remains)
+      expect(() => zbytes.toInt(), throwsA(isA<ZenohException>()));
+
+      zbytes.dispose();
+    });
+
+    test('fromInt with negative value round-trips (min int64)', () {
+      // Given: no preconditions
+      // When: ZBytes.fromInt(-9223372036854775808) is created, then toInt() is called
+      final zbytes = ZBytes.fromInt(-9223372036854775808);
+      final result = zbytes.toInt();
+
+      // Then: returns -9223372036854775808
+      expect(result, equals(-9223372036854775808));
+      zbytes.dispose();
+    });
+  });
+
   group('Barrel export', () {
     test('provides all public types', () {
       // Given: the zenoh package is imported via package:zenoh/zenoh.dart
