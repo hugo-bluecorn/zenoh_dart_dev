@@ -155,7 +155,7 @@ the synchronous callback — by the time `NativeCallable.listener`
 delivers the pointer to Dart asynchronously, the memory is invalid.
 The C shim must extract fields synchronously regardless of which Dart
 callback API is used. The current approach is battle-tested across all
-phases and 370+ tests. Monitor `NativeCallable.isolateGroupBound`
+phases and 500+ tests. Monitor `NativeCallable.isolateGroupBound`
 (experimental) for a future alternative that could read loaned pointers
 synchronously on the zenoh thread.
 
@@ -1099,12 +1099,13 @@ Several callback implementations are shared:
 
 | Callback pair | Used by |
 |---------------|---------|
-| `_zd_sample_callback` / `_zd_sample_drop` | subscriber, liveliness subscriber, background subscriber |
+| `_zd_sample_callback` / `_zd_sample_drop` | subscriber, liveliness subscriber, background subscriber, advanced subscriber |
 | `_zd_reply_callback` / `_zd_get_drop` | `Session.get()`, `Querier.get()`, `Session.livelinessGet()` |
+| `_zd_miss_callback` / `_zd_miss_drop` | `AdvancedSubscriber` miss listener |
 
 This is a consequence of zenoh-c using the same data types (`z_loaned_sample_t`,
-`z_loaned_reply_t`) across different features. The C shim mirrors this —
-one extraction function per data type, not per feature.
+`z_loaned_reply_t`, `ze_miss_t`) across different features. The C shim mirrors
+this — one extraction function per data type, not per feature.
 
 ---
 
