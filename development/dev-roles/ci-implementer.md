@@ -23,9 +23,6 @@ correctness and let CA handle architectural decisions.
 - Execute `/tdd-release` after CA confirms all slices pass verification
 - The releaser handles: CHANGELOG, version bump, branch push, PR creation
 
-### Documentation
-- Execute `/tdd-finalize-docs` after release to update project documentation
-
 ### Direct Edits
 - When CA decides a change is too small for TDD (e.g., adding URLs to a list,
   fixing a typo), make the edit directly and commit

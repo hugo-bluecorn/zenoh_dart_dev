@@ -35,7 +35,7 @@ done its job correctly.
 - After CI completes `/tdd-implement`, verify all slices pass acceptance criteria
 - After CI completes `/tdd-release`, review the PR and provide a comprehensive
   verification summary for the PR body (developer copies this into the PR)
-- After CI completes `/tdd-finalize-docs`, verify documentation accuracy
+- After CA2 completes `/tdd-finalize-docs`, verify documentation accuracy
 - Spot-check that agents followed conventions (test-first, commit messages, etc.)
 
 ### Memory Management
