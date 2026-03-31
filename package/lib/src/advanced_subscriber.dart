@@ -129,11 +129,11 @@ class AdvancedSubscriber {
       });
 
       final loaned = bindings.zd_advanced_subscriber_loan(ptr.cast());
-      final missRc =
-          bindings.zd_advanced_subscriber_declare_background_sample_miss_listener(
-        loaned,
-        missPort.sendPort.nativePort,
-      );
+      final missRc = bindings
+          .zd_advanced_subscriber_declare_background_sample_miss_listener(
+            loaned,
+            missPort.sendPort.nativePort,
+          );
 
       if (missRc != 0) {
         missPort.close();

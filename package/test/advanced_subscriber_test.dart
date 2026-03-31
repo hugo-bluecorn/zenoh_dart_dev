@@ -18,29 +18,33 @@ void main() {
     });
 
     test('declareAdvancedSubscriber returns an AdvancedSubscriber', () {
-      final subscriber =
-          session.declareAdvancedSubscriber('demo/example/adv-sub');
+      final subscriber = session.declareAdvancedSubscriber(
+        'demo/example/adv-sub',
+      );
       expect(subscriber, isA<AdvancedSubscriber>());
       subscriber.close();
     });
 
     test('AdvancedSubscriber.stream is a Stream of Sample', () {
-      final subscriber =
-          session.declareAdvancedSubscriber('demo/example/adv-sub');
+      final subscriber = session.declareAdvancedSubscriber(
+        'demo/example/adv-sub',
+      );
       addTearDown(subscriber.close);
       expect(subscriber.stream, isA<Stream<Sample>>());
       expect(subscriber.stream, isNotNull);
     });
 
     test('AdvancedSubscriber.close completes without error', () {
-      final subscriber =
-          session.declareAdvancedSubscriber('demo/example/adv-sub');
+      final subscriber = session.declareAdvancedSubscriber(
+        'demo/example/adv-sub',
+      );
       expect(() => subscriber.close(), returnsNormally);
     });
 
     test('AdvancedSubscriber.close is idempotent', () {
-      final subscriber =
-          session.declareAdvancedSubscriber('demo/example/adv-sub');
+      final subscriber = session.declareAdvancedSubscriber(
+        'demo/example/adv-sub',
+      );
       subscriber.close();
       expect(() => subscriber.close(), returnsNormally);
     });
@@ -62,13 +66,16 @@ void main() {
       );
     });
 
-    test('AdvancedSubscriber.missEvents is null when miss listener not enabled',
-        () {
-      final subscriber =
-          session.declareAdvancedSubscriber('demo/example/adv-sub');
-      addTearDown(subscriber.close);
-      expect(subscriber.missEvents, isNull);
-    });
+    test(
+      'AdvancedSubscriber.missEvents is null when miss listener not enabled',
+      () {
+        final subscriber = session.declareAdvancedSubscriber(
+          'demo/example/adv-sub',
+        );
+        addTearDown(subscriber.close);
+        expect(subscriber.missEvents, isNull);
+      },
+    );
 
     test(
       'declareAdvancedSubscriber with invalid key expression throws ZenohException',
@@ -134,32 +141,34 @@ void main() {
         expect(sample.kind, equals(SampleKind.put));
       });
 
-      test('AdvancedPublisher deleteResource received by AdvancedSubscriber',
-          () async {
-        final publisher = session1.declareAdvancedPublisher(
-          'zenoh/dart/test/adv-int/del',
-          options: AdvancedPublisherOptions(
-            cacheMaxSamples: 5,
-            publisherDetection: true,
-            sampleMissDetection: true,
-          ),
-        );
-        addTearDown(publisher.close);
+      test(
+        'AdvancedPublisher deleteResource received by AdvancedSubscriber',
+        () async {
+          final publisher = session1.declareAdvancedPublisher(
+            'zenoh/dart/test/adv-int/del',
+            options: AdvancedPublisherOptions(
+              cacheMaxSamples: 5,
+              publisherDetection: true,
+              sampleMissDetection: true,
+            ),
+          );
+          addTearDown(publisher.close);
 
-        final subscriber = session2.declareAdvancedSubscriber(
-          'zenoh/dart/test/adv-int/del',
-        );
-        addTearDown(subscriber.close);
+          final subscriber = session2.declareAdvancedSubscriber(
+            'zenoh/dart/test/adv-int/del',
+          );
+          addTearDown(subscriber.close);
 
-        await Future<void>.delayed(const Duration(seconds: 1));
+          await Future<void>.delayed(const Duration(seconds: 1));
 
-        publisher.deleteResource();
+          publisher.deleteResource();
 
-        final sample = await subscriber.stream.first.timeout(
-          const Duration(seconds: 5),
-        );
-        expect(sample.kind, equals(SampleKind.delete));
-      });
+          final sample = await subscriber.stream.first.timeout(
+            const Duration(seconds: 5),
+          );
+          expect(sample.kind, equals(SampleKind.delete));
+        },
+      );
     });
 
     // --- Test 3: history recovery (port 17521) ---
@@ -282,10 +291,17 @@ void main() {
             .timeout(const Duration(seconds: 10));
 
         final payloads = samples.map((s) => s.payload).toSet();
-        expect(payloads, containsAll([
-          'value_1', 'value_2', 'value_3',
-          'value_4', 'value_5', 'value_6',
-        ]));
+        expect(
+          payloads,
+          containsAll([
+            'value_1',
+            'value_2',
+            'value_3',
+            'value_4',
+            'value_5',
+            'value_6',
+          ]),
+        );
 
         subscriber.close();
         publisher.close();
@@ -355,21 +371,22 @@ void main() {
     });
 
     test(
-        'AdvancedSubscriber with enableMissListener has non-null missEvents stream',
-        () {
-      final subscriber = session.declareAdvancedSubscriber(
-        'demo/example/adv-miss',
-        options: AdvancedSubscriberOptions(
-          enableMissListener: true,
-          recovery: true,
-          lastSampleMissDetection: true,
-        ),
-      );
-      addTearDown(subscriber.close);
+      'AdvancedSubscriber with enableMissListener has non-null missEvents stream',
+      () {
+        final subscriber = session.declareAdvancedSubscriber(
+          'demo/example/adv-miss',
+          options: AdvancedSubscriberOptions(
+            enableMissListener: true,
+            recovery: true,
+            lastSampleMissDetection: true,
+          ),
+        );
+        addTearDown(subscriber.close);
 
-      expect(subscriber.missEvents, isNotNull);
-      expect(subscriber.missEvents, isA<Stream<MissEvent>>());
-    });
+        expect(subscriber.missEvents, isNotNull);
+        expect(subscriber.missEvents, isA<Stream<MissEvent>>());
+      },
+    );
 
     test('MissEvent has sourceId and count fields', () {
       final zid = ZenohId(Uint8List(16));
@@ -380,44 +397,45 @@ void main() {
     });
 
     test(
-        'AdvancedSubscriber with all options including miss listener declares successfully',
-        () async {
-      final config1 = Config();
-      config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17524"]');
-      config1.insertJson5('timestamping/enabled', 'true');
-      final session1 = Session.open(config: config1);
+      'AdvancedSubscriber with all options including miss listener declares successfully',
+      () async {
+        final config1 = Config();
+        config1.insertJson5('listen/endpoints', '["tcp/127.0.0.1:17524"]');
+        config1.insertJson5('timestamping/enabled', 'true');
+        final session1 = Session.open(config: config1);
 
-      await Future<void>.delayed(const Duration(milliseconds: 500));
+        await Future<void>.delayed(const Duration(milliseconds: 500));
 
-      final config2 = Config();
-      config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17524"]');
-      final session2 = Session.open(config: config2);
+        final config2 = Config();
+        config2.insertJson5('connect/endpoints', '["tcp/127.0.0.1:17524"]');
+        final session2 = Session.open(config: config2);
 
-      await Future<void>.delayed(const Duration(seconds: 1));
+        await Future<void>.delayed(const Duration(seconds: 1));
 
-      try {
-        final subscriber = session2.declareAdvancedSubscriber(
-          'demo/example/adv-miss-all',
-          options: AdvancedSubscriberOptions(
-            history: true,
-            detectLatePublishers: true,
-            recovery: true,
-            lastSampleMissDetection: true,
-            periodicQueriesPeriodMs: 1000,
-            subscriberDetection: true,
-            enableMissListener: true,
-          ),
-        );
+        try {
+          final subscriber = session2.declareAdvancedSubscriber(
+            'demo/example/adv-miss-all',
+            options: AdvancedSubscriberOptions(
+              history: true,
+              detectLatePublishers: true,
+              recovery: true,
+              lastSampleMissDetection: true,
+              periodicQueriesPeriodMs: 1000,
+              subscriberDetection: true,
+              enableMissListener: true,
+            ),
+          );
 
-        expect(subscriber.stream, isNotNull);
-        expect(subscriber.missEvents, isNotNull);
+          expect(subscriber.stream, isNotNull);
+          expect(subscriber.missEvents, isNotNull);
 
-        subscriber.close();
-      } finally {
-        session1.close();
-        session2.close();
-      }
-    });
+          subscriber.close();
+        } finally {
+          session1.close();
+          session2.close();
+        }
+      },
+    );
 
     test('AdvancedSubscriber close cleans up miss listener resources', () {
       final subscriber = session.declareAdvancedSubscriber(

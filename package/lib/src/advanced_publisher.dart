@@ -118,8 +118,10 @@ class AdvancedPublisher {
     _ensureOpen();
     final loaned = bindings.zd_advanced_publisher_loan(_ptr.cast());
     final payload = ZBytes.fromString(value);
-    final rc =
-        bindings.zd_advanced_publisher_put(loaned, payload.nativePtr.cast());
+    final rc = bindings.zd_advanced_publisher_put(
+      loaned,
+      payload.nativePtr.cast(),
+    );
     payload.markConsumed();
     if (rc != 0) {
       throw ZenohException('AdvancedPublisher put failed', rc);
@@ -132,8 +134,10 @@ class AdvancedPublisher {
   void putBytes(ZBytes payload) {
     _ensureOpen();
     final loaned = bindings.zd_advanced_publisher_loan(_ptr.cast());
-    final rc =
-        bindings.zd_advanced_publisher_put(loaned, payload.nativePtr.cast());
+    final rc = bindings.zd_advanced_publisher_put(
+      loaned,
+      payload.nativePtr.cast(),
+    );
     payload.markConsumed();
     if (rc != 0) {
       throw ZenohException('AdvancedPublisher put failed', rc);

@@ -16,28 +16,32 @@ void main() {
     });
 
     test('declareAdvancedPublisher returns an AdvancedPublisher', () {
-      final publisher =
-          session.declareAdvancedPublisher('demo/example/adv-pub');
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub',
+      );
       expect(publisher, isA<AdvancedPublisher>());
       publisher.close();
     });
 
     test('AdvancedPublisher.keyExpr returns the declared key expression', () {
-      final publisher =
-          session.declareAdvancedPublisher('demo/example/adv-pub');
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub',
+      );
       expect(publisher.keyExpr, equals('demo/example/adv-pub'));
       publisher.close();
     });
 
     test('AdvancedPublisher.close completes without error', () {
-      final publisher =
-          session.declareAdvancedPublisher('demo/example/adv-pub');
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub',
+      );
       expect(() => publisher.close(), returnsNormally);
     });
 
     test('AdvancedPublisher.close is idempotent', () {
-      final publisher =
-          session.declareAdvancedPublisher('demo/example/adv-pub');
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub',
+      );
       publisher.close();
       expect(() => publisher.close(), returnsNormally);
     });
@@ -70,39 +74,46 @@ void main() {
     );
 
     test('declareAdvancedPublisher with default options succeeds', () {
-      final publisher =
-          session.declareAdvancedPublisher('demo/example/adv-pub-default');
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub-default',
+      );
       expect(publisher, isA<AdvancedPublisher>());
       publisher.close();
     });
 
     test('AdvancedPublisher.put publishes a string without error', () {
-      final publisher =
-          session.declareAdvancedPublisher('demo/example/adv-pub-put');
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub-put',
+      );
       addTearDown(publisher.close);
       expect(() => publisher.put('Hello advanced'), returnsNormally);
     });
 
-    test('AdvancedPublisher.putBytes publishes ZBytes and consumes the payload',
-        () {
-      final publisher =
-          session.declareAdvancedPublisher('demo/example/adv-pub-putbytes');
-      addTearDown(publisher.close);
-      final payload = ZBytes.fromString('raw data');
-      expect(() => publisher.putBytes(payload), returnsNormally);
-      expect(() => payload.nativePtr, throwsA(isA<StateError>()));
-    });
+    test(
+      'AdvancedPublisher.putBytes publishes ZBytes and consumes the payload',
+      () {
+        final publisher = session.declareAdvancedPublisher(
+          'demo/example/adv-pub-putbytes',
+        );
+        addTearDown(publisher.close);
+        final payload = ZBytes.fromString('raw data');
+        expect(() => publisher.putBytes(payload), returnsNormally);
+        expect(() => payload.nativePtr, throwsA(isA<StateError>()));
+      },
+    );
 
     test('AdvancedPublisher.deleteResource completes without error', () {
-      final publisher =
-          session.declareAdvancedPublisher('demo/example/adv-pub-del');
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub-del',
+      );
       addTearDown(publisher.close);
       expect(() => publisher.deleteResource(), returnsNormally);
     });
 
     test('AdvancedPublisher.put after close throws StateError', () {
-      final publisher =
-          session.declareAdvancedPublisher('demo/example/adv-pub-closed');
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub-closed',
+      );
       publisher.close();
       expect(
         () => publisher.put('test'),
@@ -117,11 +128,14 @@ void main() {
     });
 
     test('All AdvancedPublisher operations after close throw StateError', () {
-      final publisher =
-          session.declareAdvancedPublisher('demo/example/adv-pub-closed-all');
+      final publisher = session.declareAdvancedPublisher(
+        'demo/example/adv-pub-closed-all',
+      );
       publisher.close();
-      expect(() => publisher.putBytes(ZBytes.fromString('x')),
-          throwsA(isA<StateError>()));
+      expect(
+        () => publisher.putBytes(ZBytes.fromString('x')),
+        throwsA(isA<StateError>()),
+      );
       expect(() => publisher.deleteResource(), throwsA(isA<StateError>()));
       expect(() => publisher.keyExpr, throwsA(isA<StateError>()));
     });
@@ -135,30 +149,33 @@ void main() {
       publisher.close();
     });
 
-    test('declareAdvancedPublisher with publisher detection enabled succeeds',
-        () {
-      final publisher = session.declareAdvancedPublisher(
-        'demo/example/adv-pub-detect',
-        options: AdvancedPublisherOptions(publisherDetection: true),
-      );
-      expect(publisher, isA<AdvancedPublisher>());
-      publisher.close();
-    });
+    test(
+      'declareAdvancedPublisher with publisher detection enabled succeeds',
+      () {
+        final publisher = session.declareAdvancedPublisher(
+          'demo/example/adv-pub-detect',
+          options: AdvancedPublisherOptions(publisherDetection: true),
+        );
+        expect(publisher, isA<AdvancedPublisher>());
+        publisher.close();
+      },
+    );
 
     test(
-        'declareAdvancedPublisher with sample miss detection and periodic heartbeat succeeds',
-        () {
-      final publisher = session.declareAdvancedPublisher(
-        'demo/example/adv-pub-miss',
-        options: AdvancedPublisherOptions(
-          sampleMissDetection: true,
-          heartbeatMode: HeartbeatMode.periodic,
-          heartbeatPeriodMs: 500,
-        ),
-      );
-      expect(publisher, isA<AdvancedPublisher>());
-      publisher.close();
-    });
+      'declareAdvancedPublisher with sample miss detection and periodic heartbeat succeeds',
+      () {
+        final publisher = session.declareAdvancedPublisher(
+          'demo/example/adv-pub-miss',
+          options: AdvancedPublisherOptions(
+            sampleMissDetection: true,
+            heartbeatMode: HeartbeatMode.periodic,
+            heartbeatPeriodMs: 500,
+          ),
+        );
+        expect(publisher, isA<AdvancedPublisher>());
+        publisher.close();
+      },
+    );
 
     test('declareAdvancedPublisher with all options enabled succeeds', () {
       final publisher = session.declareAdvancedPublisher(
@@ -181,14 +198,16 @@ void main() {
       expect(HeartbeatMode.sporadic.value, equals(2));
     });
 
-    test('declareAdvancedPublisher with cacheMaxSamples 0 (unlimited) succeeds',
-        () {
-      final publisher = session.declareAdvancedPublisher(
-        'demo/example/adv-pub-unlim',
-        options: AdvancedPublisherOptions(cacheMaxSamples: 0),
-      );
-      expect(publisher, isA<AdvancedPublisher>());
-      publisher.close();
-    });
+    test(
+      'declareAdvancedPublisher with cacheMaxSamples 0 (unlimited) succeeds',
+      () {
+        final publisher = session.declareAdvancedPublisher(
+          'demo/example/adv-pub-unlim',
+          options: AdvancedPublisherOptions(cacheMaxSamples: 0),
+        );
+        expect(publisher, isA<AdvancedPublisher>());
+        publisher.close();
+      },
+    );
   }); // AdvancedPublisher group
 }
