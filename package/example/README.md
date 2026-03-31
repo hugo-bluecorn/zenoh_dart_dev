@@ -80,13 +80,6 @@ returns the bytes regardless of backing. The `ZBytes.isShmBacked` property
 lets callers detect SHM when needed, but no separate subscriber example
 is required.
 
-### z_advanced_pub / z_advanced_sub — Advanced Publication (Future)
-
-These use zenoh-c's advanced publication API (`ze_declare_advanced_publisher`,
-`ze_declare_advanced_subscriber`) with sample miss detection, history, and
-recovery. Planned for a future phase when the advanced API surface is
-implemented.
-
 ### z_pong_shm — Pong Is SHM-Transparent
 
 No such example exists in zenoh-c. The pong responder echoes whatever
@@ -162,7 +155,7 @@ the synchronous callback — by the time `NativeCallable.listener`
 delivers the pointer to Dart asynchronously, the memory is invalid.
 The C shim must extract fields synchronously regardless of which Dart
 callback API is used. The current approach is battle-tested across all
-phases and 370+ tests. Monitor `NativeCallable.isolateGroupBound`
+phases and 500+ tests. Monitor `NativeCallable.isolateGroupBound`
 (experimental) for a future alternative that could read loaned pointers
 synchronously on the zenoh thread.
 
@@ -804,6 +797,223 @@ z_storage.dart -k 'demo/example/**'
 
 ---
 
+### z_advanced_pub / z_advanced_sub — Advanced Pub/Sub
+
+**Deviates from canon:** flattened options hierarchy, no `Session.ext()`,
+Dart-side key expression storage, bundled miss listener declaration,
+nullable cache semantics.
+
+This is the most complex feature phase in the project. The zenoh-c
+advanced API uses 47 functions, 8 nested options structs, and a new
+closure type (`ze_owned_closure_miss_t`). The Dart binding selectively
+wraps 11 of these functions through 5 architectural decisions that
+diverge from the C/C++ pattern.
+
+**What's new**
+
+- 2 CLI examples: `z_advanced_pub.dart`, `z_advanced_sub.dart`
+- 11 C shim functions (6 publisher, 5 subscriber), all guarded by
+  `#if defined(Z_FEATURE_UNSTABLE_API)` — unavailable on Android
+- `AdvancedPublisher`, `AdvancedPublisherOptions`, `HeartbeatMode`,
+  `AdvancedSubscriber`, `AdvancedSubscriberOptions`, `MissEvent` types
+- `Session.declareAdvancedPublisher()`, `Session.declareAdvancedSubscriber()`
+- ~38 tests: publisher lifecycle (7), put/delete (5), options (6),
+  subscriber lifecycle (7), integration/history (5), miss listener (4),
+  CLI (5)
+
+**The pattern it demonstrates**
+
+```
+z_advanced_pub: config(timestamping=true) → open → declareAdvancedPublisher(key, opts)
+                                                        │
+                                                        ▼
+                                              loop: put("[idx] payload")
+                                              (cache stores last N, heartbeat sends seq numbers)
+
+z_advanced_sub: open → declareAdvancedSubscriber(key, opts)
+                         │                        │
+                         ▼                        ▼
+                  stream<Sample>          missEvents<MissEvent>
+                  (history + live)        (gap detection via seq numbers)
+```
+
+Advanced publisher adds three capabilities beyond the regular publisher:
+(1) **cache** — stores last N samples for late-joining subscriber history
+retrieval, (2) **publisher detection** — announces presence via liveliness
+tokens, (3) **sample miss detection** — sequence numbering with optional
+heartbeats so subscribers detect gaps.
+
+Advanced subscriber adds three corresponding capabilities:
+(1) **history** — queries cached samples from advanced publishers on
+connect, (2) **recovery** — detects sequence gaps and requests
+retransmission from publisher cache, (3) **miss listener** — streams
+`MissEvent` notifications (source ZenohId + count).
+
+**Key architectural decisions**
+
+**1. Flattened options hierarchy.** zenoh-c uses deeply nested options:
+`ze_advanced_publisher_options_t` contains
+`ze_advanced_publisher_cache_options_t` (5 fields, requires separate
+`_default()` call) and
+`ze_advanced_publisher_sample_miss_detection_options_t` (3 fields,
+separate `_default()` call), each with an `is_enabled` boolean plus
+sub-fields. The subscriber side is similarly nested (3 levels deep:
+options → recovery → last_sample_miss_detection). The C shim flattens
+ALL of this into scalar parameters:
+
+```
+zenoh-c (hierarchical):
+  opts.cache.is_enabled = true;
+  opts.cache.max_samples = 10;
+  opts.cache.congestion_control = Z_CONGESTION_CONTROL_DROP;
+  opts.sample_miss_detection.is_enabled = true;
+  opts.sample_miss_detection.heartbeat_mode = PERIODIC;
+  opts.sample_miss_detection.heartbeat_period_ms = 500;
+
+C shim (flat):
+  zd_declare_advanced_publisher(session, pub, ke,
+      /*enable_cache*/ true, /*cache_max_samples*/ 10,
+      /*publisher_detection*/ true, /*sample_miss_detection*/ true,
+      /*heartbeat_mode*/ 1, /*heartbeat_period_ms*/ 500);
+```
+
+The C shim internally calls each sub-struct's `_default()` initializer
+when the corresponding boolean is true, so deferred fields
+(`congestion_control`, `priority`, `is_express` on cache;
+`query_timeout_ms` on subscriber) get correct zenoh-c defaults. This
+matches our established pattern (see `zd_declare_publisher` with its 7
+scalar parameters) and avoids exposing 8 nested C structs through FFI.
+
+**2. No `Session.ext()`.** zenoh-cpp accesses advanced features via
+`session.ext().declare_advanced_publisher()`, where `SessionExt` is a
+C++ template specialization wrapping the same session. Dart has no
+equivalent of C++ header-level extension mechanisms. An `.ext()` accessor
+would add an indirection layer with no benefit — our `Session` class
+already has 17+ methods, and the `Advanced` prefix on the method name
+provides sufficient disambiguation. Both methods are placed directly on
+`Session`.
+
+**3. Dart-side key expression storage.** zenoh-c exposes
+`ze_advanced_publisher_keyexpr()` to read the key expression back from
+the native entity. zenoh-cpp wraps this as `get_keyexpr()`. Our Dart
+binding stores the key expression string at construction time (passed
+through from `declareAdvancedPublisher()`) and returns it as a property
+— no FFI call. This avoids a pointer lifetime concern: the C function
+returns a `const z_loaned_keyexpr_t*` that borrows from the publisher,
+so if the publisher is dropped between the C call and Dart reading the
+string, the pointer is dangling. Storing at construction is simpler
+and matches our regular `Publisher`, `Querier`, and `PullSubscriber`
+pattern — none of them call back to C for their key expression.
+
+**4. Bundled miss listener declaration.** In zenoh-c (and zenoh-cpp),
+the miss listener is declared as a separate API call after the subscriber
+exists:
+
+```c
+ze_declare_advanced_subscriber(..., &sub, ...);       // step 1
+ze_advanced_subscriber_declare_background_sample_miss_listener(
+    z_loan(sub), z_move(miss_callback));              // step 2
+```
+
+Dart bundles this into the `AdvancedSubscriber.declare()` factory via an
+`enableMissListener` field in `AdvancedSubscriberOptions`. When true, the
+factory creates two NativePort pairs (samples + miss events), declares
+the subscriber, then immediately declares the miss listener. If step 2
+fails, step 1 is cleaned up (subscriber dropped, ports closed). This
+gives the consumer a single `declareAdvancedSubscriber()` call instead
+of two — matching Dart API ergonomics where factories handle multi-step
+native setup.
+
+**5. Nullable cache semantics.** zenoh-c uses separate
+`cache.is_enabled` (bool) + `cache.max_samples` (size_t) fields.
+zenoh-cpp uses `std::optional<CacheOptions>`. Dart uses
+`int? cacheMaxSamples` — `null` means no cache (disabled), non-null
+means enabled. Within non-null, `0` means unlimited samples per
+resource, `> 0` means a finite limit. This collapses the
+boolean+integer pair into a single nullable parameter and matches the
+Dart convention where `null` signals "feature not configured."
+
+**Miss callback pattern**
+
+The miss listener introduces a new callback type
+(`ze_owned_closure_miss_t`) that follows the established NativePort
+bridge pattern. The C shim callback:
+
+1. Receives `const ze_miss_t* miss` with `miss->source`
+   (`z_entity_global_id_t`) and `miss->nb` (`uint32_t`)
+2. Extracts ZID: `z_id_t zid = z_entity_global_id_zid(&miss->source)`
+3. Posts raw 16-byte ZID as `Dart_TypedData_kUint8` + `nb` as `int64`
+4. Dart constructs `MissEvent(sourceId: ZenohId(bytes), count: nb)`
+
+The raw-bytes approach matches the scout callback pattern (Phase 5) —
+`ZenohId` is constructed from a 16-byte `Uint8List`, not parsed from a
+hex string. The C example converts to hex for printing; we defer
+conversion to `ZenohId.toHexString()` on the Dart side.
+
+**Sample callback reuse**
+
+The advanced subscriber uses the same `z_owned_closure_sample_t` as the
+regular subscriber. `AdvancedSubscriber.declare()` calls
+`Subscriber.createSampleChannel()` directly — the same factory that
+creates the NativePort + StreamController pair for regular subscribers.
+This means advanced and regular subscribers share identical sample
+delivery code paths. The `_zd_sample_callback` / `_zd_sample_drop` pair
+is reused without modification.
+
+**Feature flag guard**
+
+All 11 C shim functions are guarded by
+`#if defined(Z_FEATURE_UNSTABLE_API)` — the `ze_*` namespace requires
+this flag. On Android, `Z_FEATURE_UNSTABLE_API` is excluded by
+`if(NOT ANDROID)` in `src/CMakeLists.txt`, so advanced features are
+automatically unavailable alongside SHM.
+
+**Deferred API surface**
+
+10 zenoh-c options fields are deliberately not exposed in this phase:
+
+| Deferred | Why |
+|----------|-----|
+| `publisher_detection_metadata` | Niche use case (liveliness token metadata) |
+| `subscriber_detection_metadata` | Same |
+| `put_options` (encoding, attachment) | Matches regular Publisher deferral |
+| `delete_options` | No fields beyond base options |
+| Cache QoS (`congestion_control`, `priority`, `is_express`) | Uses zenoh-c defaults |
+| `query_timeout_ms` | 0 = internal default |
+| History `max_samples`, `max_age_ms` | 0 = no limit |
+| `ze_advanced_subscriber_detect_publishers()` | Manual detection — separate call |
+| `ze_advanced_publisher_declare_matching_listener()` | Deferred to patch |
+| `ze_declare_background_advanced_subscriber()` | Background variant — defer |
+
+These can be added in patch releases without breaking changes.
+
+```
+z_advanced_pub.dart -k demo/example/zenoh-dart-advanced-pub -i 10
+z_advanced_sub.dart -k 'demo/example/**'
+```
+
+| Flag (z_advanced_pub) | Default | Description |
+|------|---------|-------------|
+| `-k, --key` | `demo/example/zenoh-dart-advanced-pub` | Key expression |
+| `-p, --payload` | `Advanced Pub from Dart!` | Payload string |
+| `-i, --history` | `1` | Cache size (number of samples) |
+| `-e, --connect` | -- | Connect endpoint(s) |
+| `-l, --listen` | -- | Listen endpoint(s) |
+
+| Flag (z_advanced_sub) | Default | Description |
+|------|---------|-------------|
+| `-k, --key` | `demo/example/**` | Key expression (wildcard) |
+| `-e, --connect` | -- | Connect endpoint(s) |
+| `-l, --listen` | -- | Listen endpoint(s) |
+
+**Note:** The zenoh-c subscriber example hardcodes all options (history,
+recovery, subscriber_detection, miss listener). Our Dart example matches
+this — all features enabled by default, no CLI flags for individual
+options. The publisher example exposes `-i` for cache size, matching
+zenoh-c's `-i`/`--history` flag.
+
+---
+
 ## Coverage Map
 
 Which zenoh-c examples does this binding implement, and which are absent?
@@ -833,14 +1043,14 @@ Which zenoh-c examples does this binding implement, and which are absent?
 | `z_bytes.c` | `z_bytes.dart` | Implemented |
 | `z_queryable_with_channels.c` | -- | Absent (Dart Streams) |
 | `z_non_blocking_get.c` | -- | Absent (Dart Streams) |
-| `z_advanced_pub.c` | -- | Future |
-| `z_advanced_sub.c` | -- | Future |
+| `z_advanced_pub.c` | `z_advanced_pub.dart` | Implemented |
+| `z_advanced_sub.c` | `z_advanced_sub.dart` | Implemented |
 | `z_pub_thr.c` | `z_pub_thr.dart` | Implemented |
 | `z_sub_thr.c` | `z_sub_thr.dart` | Implemented |
 | `z_pub_shm_thr.c` | `z_pub_shm_thr.dart` | Implemented |
 | `z_storage.c` | `z_storage.dart` | Implemented |
 
-**Current:** 24 implemented, 3 permanently absent, 2 future.
+**Current:** 26 implemented, 3 permanently absent, 0 future.
 
 ---
 
@@ -889,12 +1099,13 @@ Several callback implementations are shared:
 
 | Callback pair | Used by |
 |---------------|---------|
-| `_zd_sample_callback` / `_zd_sample_drop` | subscriber, liveliness subscriber, background subscriber |
+| `_zd_sample_callback` / `_zd_sample_drop` | subscriber, liveliness subscriber, background subscriber, advanced subscriber |
 | `_zd_reply_callback` / `_zd_get_drop` | `Session.get()`, `Querier.get()`, `Session.livelinessGet()` |
+| `_zd_miss_callback` / `_zd_miss_drop` | `AdvancedSubscriber` miss listener |
 
 This is a consequence of zenoh-c using the same data types (`z_loaned_sample_t`,
-`z_loaned_reply_t`) across different features. The C shim mirrors this —
-one extraction function per data type, not per feature.
+`z_loaned_reply_t`, `ze_miss_t`) across different features. The C shim mirrors
+this — one extraction function per data type, not per feature.
 
 ---
 

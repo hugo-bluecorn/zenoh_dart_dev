@@ -50,11 +50,12 @@ zenoh_dart_dev/                 # git repo root (development workshop)
 **Phase 14 Throughput Benchmarks: COMPLETE** — 92 C shim functions, 394 integration tests. Composition phase (no new C shim functions or Dart API classes). `z_pub_thr.dart` (heap-based tight-loop publisher with `CongestionControl.block` and clone-in-loop), `z_sub_thr.dart` (background subscriber counting messages per round, reports throughput in msg/s with summary on exit), `z_pub_shm_thr.dart` (SHM zero-copy tight-loop using allocate-once-clone-in-loop pattern).
 **Phase 16 Bytes Serialization: COMPLETE** — 141 C shim functions, 455 integration tests. `ZSerializer` (streaming multi-value serialization: uint8–int64, float, double, bool, string, bytes, sequence length); `ZDeserializer` (type-safe deserialization with `isDone` state tracking); `ZBytesWriter` (raw byte assembly via `writeAll`/`append`/`finish`); `ZBytes.fromInt()`/`toInt()`, `fromDouble()`/`toDouble()`, `fromBool()`/`toBool()` convenience methods; `ZBytes.slices` lazy iterable for fragmented data; CLI example `z_bytes.dart`. Phase 15 (SHM Throughput) subsumed by Phase 14.
 **Phase 17 Storage: COMPLETE** — 144 C shim functions, 473 integration tests. `KeyExpr.intersects(other)`, `KeyExpr.includes(other)`, `KeyExpr.equals(other)` for key expression matching via 3 new C shim functions; CLI example `z_storage.dart` (in-memory storage combining subscriber + queryable with `Map<String, Sample>` and key expression intersection for query replies).
+**Phase 18 Advanced Pub/Sub: COMPLETE** — 155 C shim functions, 512 integration tests. `AdvancedPublisher` with cache, publisher detection, and sample miss detection (`put`/`putBytes`/`deleteResource`/`keyExpr`/`close`); `AdvancedSubscriber` with history recovery, late publisher detection, miss events, and subscriber detection (`stream`/`missEvents`/`close`); `AdvancedPublisherOptions`, `AdvancedSubscriberOptions`, `HeartbeatMode`, `MissEvent` types; `Session.declareAdvancedPublisher()` and `Session.declareAdvancedSubscriber()`; CLI examples `z_advanced_pub.dart` and `z_advanced_sub.dart`; 11 new C shim functions guarded by `Z_FEATURE_UNSTABLE_API`.
 
 Available Dart API classes:
 - `Zenoh` — Static utilities: `initLog(fallback)` for runtime logger initialization (call before `Session.open()`); `scout(config)` discovers zenoh entities on the network
 - `Config` — Session configuration with JSON5 insertion
-- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`; `declareBackgroundSubscriber(keyExpr)` returns `Stream<Sample>` (fire-and-forget, lives until session closes); `declarePublisher(keyExpr, isExpress:)` returns a `Publisher`; `get(selector, payload: ZBytes?)` returns `Stream<Reply>` (payload accepts SHM-backed `ZBytes` for zero-copy query payloads); `declareQueryable(keyExpr)` returns a `Queryable`; `declarePullSubscriber(keyExpr, capacity: N)` returns a `PullSubscriber`; `declareQuerier(keyExpr)` returns a `Querier`; `declareLivelinessToken(keyExpr)` returns a `LivelinessToken`; `declareLivelinessSubscriber(keyExpr, history:)` returns a `Subscriber`; `livelinessGet(keyExpr, timeout:)` returns `Stream<Reply>`; `zid` returns own `ZenohId`; `routersZid()` and `peersZid()` return connected router/peer IDs
+- `Session` — Open/close zenoh sessions (peer mode); `put(keyExpr, value)`, `putBytes(keyExpr, payload)`, `deleteResource(keyExpr)` one-shot operations; `declareSubscriber(keyExpr)` returns a `Subscriber`; `declareBackgroundSubscriber(keyExpr)` returns `Stream<Sample>` (fire-and-forget, lives until session closes); `declarePublisher(keyExpr, isExpress:)` returns a `Publisher`; `declareAdvancedPublisher(keyExpr, options:)` returns an `AdvancedPublisher`; `declareAdvancedSubscriber(keyExpr, options:)` returns an `AdvancedSubscriber`; `get(selector, payload: ZBytes?)` returns `Stream<Reply>` (payload accepts SHM-backed `ZBytes` for zero-copy query payloads); `declareQueryable(keyExpr)` returns a `Queryable`; `declarePullSubscriber(keyExpr, capacity: N)` returns a `PullSubscriber`; `declareQuerier(keyExpr)` returns a `Querier`; `declareLivelinessToken(keyExpr)` returns a `LivelinessToken`; `declareLivelinessSubscriber(keyExpr, history:)` returns a `Subscriber`; `livelinessGet(keyExpr, timeout:)` returns `Stream<Reply>`; `zid` returns own `ZenohId`; `routersZid()` and `peersZid()` return connected router/peer IDs
 - `KeyExpr` — Key expression creation and validation; `intersects(other)` tests if two key expressions share at least one key; `includes(other)` tests if this expression is a superset of another; `equals(other)` tests semantic equality
 - `ZBytes` — Binary payload container with string round-trip; `clone()` (shallow ref-counted copy); `toBytes()` (read content as `Uint8List`); `fromInt()`/`toInt()`, `fromDouble()`/`toDouble()`, `fromBool()`/`toBool()` single-value convenience methods (int64/double/bool); `slices` lazy iterable of internal byte fragments; `markConsumed()` for FFI ownership semantics; `isShmBacked` detects whether bytes are backed by shared memory (SHM feature-guarded, returns false on Android)
 - `ZSerializer` — Streaming serializer for multi-value payloads; `serializeUint8()`–`serializeInt64()`, `serializeFloat()`, `serializeDouble()`, `serializeBool()`, `serializeString()`, `serializeBytes()`, `serializeSequenceLength()`; `finish()` returns `ZBytes`; `dispose()` for error cleanup
@@ -81,9 +82,15 @@ Available Dart API classes:
 - `ZenohId` — 16-byte session/entity identifier with `toHexString()`, equality, and hashCode
 - `WhatAmI` — Enum with `router`, `peer`, and `client` values mapping zenoh-c bitmask (1, 2, 4)
 - `Hello` — Scouting result with `zid` (`ZenohId`), `whatami` (`WhatAmI`), and `locators` (list of strings) fields
+- `AdvancedPublisher` — Advanced publisher with cache, publisher detection, and sample miss detection; `put()`, `putBytes()`, `deleteResource()`, `keyExpr`, `close()`; requires `timestamping/enabled: true` on session config
+- `AdvancedPublisherOptions` — Configuration for `cacheMaxSamples` (null=no cache, 0=unlimited, >0=limit), `publisherDetection`, `sampleMissDetection`, `heartbeatMode`, `heartbeatPeriodMs`
+- `HeartbeatMode` — Enum with `none` (0), `periodic` (1), `sporadic` (2) heartbeat modes for advanced publisher sample miss detection
+- `AdvancedSubscriber` — Advanced subscriber with history recovery, late publisher detection, and miss events; `stream` (`Stream<Sample>`), `missEvents` (`Stream<MissEvent>?`, non-null when `enableMissListener: true`), `close()`
+- `AdvancedSubscriberOptions` — Configuration for `history`, `detectLatePublishers`, `recovery`, `lastSampleMissDetection`, `periodicQueriesPeriodMs`, `subscriberDetection`, `enableMissListener`
+- `MissEvent` — Miss event with `sourceId` (`ZenohId`) and `count` fields, delivered via `AdvancedSubscriber.missEvents` stream
 - `ZenohException` — Error type for zenoh operations
 
-Phase 18 (advanced) is specified in `development/phases/` but not yet implemented.
+All phases complete.
 
 ## FVM Requirement
 
@@ -236,6 +243,12 @@ cd package && fvm dart run example/z_bytes.dart
 
 # In-memory storage: subscriber stores PUT/DELETE, queryable replies with matching entries (runs until Ctrl-C)
 cd package && fvm dart run example/z_storage.dart -k 'demo/example/**'
+
+# Advanced publisher with cache, publisher detection, and periodic heartbeat (runs until Ctrl-C)
+cd package && fvm dart run example/z_advanced_pub.dart -k demo/example/zenoh-dart-advanced-pub -i 10
+
+# Advanced subscriber with history recovery, miss detection, and miss listener (runs until Ctrl-C)
+cd package && fvm dart run example/z_advanced_sub.dart -k 'demo/example/**'
 ```
 
 CLI flags must mirror zenoh-c's examples (`extern/zenoh-c/examples/z_*.c`). When adding a new CLI example in any phase:

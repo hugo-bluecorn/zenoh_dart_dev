@@ -1,4 +1,42 @@
 # Changelog
+## 0.18.0
+
+### Added
+- `AdvancedPublisher` class — advanced publisher with cache, publisher
+  detection, and sample miss detection; `put()`, `putBytes()`,
+  `deleteResource()`, `keyExpr`, and `close()`
+- `AdvancedPublisherOptions` class — configuration for cache size
+  (`cacheMaxSamples`), `publisherDetection`, `sampleMissDetection`,
+  `heartbeatMode`, and `heartbeatPeriodMs`
+- `HeartbeatMode` enum — `none`, `periodic`, `sporadic` heartbeat
+  modes for sample miss detection signalling
+- `AdvancedSubscriber` class — advanced subscriber with history
+  recovery, late publisher detection, miss events, and sample miss
+  detection; `stream`, `missEvents`, `keyExpr`, and `close()`
+- `AdvancedSubscriberOptions` class — configuration for `history`,
+  `detectLatePublishers`, `recovery`, `lastSampleMissDetection`,
+  `periodicQueriesPeriodMs`, `subscriberDetection`, and
+  `enableMissListener`
+- `MissEvent` class — miss event with `sourceId` (`ZenohId`) and
+  `count` fields delivered via `AdvancedSubscriber.missEvents` stream
+- `Session.declareAdvancedPublisher()` — declare an advanced publisher
+  with optional `AdvancedPublisherOptions`
+- `Session.declareAdvancedSubscriber()` — declare an advanced subscriber
+  with optional `AdvancedSubscriberOptions`
+- CLI example: `z_advanced_pub.dart` — advanced publisher with cache,
+  publisher detection, and heartbeat; `-k`, `-p`, `-i`, `-e`, `-l` flags
+- CLI example: `z_advanced_sub.dart` — advanced subscriber with history
+  recovery, miss detection; `-k`, `-e`, `-l` flags
+- 11 new C shim functions (144 → 155 total): `zd_advanced_publisher_sizeof`,
+  `zd_declare_advanced_publisher`, `zd_advanced_publisher_put`,
+  `zd_advanced_publisher_delete`, `zd_advanced_publisher_loan`,
+  `zd_advanced_publisher_drop`, `zd_advanced_subscriber_sizeof`,
+  `zd_declare_advanced_subscriber`,
+  `zd_advanced_subscriber_declare_background_sample_miss_listener`,
+  `zd_advanced_subscriber_loan`, `zd_advanced_subscriber_drop`
+  (all guarded by `#if defined(Z_FEATURE_UNSTABLE_API)`)
+- ~38 new integration tests (473 → ~511 total)
+
 ## 0.17.0
 
 ### Added
