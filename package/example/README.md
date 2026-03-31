@@ -80,13 +80,6 @@ returns the bytes regardless of backing. The `ZBytes.isShmBacked` property
 lets callers detect SHM when needed, but no separate subscriber example
 is required.
 
-### z_advanced_pub / z_advanced_sub — Advanced Publication (Future)
-
-These use zenoh-c's advanced publication API (`ze_declare_advanced_publisher`,
-`ze_declare_advanced_subscriber`) with sample miss detection, history, and
-recovery. Planned for a future phase when the advanced API surface is
-implemented.
-
 ### z_pong_shm — Pong Is SHM-Transparent
 
 No such example exists in zenoh-c. The pong responder echoes whatever
@@ -804,6 +797,107 @@ z_storage.dart -k 'demo/example/**'
 
 ---
 
+### z_advanced_pub — Advanced Publisher
+
+**Follows canon.**
+
+**What's new**
+
+- 1 CLI example: `z_advanced_pub.dart` — advanced publisher with cache and heartbeat
+- 6 C shim functions: `zd_advanced_publisher_sizeof`,
+  `zd_declare_advanced_publisher`, `zd_advanced_publisher_put`,
+  `zd_advanced_publisher_delete`, `zd_advanced_publisher_loan`,
+  `zd_advanced_publisher_drop`
+- `AdvancedPublisher`, `AdvancedPublisherOptions`, `HeartbeatMode` types
+- `Session.declareAdvancedPublisher()` method
+
+**The pattern it demonstrates**
+
+```
+z_advanced_pub: config(timestamping=true) → open → declareAdvancedPublisher(key, opts)
+                                                        │
+                                                        ▼
+                                              loop: put("[idx] payload")
+                                              (cache stores last N, heartbeat sends sequence numbers)
+```
+
+Advanced publisher enables three capabilities beyond the regular publisher:
+(1) **cache** — stores the last N samples so late-joining subscribers can
+retrieve history, (2) **publisher detection** — announces presence via
+liveliness so subscribers know when publishers appear, (3) **sample miss
+detection** with heartbeats — adds sequence numbers so subscribers can
+detect gaps and request retransmission.
+
+**Dart-specific note**
+
+Requires `config.insertJson5('timestamping/enabled', 'true')` on the
+publisher's session. The 11 C shim functions are guarded by
+`#if defined(Z_FEATURE_UNSTABLE_API)` — unavailable on Android.
+
+```
+z_advanced_pub.dart -k demo/example/zenoh-dart-advanced-pub -i 10
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-k, --key` | `demo/example/zenoh-dart-advanced-pub` | Key expression |
+| `-p, --payload` | `Advanced Pub from Dart!` | Payload string |
+| `-i, --history` | `1` | Cache size (number of samples) |
+| `-e, --connect` | -- | Connect endpoint(s) |
+| `-l, --listen` | -- | Listen endpoint(s) |
+
+---
+
+### z_advanced_sub — Advanced Subscriber
+
+**Follows canon.**
+
+**What's new**
+
+- 1 CLI example: `z_advanced_sub.dart` — advanced subscriber with history and miss detection
+- 5 C shim functions: `zd_advanced_subscriber_sizeof`,
+  `zd_declare_advanced_subscriber`,
+  `zd_advanced_subscriber_declare_background_sample_miss_listener`,
+  `zd_advanced_subscriber_loan`, `zd_advanced_subscriber_drop`
+- `AdvancedSubscriber`, `AdvancedSubscriberOptions`, `MissEvent` types
+- `Session.declareAdvancedSubscriber()` method
+
+**The pattern it demonstrates**
+
+```
+z_advanced_sub: open → declareAdvancedSubscriber(key, opts)
+                         │                        │
+                         ▼                        ▼
+                  stream<Sample>          missEvents<MissEvent>
+                  (history + live)        (gap detection)
+```
+
+Advanced subscriber enables three capabilities beyond the regular subscriber:
+(1) **history** — retrieves cached samples from advanced publishers on connect,
+(2) **recovery** — detects gaps via sequence numbers and requests retransmission,
+(3) **miss listener** — streams `MissEvent` notifications when samples are
+lost (source ZenohId + count).
+
+**Dart-specific note**
+
+The miss listener uses a separate NativePort callback bridge. The C shim's
+`_zd_miss_callback` posts `[zid_raw_bytes, nb_missed]` to a Dart port,
+where `MissEvent` is constructed from raw 16-byte ZID (matching the scout
+pattern). Two streams are active: samples reuse the existing
+`_zd_sample_callback`, while miss events use the new miss callback.
+
+```
+z_advanced_sub.dart -k 'demo/example/**'
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-k, --key` | `demo/example/**` | Key expression |
+| `-e, --connect` | -- | Connect endpoint(s) |
+| `-l, --listen` | -- | Listen endpoint(s) |
+
+---
+
 ## Coverage Map
 
 Which zenoh-c examples does this binding implement, and which are absent?
@@ -833,14 +927,14 @@ Which zenoh-c examples does this binding implement, and which are absent?
 | `z_bytes.c` | `z_bytes.dart` | Implemented |
 | `z_queryable_with_channels.c` | -- | Absent (Dart Streams) |
 | `z_non_blocking_get.c` | -- | Absent (Dart Streams) |
-| `z_advanced_pub.c` | -- | Future |
-| `z_advanced_sub.c` | -- | Future |
+| `z_advanced_pub.c` | `z_advanced_pub.dart` | Implemented |
+| `z_advanced_sub.c` | `z_advanced_sub.dart` | Implemented |
 | `z_pub_thr.c` | `z_pub_thr.dart` | Implemented |
 | `z_sub_thr.c` | `z_sub_thr.dart` | Implemented |
 | `z_pub_shm_thr.c` | `z_pub_shm_thr.dart` | Implemented |
 | `z_storage.c` | `z_storage.dart` | Implemented |
 
-**Current:** 24 implemented, 3 permanently absent, 2 future.
+**Current:** 26 implemented, 3 permanently absent, 0 future.
 
 ---
 
